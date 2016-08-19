@@ -1,8 +1,8 @@
 #include <cstdint>
 #include <cstring>
 
-#include <lib/services/spidrv.hpp>
-#include <lib/util/logging.hpp>
+#include <xXx/services/spidrv.hpp>
+#include <xXx/util/logging.hpp>
 
 #include "definitions.h"
 #include "nrf24l01p.hpp"
