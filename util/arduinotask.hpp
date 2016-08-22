@@ -1,23 +1,22 @@
-#ifndef IARDUINOTASK_HPP_
-#define IARDUINOTASK_HPP_
+#ifndef ARDUINOTASK_HPP_
+#define ARDUINOTASK_HPP_
 
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "staticsingleton.hpp"
-
 class ArduinoTask {
    public:
+    virtual ~ArduinoTask() {}
+
     virtual void setup() = 0;
     virtual void loop() = 0;
 
-    BaseType_t attachToScheduler(const char *const name,
-                                 const uint16_t stackDepth,
-                                 UBaseType_t priority,
-                                 TaskHandle_t *const handle = NULL);
+    BaseType_t attachToScheduler(const uint16_t stackDepth,
+                                 UBaseType_t priority);
 
    protected:
-    virtual ~ArduinoTask();
+    TaskHandle_t *_handle = NULL;
+    char *_name = NULL;
 };
 
-#endif /* IARDUINOTASK_HPP_ */
+#endif /* ARDUINOTASK_HPP_ */

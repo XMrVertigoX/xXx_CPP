@@ -14,14 +14,10 @@
         }                                                             \
     }
 
-ArduinoTask::~ArduinoTask() {}
-
-BaseType_t ArduinoTask::attachToScheduler(const char *const name,
-                                          const uint16_t stackDepth,
-                                          UBaseType_t priority,
-                                          TaskHandle_t *const handle) {
+BaseType_t ArduinoTask::attachToScheduler(uint16_t stackDepth,
+                                          UBaseType_t priority) {
     BaseType_t status =
-        xTaskCreate(TASK_FUNCTION, name, stackDepth, this, priority, handle);
+        xTaskCreate(TASK_FUNCTION, _name, stackDepth, this, priority, _handle);
 
     return (status);
 }

@@ -3,18 +3,17 @@
 
 #include <cstdint>
 
-#include <xXx/services/spidrv.hpp>
+#include <xXx/drivers/genericspi.hpp>
 
 class nRF24L01P {
    private:
-    SpiDrv &_spi;
-    SpiDrv_Device_t &_device;
+    GenericSpi &_spi;
 
     uint8_t read(uint8_t addr, uint8_t bytes[], uint32_t numBytes);
     uint8_t write(uint8_t addr, uint8_t bytes[], uint32_t numBytes);
 
    public:
-    nRF24L01P(SpiDrv &spi, SpiDrv_Device_t &device);
+    nRF24L01P(GenericSpi &spi);
     ~nRF24L01P();
 
     void config_powerUp();
