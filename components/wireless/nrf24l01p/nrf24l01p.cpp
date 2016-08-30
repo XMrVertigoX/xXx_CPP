@@ -1,15 +1,15 @@
 #include <cstdint>
 #include <cstring>
 
-#include <xXx/drivers/genericspi.hpp>
-#include <xXx/util/logging.hpp>
+#include <xXx/services/ispi.hpp>
+#include <xXx/utils/logging.hpp>
 
 #include "definitions.h"
 #include "nrf24l01p.hpp"
 
 #define PLACEHOLDER 0xFF
 
-nRF24L01P::nRF24L01P(GenericSpi &spi) : _spi(spi) {}
+nRF24L01P::nRF24L01P(ISpi &spi) : _spi(spi) {}
 
 nRF24L01P::~nRF24L01P() {}
 

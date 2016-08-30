@@ -3,7 +3,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "arduinotask.hpp"
+#include <xXx/utils/arduinotask.hpp>
 
 #define TASK_FUNCTION                                                 \
     [](void *pvParameters) {                                          \

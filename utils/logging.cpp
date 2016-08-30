@@ -6,7 +6,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "logging.hpp"
+#include <xXx/utils/logging.hpp>
 
 static const size_t maxLength = 256;
 

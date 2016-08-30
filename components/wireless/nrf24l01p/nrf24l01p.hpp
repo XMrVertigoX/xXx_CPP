@@ -3,17 +3,17 @@
 
 #include <cstdint>
 
-#include <xXx/drivers/genericspi.hpp>
+#include <xXx/services/ispi.hpp>
 
 class nRF24L01P {
    private:
-    GenericSpi &_spi;
+    ISpi &_spi;
 
     uint8_t read(uint8_t addr, uint8_t bytes[], uint32_t numBytes);
     uint8_t write(uint8_t addr, uint8_t bytes[], uint32_t numBytes);
 
    public:
-    nRF24L01P(GenericSpi &spi);
+    nRF24L01P(ISpi &spi);
     ~nRF24L01P();
 
     void config_powerUp();

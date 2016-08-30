@@ -4,7 +4,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-class ArduinoTask {
+class ArduinoTask{
    public:
     virtual ~ArduinoTask() = default;
 
