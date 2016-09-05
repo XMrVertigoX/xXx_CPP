@@ -47,8 +47,8 @@ void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
     memcpy(string, message, messageLength + 1);
 
     for (int i = 0; i < numBytes; ++i) {
-        snprintf(&string[i * byteStringLength], byteStringLength + 1, " %02x",
-                 bytes[i]);
+        snprintf(&string[(i * byteStringLength) + messageLength],
+                 byteStringLength + 1, " %02x", bytes[i]);
     }
 
     print(string);
