@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include <xXx/services/ispi.hpp>
+#include <xXx/interfaces/ispi.hpp>
 
 class nRF24L01P {
    private:

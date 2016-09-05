@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include <xXx/services/ispi.hpp>
+#include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
 #include "definitions.h"
