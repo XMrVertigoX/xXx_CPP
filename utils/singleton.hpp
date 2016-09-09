@@ -9,12 +9,17 @@ class Singleton {
    protected:
     Singleton() = default;
     ~Singleton() = default;
+
+   private:
+    static TYPE _instance;
 };
 
 template <typename TYPE>
+TYPE Singleton<TYPE>::_instance;
+
+template <typename TYPE>
 TYPE& Singleton<TYPE>::getInstance() {
-    static TYPE instance;
-    return (instance);
+    return (_instance);
 }
 
 #endif  // SINGLETON_HPP_
