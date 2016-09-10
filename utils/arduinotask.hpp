@@ -4,6 +4,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+namespace xXx {
+
 class ArduinoTask{
    public:
     virtual ~ArduinoTask() = default;
@@ -17,5 +19,7 @@ class ArduinoTask{
     TaskHandle_t *_handle = NULL;
     char *_name = NULL;
 };
+
+} /* namespace xXx */
 
 #endif /* ARDUINOTASK_HPP_ */

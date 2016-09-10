@@ -14,6 +14,8 @@
         }                                                             \
     }
 
+namespace xXx {
+
 BaseType_t ArduinoTask::attachToScheduler(uint16_t stackDepth,
                                           UBaseType_t priority) {
     BaseType_t status =
@@ -21,3 +23,5 @@ BaseType_t ArduinoTask::attachToScheduler(uint16_t stackDepth,
 
     return (status);
 }
+
+} /* namespace xXx */
