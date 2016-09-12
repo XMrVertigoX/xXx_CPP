@@ -13,6 +13,8 @@ class Queue {
     ~Queue();
     BaseType_t enqueue(TYPE &element, bool isr = false);
     BaseType_t dequeue(TYPE &element, bool isr = false);
+    UBaseType_t messagesWaiting(bool isr = false);
+    UBaseType_t spacesAvailable();
 
    private:
     QueueHandle_t _queue;
@@ -31,19 +33,33 @@ Queue<TYPE>::~Queue() {
 template <typename TYPE>
 BaseType_t Queue<TYPE>::enqueue(TYPE &element, bool isr) {
     if (isr) {
-        xQueueSendFromISR(_queue, &element, pdFALSE);
+        return (xQueueSendToBackFromISR(_queue, &element, pdTRUE));
     } else {
-        xQueueSend(_queue, &element, 0);
+        return (xQueueSendToBack(_queue, &element, 0));
     }
 }
 
 template <typename TYPE>
 BaseType_t Queue<TYPE>::dequeue(TYPE &element, bool isr) {
     if (isr) {
-        xQueueReceiveFromISR(_queue, &element, pdFALSE);
+        return (xQueueReceiveFromISR(_queue, &element, pdTRUE));
     } else {
-        xQueueReceive(_queue, &element, 0);
+        return (xQueueReceive(_queue, &element, 0));
     }
+}
+
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::messagesWaiting(bool isr) {
+    if (isr) {
+        return (uxQueueMessagesWaitingFromISR(_queue));
+    } else {
+        return (uxQueueMessagesWaiting(_queue));
+    }
+}
+
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::spacesAvailable() {
+    return (uxQueueSpacesAvailable(_queue));
 }
 
 } /* namespace xXx */
