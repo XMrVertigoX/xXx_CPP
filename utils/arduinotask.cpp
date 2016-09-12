@@ -16,12 +16,8 @@
 
 namespace xXx {
 
-BaseType_t ArduinoTask::attachToScheduler(uint16_t stackDepth,
-                                          UBaseType_t priority) {
-    BaseType_t status =
-        xTaskCreate(TASK_FUNCTION, _name, stackDepth, this, priority, _handle);
-
-    return (status);
+BaseType_t ArduinoTask::attach(uint16_t stack, UBaseType_t priority) {
+    return (xTaskCreate(TASK_FUNCTION, NULL, stack, this, priority, &_handle));
 }
 
 } /* namespace xXx */

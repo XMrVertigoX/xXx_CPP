@@ -13,11 +13,10 @@ class ArduinoTask{
     virtual void setup() = 0;
     virtual void loop() = 0;
 
-    BaseType_t attachToScheduler(uint16_t stackDepth, UBaseType_t priority);
+    BaseType_t attach(uint16_t stackDepth, UBaseType_t priority);
 
    protected:
-    TaskHandle_t *_handle = NULL;
-    char *_name = NULL;
+    TaskHandle_t _handle = NULL;
 };
 
 } /* namespace xXx */
