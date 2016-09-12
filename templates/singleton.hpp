@@ -1,6 +1,8 @@
 #ifndef SINGLETON_HPP_
 #define SINGLETON_HPP_
 
+namespace xXx {
+
 template <typename TYPE>
 class Singleton {
    public:
@@ -21,5 +23,7 @@ template <typename TYPE>
 TYPE& Singleton<TYPE>::getInstance() {
     return (_instance);
 }
+
+} /* namespace xXx */
 
 #endif  // SINGLETON_HPP_
