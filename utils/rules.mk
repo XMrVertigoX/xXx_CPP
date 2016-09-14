@@ -33,26 +33,26 @@ CPPFLAGS += -MP
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
 LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 
-LIBFLAGS = $(addprefix -l,$(LIBRARIES))
-# LIBFLAGS = -Wl,--start-group $(addprefix -l, $(LIBRARIES)) -Wl,--end-group
+_LIBFLAGS = $(addprefix -l,$(LIBRARIES))
+# _LIBFLAGS = -Wl,--start-group $(addprefix -l, $(LIBRARIES)) -Wl,--end-group
 
 # ----- Sourced and objects ---------------------------------------------------
 
-ASM_SOURCE_FILES  = $(sort $(realpath $(filter %.s %.S,$(SOURCE_FILES))))
-ASM_OBJECT_FILES += $(patsubst %.s,%.o,$(ASM_SOURCE_FILES))
-ASM_OBJECT_FILES += $(patsubst %.S,%.o,$(ASM_SOURCE_FILES))
+_ASM_SOURCE_FILES  = $(sort $(realpath $(filter %.s %.S,$(SOURCE_FILES))))
+_ASM_OBJECT_FILES += $(patsubst %.s,%.o,$(_ASM_SOURCE_FILES))
+_ASM_OBJECT_FILES += $(patsubst %.S,%.o,$(_ASM_SOURCE_FILES))
 
-C_SOURCE_FILES    = $(sort $(realpath $(filter %.c,$(SOURCE_FILES))))
-C_OBJECT_FILES   += $(patsubst %.c,%.o,$(C_SOURCE_FILES))
+_C_SOURCE_FILES    = $(sort $(realpath $(filter %.c,$(SOURCE_FILES))))
+_C_OBJECT_FILES   += $(patsubst %.c,%.o,$(_C_SOURCE_FILES))
 
-CXX_SOURCE_FILES  = $(sort $(realpath $(filter %.cpp,$(SOURCE_FILES))))
-CXX_OBJECT_FILES += $(patsubst %.cpp,%.o,$(CXX_SOURCE_FILES))
+_CXX_SOURCE_FILES  = $(sort $(realpath $(filter %.cpp,$(SOURCE_FILES))))
+_CXX_OBJECT_FILES += $(patsubst %.cpp,%.o,$(_CXX_SOURCE_FILES))
 
-OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(ASM_OBJECT_FILES))
-OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(C_OBJECT_FILES))
-OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(CXX_OBJECT_FILES))
+_OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(_ASM_OBJECT_FILES))
+_OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(_C_OBJECT_FILES))
+_OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(_CXX_OBJECT_FILES))
 
-DEPENDENCY_FILES  = $(patsubst %.o,%.d,$(OBJECT_FILES))
+_DEPENDENCY_FILES  = $(patsubst %.o,%.d,$(_OBJECT_FILES))
 
 # ----- Rules -----------------------------------------------------------------
 
@@ -69,9 +69,9 @@ clean:
 download: $(EXECUTABLE)
 	$(GDB) -q -x download.gdb $<
 
-$(OUTPUT_DIR)/$(EXECUTABLE): $(OBJECT_FILES)
+$(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(LDFLAGS) $^ $(LIBFLAGS) -o $@
+	$(GCC) $(GCCFLAGS) $(LDFLAGS) $^ $(_LIBFLAGS) -o $@
 
 $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
@@ -87,4 +87,4 @@ $(OUTPUT_DIR)/%.o: /%.cpp
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "$(subst $(PARENT_DIR),,$<)"
 
--include $(DEPENDENCY_FILES)
+-include $(_DEPENDENCY_FILES)
