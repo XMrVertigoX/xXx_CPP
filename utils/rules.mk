@@ -27,6 +27,8 @@ VPATH += $(OUTPUT_DIR)
 
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
+CPPFLAGS += -MD
+CPPFLAGS += -MP
 
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
 LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
@@ -39,15 +41,18 @@ LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 ASM_SOURCE_FILES  = $(sort $(realpath $(filter %.s %.S,$(SOURCE_FILES))))
 ASM_OBJECT_FILES += $(patsubst %.s,%.o,$(ASM_SOURCE_FILES))
 ASM_OBJECT_FILES += $(patsubst %.S,%.o,$(ASM_SOURCE_FILES))
-OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(ASM_OBJECT_FILES))
 
 C_SOURCE_FILES    = $(sort $(realpath $(filter %.c,$(SOURCE_FILES))))
 C_OBJECT_FILES   += $(patsubst %.c,%.o,$(C_SOURCE_FILES))
-OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(C_OBJECT_FILES))
 
 CXX_SOURCE_FILES  = $(sort $(realpath $(filter %.cpp,$(SOURCE_FILES))))
 CXX_OBJECT_FILES += $(patsubst %.cpp,%.o,$(CXX_SOURCE_FILES))
+
+OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(ASM_OBJECT_FILES))
+OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(C_OBJECT_FILES))
 OBJECT_FILES     += $(addprefix $(OUTPUT_DIR),$(CXX_OBJECT_FILES))
+
+DEPENDENCY_FILES  = $(patsubst %.o,%.d,$(OBJECT_FILES))
 
 # ----- Rules -----------------------------------------------------------------
 
@@ -75,9 +80,11 @@ $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 $(OUTPUT_DIR)/%.o: /%.c
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$(subst $(PARENT_DIR),,$^)"
+	@echo "$(subst $(PARENT_DIR),,$<)"
 
 $(OUTPUT_DIR)/%.o: /%.cpp
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$(subst $(PARENT_DIR),,$^)"
+	@echo "$(subst $(PARENT_DIR),,$<)"
+
+-include $(DEPENDENCY_FILES)
