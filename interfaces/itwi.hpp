@@ -1,6 +1,7 @@
 #ifndef ITWI_HPP_
 #define ITWI_HPP_
 
+namespace xXx {
 class ITwi {
    public:
     virtual ~ITwi() = default;
@@ -12,5 +13,6 @@ class ITwi {
     virtual uint8_t writeBytes(uint8_t address, uint8_t bytes[],
                                size_t numBytes) = 0;
 };
+}
 
 #endif /* ITWI_HPP_ */

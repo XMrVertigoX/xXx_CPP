@@ -5,6 +5,8 @@
 
 #include <xXx/interfaces/ispi.hpp>
 
+using namespace xXx;
+
 class nRF24L01P {
    private:
     ISpi &_spi;
