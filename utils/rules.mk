@@ -1,29 +1,35 @@
-# ----- Toolchain -------------------------------------------------------------
+# ----- Tools -----------------------------------------------------------------
 
-TOOLCHAIN_PREFIX = arm-none-eabi-
+MKDIR = mkdir -p
+RM = rm -rf
 
 GCC     = $(TOOLCHAIN_PREFIX)gcc
 GDB     = $(TOOLCHAIN_PREFIX)gdb
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
-# ----- Tools -----------------------------------------------------------------
-
-MKDIR = mkdir -p
-RM = rm -rf
-
 # ----- Directories and files -------------------------------------------------
 
-BINARY     = $(PROJECT_NAME).bin
-EXECUTABLE = $(PROJECT_NAME).elf
-MAPFILE    = $(PROJECT_NAME).map
-
 PARENT_DIR = $(dir $(CURDIR))
-OUTPUT_DIR = _out
 
-VPATH += $(OUTPUT_DIR)
+ifndef OUTPUT_DIR
+OUTPUT_DIR = _out
+endif
+
+vpath %.elf $(OUTPUT_DIR)
+vpath %.bin $(OUTPUT_DIR)
+
+ifndef OUTPUT_NAME
+OUTPUT_NAME = $(PROJECT_NAME)
+endif
+
+BINARY     = $(OUTPUT_NAME).bin
+EXECUTABLE = $(OUTPUT_NAME).elf
+MAPFILE    = $(OUTPUT_NAME).map
 
 # ----- Flags -----------------------------------------------------------------
+
+COMMON_CFLAGS += -fdiagnostics-color=always
 
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
@@ -77,12 +83,12 @@ $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
 
-$(OUTPUT_DIR)/%.o: /%.c
+$(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "$(subst $(PARENT_DIR),,$<)"
 
-$(OUTPUT_DIR)/%.o: /%.cpp
+$(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "$(subst $(PARENT_DIR),,$<)"
