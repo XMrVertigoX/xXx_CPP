@@ -21,14 +21,14 @@ ifndef OUTPUT_DIR
 OUTPUT_DIR = _out
 endif
 
-vpath %.elf $(OUTPUT_DIR)
-vpath %.bin $(OUTPUT_DIR)
-
 PARENT_DIR = $(dir $(CURDIR))
 
 BINARY     = $(OUTPUT_NAME).bin
 EXECUTABLE = $(OUTPUT_NAME).elf
 MAPFILE    = $(OUTPUT_NAME).map
+
+vpath %.elf $(OUTPUT_DIR)
+vpath %.bin $(OUTPUT_DIR)
 
 # ----- Flags -----------------------------------------------------------------
 
