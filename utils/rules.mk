@@ -82,11 +82,11 @@ $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 $(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$(subst $(PARENT_DIR),,$<)"
+	@echo "$<"
 
 $(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$(subst $(PARENT_DIR),,$<)"
+	@echo "$<"
 
 -include $(_DEPENDENCY_FILES)
