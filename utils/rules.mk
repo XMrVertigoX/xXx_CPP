@@ -32,17 +32,17 @@ vpath %.bin $(OUTPUT_DIR)
 
 # ----- Flags -----------------------------------------------------------------
 
-_LIBFLAGS      = $(addprefix -l,$(LIBRARIES))
+_LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
-COMMON_CFLAGS += -fdiagnostics-color=always
+GCCFLAGS += -fdiagnostics-color=always
 
-CPPFLAGS      += $(addprefix -D,$(SYMBOLS))
-CPPFLAGS      += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
-CPPFLAGS      += -MD
-CPPFLAGS      += -MP
+CPPFLAGS += $(addprefix -D,$(SYMBOLS))
+CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
+CPPFLAGS += -MD
+CPPFLAGS += -MP
 
-LDFLAGS       += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
-LDFLAGS       += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
+LDFLAGS  += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
+LDFLAGS  += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 
 # ----- Sourced and objects ---------------------------------------------------
 
