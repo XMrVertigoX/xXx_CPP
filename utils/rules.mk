@@ -10,17 +10,14 @@ RM      = rm -rf
 # ----- Directories and files -------------------------------------------------
 
 ifndef PROJECT_NAME
-PROJECT_NAME = PROJECT_NAME_NO_SET
+PROJECT_NAME = NONE 
 endif
 
 ifndef OUTPUT_NAME
 OUTPUT_NAME = $(PROJECT_NAME)
 endif
 
-ifndef OUTPUT_DIR
 OUTPUT_DIR = _out
-endif
-
 PARENT_DIR = $(dir $(CURDIR))
 
 BINARY     = $(OUTPUT_NAME).bin
