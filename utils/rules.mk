@@ -1,16 +1,21 @@
 # ----- Tools -----------------------------------------------------------------
 
-MKDIR = mkdir -p
-RM = rm -rf
-
 GCC     = $(TOOLCHAIN_PREFIX)gcc
-GDB     = $(TOOLCHAIN_PREFIX)gdb
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
+MKDIR   = mkdir -p
+RM      = rm -rf
+
 # ----- Directories and files -------------------------------------------------
 
-PARENT_DIR = $(dir $(CURDIR))
+ifndef PROJECT_NAME
+PROJECT_NAME = PROJECT_NAME_NO_SET
+endif
+
+ifndef OUTPUT_NAME
+OUTPUT_NAME = $(PROJECT_NAME)
+endif
 
 ifndef OUTPUT_DIR
 OUTPUT_DIR = _out
@@ -19,9 +24,7 @@ endif
 vpath %.elf $(OUTPUT_DIR)
 vpath %.bin $(OUTPUT_DIR)
 
-ifndef OUTPUT_NAME
-OUTPUT_NAME = $(PROJECT_NAME)
-endif
+PARENT_DIR = $(dir $(CURDIR))
 
 BINARY     = $(OUTPUT_NAME).bin
 EXECUTABLE = $(OUTPUT_NAME).elf
@@ -29,18 +32,17 @@ MAPFILE    = $(OUTPUT_NAME).map
 
 # ----- Flags -----------------------------------------------------------------
 
+_LIBFLAGS      = $(addprefix -l,$(LIBRARIES))
+
 COMMON_CFLAGS += -fdiagnostics-color=always
 
-CPPFLAGS += $(addprefix -D,$(SYMBOLS))
-CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
-CPPFLAGS += -MD
-CPPFLAGS += -MP
+CPPFLAGS      += $(addprefix -D,$(SYMBOLS))
+CPPFLAGS      += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
+CPPFLAGS      += -MD
+CPPFLAGS      += -MP
 
-LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
-LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
-
-_LIBFLAGS = $(addprefix -l,$(LIBRARIES))
-# _LIBFLAGS = -Wl,--start-group $(addprefix -l, $(LIBRARIES)) -Wl,--end-group
+LDFLAGS       += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
+LDFLAGS       += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 
 # ----- Sourced and objects ---------------------------------------------------
 
@@ -62,7 +64,7 @@ _DEPENDENCY_FILES  = $(patsubst %.o,%.d,$(_OBJECT_FILES))
 
 # ----- Rules -----------------------------------------------------------------
 
-.PHONY: all clean download
+.PHONY: all clean
 
 all: $(EXECUTABLE) $(BINARY)
 	@echo # New line for better reading
@@ -71,9 +73,6 @@ all: $(EXECUTABLE) $(BINARY)
 
 clean:
 	$(RM) $(OUTPUT_DIR)
-
-download: $(EXECUTABLE)
-	$(GDB) -q -x download.gdb $<
 
 $(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 	$(MKDIR) $(dir $@)
