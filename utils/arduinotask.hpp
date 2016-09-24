@@ -6,7 +6,7 @@
 
 namespace xXx {
 
-class ArduinoTask{
+class ArduinoTask {
    public:
     virtual ~ArduinoTask() = default;
 
