@@ -10,7 +10,7 @@ RM      = rm -rf
 # ----- Directories and files -------------------------------------------------
 
 ifndef PROJECT_NAME
-PROJECT_NAME = NONE 
+PROJECT_NAME = NONE
 endif
 
 ifndef OUTPUT_NAME
@@ -29,8 +29,6 @@ vpath %.bin $(OUTPUT_DIR)
 
 # ----- Flags -----------------------------------------------------------------
 
-_LIBFLAGS = $(addprefix -l,$(LIBRARIES))
-
 GCCFLAGS += -fdiagnostics-color=always
 
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
@@ -40,6 +38,8 @@ CPPFLAGS += -MP
 
 LDFLAGS  += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
 LDFLAGS  += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
+
+_LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
 # ----- Sourced and objects ---------------------------------------------------
 
