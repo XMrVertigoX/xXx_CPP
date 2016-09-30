@@ -6,9 +6,8 @@
 
 namespace xXx {
 
-template <typename TYPE>
-class Queue {
-   public:
+template <typename TYPE> class Queue {
+  public:
     Queue(UBaseType_t numElements);
     ~Queue();
     BaseType_t enqueue(TYPE &element, bool isr = false);
@@ -16,17 +15,15 @@ class Queue {
     UBaseType_t messagesWaiting(bool isr = false);
     UBaseType_t spacesAvailable();
 
-   private:
+  private:
     QueueHandle_t _queue;
 };
 
-template <typename TYPE>
-Queue<TYPE>::Queue(UBaseType_t numElements) {
+template <typename TYPE> Queue<TYPE>::Queue(UBaseType_t numElements) {
     _queue = xQueueCreate(numElements, sizeof(TYPE));
 }
 
-template <typename TYPE>
-Queue<TYPE>::~Queue() {
+template <typename TYPE> Queue<TYPE>::~Queue() {
     vQueueDelete(_queue);
 }
 
@@ -48,8 +45,7 @@ BaseType_t Queue<TYPE>::dequeue(TYPE &element, bool isr) {
     }
 }
 
-template <typename TYPE>
-UBaseType_t Queue<TYPE>::messagesWaiting(bool isr) {
+template <typename TYPE> UBaseType_t Queue<TYPE>::messagesWaiting(bool isr) {
     if (isr) {
         return (uxQueueMessagesWaitingFromISR(_queue));
     } else {
@@ -57,8 +53,7 @@ UBaseType_t Queue<TYPE>::messagesWaiting(bool isr) {
     }
 }
 
-template <typename TYPE>
-UBaseType_t Queue<TYPE>::spacesAvailable() {
+template <typename TYPE> UBaseType_t Queue<TYPE>::spacesAvailable() {
     return (uxQueueSpacesAvailable(_queue));
 }
 

@@ -2,8 +2,9 @@
 #define ITWI_HPP_
 
 namespace xXx {
+
 class ITwi {
-   public:
+  public:
     virtual ~ITwi() = default;
 
     virtual uint8_t startTransmission(void) = 0;
@@ -13,6 +14,7 @@ class ITwi {
     virtual uint8_t writeBytes(uint8_t address, uint8_t bytes[],
                                size_t numBytes) = 0;
 };
-}
+
+} /* namespace xXx */
 
 #endif /* ITWI_HPP_ */
