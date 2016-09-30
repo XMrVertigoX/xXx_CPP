@@ -8,15 +8,17 @@ namespace xXx {
 
 class ArduinoTask {
   public:
+    ArduinoTask(uint16_t stack, UBaseType_t priority);
     virtual ~ArduinoTask();
 
     virtual void setup() = 0;
     virtual void loop() = 0;
 
-    BaseType_t attach(uint16_t stackDepth, UBaseType_t priority);
+    void suspend();
+    void resume();
 
   private:
-    TaskHandle_t _handle = NULL;
+    TaskHandle_t _handle;
 };
 
 } /* namespace xXx */

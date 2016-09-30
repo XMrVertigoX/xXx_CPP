@@ -15,12 +15,20 @@
 
 namespace xXx {
 
+ArduinoTask::ArduinoTask(uint16_t stack, UBaseType_t priority) : _handle(NULL) {
+    xTaskCreate(ARDUINO, NULL, stack, this, priority, &_handle);
+}
+
 ArduinoTask::~ArduinoTask() {
     vTaskDelete(_handle);
 }
 
-BaseType_t ArduinoTask::attach(uint16_t stack, UBaseType_t priority) {
-    return (xTaskCreate(ARDUINO, NULL, stack, this, priority, &_handle));
+void ArduinoTask::suspend() {
+    vTaskSuspend(_handle);
+}
+
+void ArduinoTask::resume() {
+    vTaskResume(_handle);
 }
 
 } /* namespace xXx */
