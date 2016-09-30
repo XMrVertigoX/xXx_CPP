@@ -8,12 +8,12 @@ namespace xXx {
 
 class ArduinoTask {
    public:
-    virtual ~ArduinoTask() = default;
+     virtual ~ArduinoTask();
 
-    virtual void setup() = 0;
-    virtual void loop() = 0;
+     virtual void setup() = 0;
+     virtual void loop() = 0;
 
-    BaseType_t attach(uint16_t stackDepth, UBaseType_t priority);
+     BaseType_t attach(uint16_t stackDepth, UBaseType_t priority);
 
    protected:
     TaskHandle_t _handle = NULL;

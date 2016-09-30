@@ -5,13 +5,19 @@
 
 #include "arduinotask.hpp"
 
-#define ARDUINO                                                    \
-    [](void *pvParameters) {                                       \
-        static_cast<ArduinoTask *>(pvParameters)->setup();         \
-        for (;;) static_cast<ArduinoTask *>(pvParameters)->loop(); \
+#define ARDUINO                                                                \
+    [](void *pvParameters) {                                                   \
+        static_cast<ArduinoTask *>(pvParameters)->setup();                     \
+        for (;;) {                                                             \
+            static_cast<ArduinoTask *>(pvParameters)->loop();                  \
+        }                                                                      \
     }
 
 namespace xXx {
+
+ArduinoTask::~ArduinoTask() {
+    vTaskDelete(_handle);
+}
 
 BaseType_t ArduinoTask::attach(uint16_t stack, UBaseType_t priority) {
     return (xTaskCreate(ARDUINO, NULL, stack, this, priority, &_handle));
