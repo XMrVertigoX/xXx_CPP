@@ -12,7 +12,7 @@ class ArduinoTask {
     virtual ~ArduinoTask();
 
     virtual void setup() = 0;
-    virtual void loop() = 0;
+    virtual void loop()  = 0;
 
     void suspend();
     void resume();
