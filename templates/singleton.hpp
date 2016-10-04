@@ -8,7 +8,7 @@ template <typename TYPE> class Singleton {
     static TYPE &getInstance();
 
   protected:
-    Singleton() = default;
+    Singleton()  = default;
     ~Singleton() = default;
 
   private:
