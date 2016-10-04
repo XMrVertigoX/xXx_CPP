@@ -18,6 +18,8 @@ class ArduinoTask {
     void resume();
 
   private:
+    static void taskFunction(void *pvParameters);
+
     TaskHandle_t _handle;
 };
 

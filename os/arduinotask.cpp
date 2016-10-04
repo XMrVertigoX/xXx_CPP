@@ -5,18 +5,10 @@
 
 #include "arduinotask.hpp"
 
-#define ARDUINO                                                                \
-    [](void *pvParameters) {                                                   \
-        static_cast<ArduinoTask *>(pvParameters)->setup();                     \
-        for (;;) {                                                             \
-            static_cast<ArduinoTask *>(pvParameters)->loop();                  \
-        }                                                                      \
-    }
-
 namespace xXx {
 
 ArduinoTask::ArduinoTask(uint16_t stack, UBaseType_t priority) : _handle(NULL) {
-    xTaskCreate(ARDUINO, NULL, stack, this, priority, &_handle);
+    xTaskCreate(taskFunction, NULL, stack, this, priority, &_handle);
 }
 
 ArduinoTask::~ArduinoTask() {
@@ -29,6 +21,13 @@ void ArduinoTask::suspend() {
 
 void ArduinoTask::resume() {
     vTaskResume(_handle);
+}
+
+// ----- private static -------------------------------------------------------
+
+void ArduinoTask::taskFunction(void *pvParameters) {
+    static_cast<ArduinoTask *>(pvParameters)->setup();
+    for (;;) static_cast<ArduinoTask *>(pvParameters)->loop();
 }
 
 } /* namespace xXx */
