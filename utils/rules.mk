@@ -40,18 +40,18 @@ COMMON_CFLAGS += -nostdlib
 CXXFLAGS += -fno-rtti
 CXXFLAGS += -fno-threadsafe-statics
 
-CPPFLAGS += $(addprefix -D,$(SYMBOLS))
-CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 CPPFLAGS += -MD
 CPPFLAGS += -MP
+CPPFLAGS += $(addprefix -D,$(SYMBOLS))
+CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 
-LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
-LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
+LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
 
 _LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
-# ----- Sourced and objects ---------------------------------------------------
+# ----- Sources and objects ---------------------------------------------------
 
 _SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp,$(SOURCE_FILES))))
 _OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(_SOURCE_FILES)))
