@@ -53,7 +53,8 @@ _LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
 # ----- Sourced and objects ---------------------------------------------------
 
-_OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(sort $(realpath $(filter %.c %.cpp %.s %.S,$(SOURCE_FILES))))))
+_SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp,$(SOURCE_FILES))))
+_OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(_SOURCE_FILES)))
 
 _DEPENDENCY_FILES = $(addsuffix .d,$(_OUTPUT_FILES))
 _OBJECT_FILES     = $(addsuffix .o,$(_OUTPUT_FILES))
