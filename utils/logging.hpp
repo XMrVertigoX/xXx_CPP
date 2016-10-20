@@ -1,7 +1,7 @@
 #ifndef LOGGING_HPP_
 #define LOGGING_HPP_
 
-#include <cstdint>
+#include <stdint.h>
 
 #if defined(NDEBUG)
 #define BUFFER(...)

@@ -1,7 +1,7 @@
-#include <cctype>
-#include <cstdarg>
-#include <cstdio>
-#include <cstring>
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -38,11 +38,11 @@ void printFormat(const char *format, ...) {
 }
 
 void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
-    char string[stringLength];
-
     size_t messageLength    = strlen(message);
     size_t stringLength     = messageLength + (numBytes * 3) + 1;
     size_t byteStringLength = 3;
+
+    char string[stringLength];
 
     // Copy terminating zero in case that numBytes equals zero (+1)
     memcpy(string, message, messageLength + 1);
