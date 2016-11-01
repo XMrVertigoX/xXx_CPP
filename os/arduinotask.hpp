@@ -6,7 +6,7 @@
 
 // clang-format off
 #define DEFAULT_STACK_SIZE    (configMINIMAL_STACK_SIZE)
-#define DEFAULT_TASK_PRIORITY (1)
+#define DEFAULT_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
 // clang-format on
 
 namespace xXx {
