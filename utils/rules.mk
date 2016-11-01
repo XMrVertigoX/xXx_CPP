@@ -30,6 +30,8 @@ vpath %.bin $(OUTPUT_DIR)
 
 GCCFLAGS += -fdiagnostics-color=always
 
+# ASMFLAGS +=
+
 COMMON_CFLAGS += -fdata-sections
 COMMON_CFLAGS += -ffunction-sections
 COMMON_CFLAGS += -fno-builtin
@@ -45,6 +47,8 @@ CPPFLAGS += -MP
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 
+LDFLAGS += --specs=nano.specs
+LDFLAGS += --specs=nosys.specs
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
@@ -53,7 +57,7 @@ _LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
 # ----- Sources and objects ---------------------------------------------------
 
-_SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp,$(SOURCE_FILES))))
+_SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp %.s,$(SOURCE_FILES))))
 _OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(_SOURCE_FILES)))
 
 _DEPENDENCY_FILES = $(addsuffix .d,$(_OUTPUT_FILES))
@@ -78,6 +82,11 @@ $(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
+
+$(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@echo "$<"
 
 $(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
