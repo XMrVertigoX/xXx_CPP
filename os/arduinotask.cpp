@@ -15,15 +15,13 @@ ArduinoTask::~ArduinoTask() {
     vTaskDelete(_handle);
 }
 
-void ArduinoTask::suspend() {
-    vTaskSuspend(_handle);
-}
-
 void ArduinoTask::resume() {
     vTaskResume(_handle);
 }
 
-// ----- private static -------------------------------------------------------
+void ArduinoTask::suspend() {
+    vTaskSuspend(_handle);
+}
 
 void ArduinoTask::taskFunction(void *pvParameters) {
     static_cast<ArduinoTask *>(pvParameters)->setup();
