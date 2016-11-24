@@ -10,8 +10,9 @@ template <typename TYPE> class Queue {
   public:
     Queue(UBaseType_t numElements);
     ~Queue();
-    BaseType_t enqueue(TYPE &element, bool isr = false);
     BaseType_t dequeue(TYPE &element, bool isr = false);
+    BaseType_t enqueue(TYPE &element, bool isr = false);
+
     UBaseType_t freeSlots(bool isr = false);
     UBaseType_t usedSlots();
 
