@@ -4,17 +4,15 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-// clang-format off
-#define DEFAULT_STACK_SIZE    (configMINIMAL_STACK_SIZE)
-#define DEFAULT_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-// clang-format on
+const uint16_t defaultStackSize   = configMINIMAL_STACK_SIZE;
+const uint8_t defaultTaskPriority = tskIDLE_PRIORITY + 1;
 
 namespace xXx {
 
 class ArduinoTask {
   public:
-    ArduinoTask(uint16_t stackSize   = DEFAULT_STACK_SIZE,
-                uint8_t taskPriority = DEFAULT_TASK_PRIORITY);
+    ArduinoTask(uint16_t stackSize   = defaultStackSize,
+                uint8_t taskPriority = defaultTaskPriority);
     virtual ~ArduinoTask();
 
     virtual void setup() = 0;
