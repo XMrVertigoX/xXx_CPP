@@ -6,5 +6,4 @@ Most of the functionality requires FreeRTOS at the moment
 
 ## Todo
 
-- Implement interface for rtos independency
-- Makefile to build precompiled library
+- [ ] Implement interfaces for rtos independency
