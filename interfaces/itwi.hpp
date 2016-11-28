@@ -3,16 +3,21 @@
 
 namespace xXx {
 
+struct ITwi_Message_t {
+    uint8_t address;
+    uint8_t *txBytes;
+    size_t txNumBytes;
+    uint8_t *rxBytes;
+    size_t rxNumBytes;
+};
+
+enum ITwi_Status_t { ITwi_SUCCESS, ITwi_FAILURE };
+
 class ITwi {
   public:
     virtual ~ITwi() = default;
 
-    virtual uint8_t startTransmission(void) = 0;
-    virtual uint8_t stopTransmission(void) = 0;
-    virtual uint8_t readBytes(uint8_t address, uint8_t bytes[],
-                              size_t numBytes) = 0;
-    virtual uint8_t writeBytes(uint8_t address, uint8_t bytes[],
-                               size_t numBytes) = 0;
+    virtual ITwi_Status_t transmit_receive(ITwi_Message_t message) = 0;
 };
 
 } /* namespace xXx */
