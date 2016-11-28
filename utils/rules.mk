@@ -47,8 +47,11 @@ CPPFLAGS += -MP
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 
+ifneq ($(TOOLCHAIN_PREFIX), avr-)
 LDFLAGS += --specs=nano.specs
 LDFLAGS += --specs=nosys.specs
+endif
+
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(MAPFILE)
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
