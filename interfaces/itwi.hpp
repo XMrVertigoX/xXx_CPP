@@ -1,6 +1,8 @@
 #ifndef ITWI_HPP_
 #define ITWI_HPP_
 
+#include <stddef.h>
+
 namespace xXx {
 
 struct ITwi_Message_t {
