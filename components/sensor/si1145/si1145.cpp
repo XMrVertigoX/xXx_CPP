@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "twi.h"
+#include <xXx/interfaces/itwi.hpp>
 
 namespace xXx {
 
