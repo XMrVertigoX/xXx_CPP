@@ -10,10 +10,12 @@ namespace xXx {
 class SI1145 {
   private:
     ITwi &_twi;
+    uint8_t _address;
 
   public:
-    SI1145(ITwi &twi);
+    SI1145(ITwi &twi, uint8_t address);
     ~SI1145();
+    void init();
 };
 
 } /* namespace xXx */
