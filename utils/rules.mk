@@ -10,18 +10,16 @@ RM      = rm -rf
 # ----- Directories and files -------------------------------------------------
 
 ifndef PROJECT_NAME
-PROJECT_NAME = PROJECT_NAME_NOT_SET
+PROJECT_NAME = project_name_not_set
 endif
 
-ifndef OUTPUT_NAME
-OUTPUT_NAME = $(PROJECT_NAME)
-endif
+BINARY     = $(PROJECT_NAME).bin
+EXECUTABLE = $(PROJECT_NAME).elf
+MAPFILE    = $(PROJECT_NAME).map
 
-BINARY     = $(OUTPUT_NAME).bin
-EXECUTABLE = $(OUTPUT_NAME).elf
-MAPFILE    = $(OUTPUT_NAME).map
-
+ifndef OUTPUT_DIR
 OUTPUT_DIR = _out
+endif
 
 vpath %.elf $(OUTPUT_DIR)
 vpath %.bin $(OUTPUT_DIR)
