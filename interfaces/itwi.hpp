@@ -5,17 +5,14 @@
 
 namespace xXx {
 
-enum ITwi_Status_t { ITwi_SUCCESS, ITwi_FAILURE };
-
-typedef void (*ITwi_Callback_t)(ITwi_Status_t status, uint8_t rxBytes[],
-                                size_t rxNumBytes);
+typedef void (*ITwi_Callback_t)(uint8_t rxBytes[], size_t rxNumBytes);
 
 class ITwi {
   public:
     virtual ~ITwi() = default;
 
     virtual ITwi_Status_t transmit_receive(uint8_t address, uint8_t txBytes[],
-                                           size_t txNumBytes,
+                                           size_t txNumBytes, size_t rxNumBytes,
                                            ITwi_Callback_t callback,
                                            void *user) = 0;
 };
