@@ -20,7 +20,8 @@ template <typename TYPE> class Queue {
     QueueHandle_t _queue;
 };
 
-template <typename TYPE> Queue<TYPE>::Queue(UBaseType_t numElements) {
+template <typename TYPE>
+Queue<TYPE>::Queue(UBaseType_t numElements) : _queue(NULL) {
     _queue = xQueueCreate(numElements, sizeof(TYPE));
 }
 
