@@ -5,7 +5,8 @@
 
 namespace xXx {
 
-typedef void (*ITwi_Callback_t)(uint8_t rxBytes[], size_t rxNumBytes);
+typedef void (*ITwi_Callback_t)(uint8_t rxBytes[], size_t rxNumBytes,
+                                void *user);
 
 class ITwi {
   public:

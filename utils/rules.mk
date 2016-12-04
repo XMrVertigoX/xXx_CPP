@@ -28,7 +28,7 @@ vpath %.bin $(OUTPUT_DIR)
 
 GCCFLAGS += -fdiagnostics-color=always
 
-# ASMFLAGS +=
+ASMFLAGS +=
 
 COMMON_CFLAGS += -fdata-sections
 COMMON_CFLAGS += -ffunction-sections
@@ -36,6 +36,8 @@ COMMON_CFLAGS += -fno-builtin
 COMMON_CFLAGS += -fno-exceptions
 COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -nostdlib
+
+CFLAGS +=
 
 CXXFLAGS += -fno-rtti
 CXXFLAGS += -fno-threadsafe-statics
