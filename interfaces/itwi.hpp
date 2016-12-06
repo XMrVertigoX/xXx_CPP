@@ -12,10 +12,9 @@ class ITwi {
   public:
     virtual ~ITwi() = default;
 
-    virtual ITwi_Status_t transmit_receive(uint8_t address, uint8_t txBytes[],
-                                           size_t txNumBytes, size_t rxNumBytes,
-                                           ITwi_Callback_t callback,
-                                           void *user) = 0;
+    virtual uint8_t transmit_receive(uint8_t address, uint8_t txBytes[],
+                                     size_t txNumBytes, size_t rxNumBytes,
+                                     ITwi_Callback_t callback, void *user) = 0;
 };
 
 } /* namespace xXx */
