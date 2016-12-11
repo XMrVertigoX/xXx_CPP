@@ -10,18 +10,20 @@
 
 static const size_t maxLength = 256;
 
-static void print(const char *message) {
+static void print(char *string) {
     portENTER_CRITICAL();
 
     uint32_t millis = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    printf("%d.%03d %s\n", millis / 1000, millis % 1000, message);
+    printf("%d.%03d %s\n", millis / 1000, millis % 1000, string);
+    delete string;
 
     portEXIT_CRITICAL();
 }
 
 void printFormat(const char *format, ...) {
-    char string[maxLength];
     size_t length;
+
+    char *string = new char[maxLength];
 
     va_list args;
     va_start(args, format);
@@ -42,7 +44,7 @@ void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
     size_t stringLength     = messageLength + (numBytes * 3) + 1;
     size_t byteStringLength = 3;
 
-    char string[stringLength];
+    char *string = new char[stringLength];
 
     // Copy terminating zero in case that numBytes equals zero (+1)
     memcpy(string, message, messageLength + 1);
