@@ -14,7 +14,7 @@ static void print(char *string) {
     portENTER_CRITICAL();
 
     uint32_t millis = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    printf("%d.%03d %s\n", millis / 1000, millis % 1000, string);
+    printf("%d.%03d %s\r\n", millis / 1000, millis % 1000, string);
     delete string;
 
     portEXIT_CRITICAL();
