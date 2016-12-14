@@ -1,6 +1,7 @@
 #ifndef LOGGING_HPP_
 #define LOGGING_HPP_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(NDEBUG)
