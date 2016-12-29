@@ -23,9 +23,9 @@ void ArduinoTask::suspend() {
     vTaskSuspend(_handle);
 }
 
-void ArduinoTask::taskFunction(void *pvParameters) {
-    static_cast<ArduinoTask *>(pvParameters)->setup();
-    for (;;) static_cast<ArduinoTask *>(pvParameters)->loop();
+void ArduinoTask::taskFunction(void *task) {
+    static_cast<ArduinoTask *>(task)->setup();
+    for (;;) static_cast<ArduinoTask *>(task)->loop();
 }
 
 } /* namespace xXx */

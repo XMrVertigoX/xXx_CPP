@@ -25,7 +25,7 @@ class ArduinoTask {
     TaskHandle_t _handle = NULL;
 
   private:
-    static void taskFunction(void *pvParameters);
+    static void taskFunction(void *task);
 };
 
 } /* namespace xXx */
