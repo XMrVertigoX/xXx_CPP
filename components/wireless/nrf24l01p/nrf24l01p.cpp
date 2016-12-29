@@ -1,40 +1,60 @@
 #include <cstdint>
 #include <cstring>
 
+#include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
 #include "definitions.h"
 #include "nrf24l01p.hpp"
 
+#define lambda []
 #define PLACEHOLDER 0xFF
+#define COMMAND_LEGTH 1
 
-nRF24L01P::nRF24L01P(ISpi &spi) : _spi(spi) {}
+nRF24L01P::nRF24L01P(ISpi &spi /*, IGpio &ce, IGpio &irq */)
+    : _spi(spi) /*, _ce(ce), _irq(irq) */ {}
 
 nRF24L01P::~nRF24L01P() {}
 
-uint8_t nRF24L01P::read(uint8_t command, uint8_t bytes[], uint32_t numBytes) {
-    uint8_t miso[numBytes + 1];
-    uint8_t mosi[numBytes + 1];
+uint8_t nRF24L01P::read(uint8_t command, uint8_t dataBytes[],
+                        size_t dataNumBytes) {
+    uint8_t mosiNumBytes = dataNumBytes + COMMAND_LEGTH;
 
-    mosi[0] = command;
-    memset(&mosi[1], PLACEHOLDER, numBytes);
+    uint8_t mosiBytes[mosiNumBytes];
 
-    _spi.transmit(miso, mosi, numBytes + 1);
+    mosiBytes[0] = command;
 
-    memcpy(&miso[1], bytes, numBytes);
+    uint8_t *startOfCommand = &mosiBytes[0];
+    uint8_t *startOfData    = &mosiBytes[COMMAND_LEGTH];
+    memset(startOfData, PLACEHOLDER, dataNumBytes);
+
+    _spi.transmit(mosiBytes, mosiNumBytes,
+                  lambda(uint8_t misoBytes[], size_t misoNumBytes, void *user) {
+                      BUFFER("<<<", misoBytes, misoNumBytes);
+                  },
+                  this);
 
     return (0);
 }
 
-uint8_t nRF24L01P::write(uint8_t command, uint8_t bytes[], uint32_t numBytes) {
-    uint8_t miso[numBytes + 1];
-    uint8_t mosi[numBytes + 1];
+uint8_t nRF24L01P::write(uint8_t command, uint8_t dataBytes[],
+                         size_t dataNumBytes) {
+    uint8_t mosiNumBytes = dataNumBytes + COMMAND_LEGTH;
 
-    mosi[0] = command;
-    memcpy(&mosi[1], bytes, numBytes);
+    uint8_t mosiBytes[mosiNumBytes];
 
-    _spi.transmit(miso, mosi, numBytes + 1);
+    mosiBytes[0] = command;
+
+    uint8_t *startOfCommand = &mosiBytes[0];
+    uint8_t *startOfData    = &mosiBytes[COMMAND_LEGTH];
+    memcpy(startOfData, dataBytes, dataNumBytes);
+
+    _spi.transmit(mosiBytes, mosiNumBytes,
+                  lambda(uint8_t misoBytes[], size_t misoNumBytes, void *user) {
+                      BUFFER("<<<", misoBytes, misoNumBytes);
+                  },
+                  this);
 
     return (0);
 }
