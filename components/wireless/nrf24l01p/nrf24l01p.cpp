@@ -1,5 +1,5 @@
-#include <cstdint>
-#include <cstring>
+#include <stdint.h>
+#include <string.h>
 
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
@@ -9,25 +9,26 @@
 #include "nrf24l01p.hpp"
 
 #define lambda []
-#define PLACEHOLDER 0xFF
-#define COMMAND_LEGTH 1
 
-nRF24L01P::nRF24L01P(ISpi &spi /*, IGpio &ce, IGpio &irq */)
-    : _spi(spi) /*, _ce(ce), _irq(irq) */ {}
+const uint8_t spiPlaceholder = 0xFF;
+const uint8_t commandLength  = 1;
+
+nRF24L01P::nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq)
+    : _spi(spi), _ce(ce), _irq(irq) {}
 
 nRF24L01P::~nRF24L01P() {}
 
 uint8_t nRF24L01P::read(uint8_t command, uint8_t dataBytes[],
                         size_t dataNumBytes) {
-    uint8_t mosiNumBytes = dataNumBytes + COMMAND_LEGTH;
+    uint8_t mosiNumBytes = dataNumBytes + commandLength;
 
     uint8_t mosiBytes[mosiNumBytes];
 
     mosiBytes[0] = command;
 
     uint8_t *startOfCommand = &mosiBytes[0];
-    uint8_t *startOfData    = &mosiBytes[COMMAND_LEGTH];
-    memset(startOfData, PLACEHOLDER, dataNumBytes);
+    uint8_t *startOfData    = &mosiBytes[commandLength];
+    memset(startOfData, spiPlaceholder, dataNumBytes);
 
     _spi.transmit(mosiBytes, mosiNumBytes,
                   lambda(uint8_t misoBytes[], size_t misoNumBytes, void *user) {
@@ -40,14 +41,14 @@ uint8_t nRF24L01P::read(uint8_t command, uint8_t dataBytes[],
 
 uint8_t nRF24L01P::write(uint8_t command, uint8_t dataBytes[],
                          size_t dataNumBytes) {
-    uint8_t mosiNumBytes = dataNumBytes + COMMAND_LEGTH;
+    uint8_t mosiNumBytes = dataNumBytes + commandLength;
 
     uint8_t mosiBytes[mosiNumBytes];
 
     mosiBytes[0] = command;
 
     uint8_t *startOfCommand = &mosiBytes[0];
-    uint8_t *startOfData    = &mosiBytes[COMMAND_LEGTH];
+    uint8_t *startOfData    = &mosiBytes[commandLength];
     memcpy(startOfData, dataBytes, dataNumBytes);
 
     _spi.transmit(mosiBytes, mosiNumBytes,
