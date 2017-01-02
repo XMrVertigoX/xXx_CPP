@@ -8,21 +8,23 @@ namespace xXx {
 
 template <typename TYPE> class Queue {
   public:
-    Queue(UBaseType_t numElements);
+    Queue(UBaseType_t size);
     ~Queue();
     BaseType_t dequeue(TYPE &element, bool isr = false);
     BaseType_t enqueue(TYPE &element, bool isr = false);
 
     UBaseType_t freeSlots(bool isr = false);
+    UBaseType_t size();
     UBaseType_t usedSlots();
 
   private:
     QueueHandle_t _queue;
+    UBaseType_t _size;
 };
 
 template <typename TYPE>
-Queue<TYPE>::Queue(UBaseType_t numElements) : _queue(NULL) {
-    _queue = xQueueCreate(numElements, sizeof(TYPE));
+Queue<TYPE>::Queue(UBaseType_t size) : _queue(NULL), _size(size) {
+    _queue = xQueueCreate(size, sizeof(TYPE));
 }
 
 template <typename TYPE> Queue<TYPE>::~Queue() {
@@ -55,9 +57,15 @@ template <typename TYPE> UBaseType_t Queue<TYPE>::freeSlots(bool isr) {
     }
 }
 
+template <typename TYPE> UBaseType_t Queue<TYPE>::size() {
+    return (_size);
+}
+
 template <typename TYPE> UBaseType_t Queue<TYPE>::usedSlots() {
     return (uxQueueSpacesAvailable(_queue));
 }
+
+template <typename TYPE> using Queue_Handle_t = Queue<TYPE> *;
 
 } /* namespace xXx */
 
