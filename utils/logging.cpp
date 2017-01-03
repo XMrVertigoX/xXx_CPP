@@ -8,51 +8,66 @@
 
 #include "logging.hpp"
 
-static const size_t maxLength = 256;
+#define BYTE_REPRESEANTATION_FORMAT " %02x"
+#define DUMMY_CHARACTER '_'
+#define TIME_FORMAT "%d.%03d"
+#define MESSAGE_FORMAT "%.*s\r\n"
+#define OUTPUT_FORMAT TIME_FORMAT " " MESSAGE_FORMAT
 
-static void print(char *string) {
-    portENTER_CRITICAL();
+static const size_t maxLength                = 256;
+static const size_t byteRepresentationLength = 3;
 
-    uint32_t millis = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    printf("%d.%03d %s\r\n", millis / 1000, millis % 1000, string);
-    delete string;
+static inline uint32_t ticks2ms(TickType_t ticks) {
+    return (ticks * portTICK_PERIOD_MS);
+}
 
-    portEXIT_CRITICAL();
+static inline uint32_t seconds(TickType_t ticks) {
+    return (ticks2ms(ticks) / 1000);
+}
+
+static inline uint32_t milliseconds(TickType_t ticks) {
+    return (ticks2ms(ticks) % 1000);
 }
 
 void printFormat(const char *format, ...) {
-    size_t length;
+    TickType_t ticks = xTaskGetTickCount();
 
-    char *string = new char[maxLength];
+    va_list arguments;
+    char outputBytes[maxLength];
+    size_t outputNumBytes;
 
-    va_list args;
-    va_start(args, format);
-    length = vsnprintf(string, maxLength, format, args);
-    va_end(args);
+    va_start(arguments, format);
+    outputNumBytes = vsnprintf(outputBytes, maxLength, format, arguments);
+    va_end(arguments);
 
-    for (size_t i = 0; i < length; i++) {
-        if (!isprint(string[i])) {
-            string[i] = '_';
+    for (size_t i = 0; i < outputNumBytes; ++i) {
+        if (!isprint(outputBytes[i])) {
+            outputBytes[i] = DUMMY_CHARACTER;
         }
     }
 
-    print(string);
+    printf(OUTPUT_FORMAT, seconds(ticks), milliseconds(ticks), outputNumBytes,
+           outputBytes);
 }
 
 void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
-    size_t messageLength    = strlen(message);
-    size_t stringLength     = messageLength + (numBytes * 3) + 1;
-    size_t byteStringLength = 3;
+    TickType_t ticks = xTaskGetTickCount();
 
-    char *string = new char[stringLength];
+    size_t messageLength = strlen(message);
+    size_t outputNumBytes =
+        messageLength + (numBytes * byteRepresentationLength) + 1;
+    char outputBytes[outputNumBytes];
 
-    // Copy terminating zero in case that numBytes equals zero (+1)
-    memcpy(string, message, messageLength + 1);
+    memcpy(outputBytes, message, messageLength);
 
     for (int i = 0; i < numBytes; ++i) {
-        snprintf(&string[(i * byteStringLength) + messageLength],
-                 byteStringLength + 1, " %02x", bytes[i]);
+        int position = (byteRepresentationLength * i) + messageLength;
+        char *string = &outputBytes[position];
+
+        snprintf(string, byteRepresentationLength + 1,
+                 BYTE_REPRESEANTATION_FORMAT, bytes[i]);
     }
 
-    print(string);
+    printf(OUTPUT_FORMAT, seconds(ticks), milliseconds(ticks), outputNumBytes,
+           outputBytes);
 }
