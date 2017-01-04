@@ -6,28 +6,38 @@
  * version 2 as published by the Free Software Foundation.
  */
 
-#ifndef __RF24_CONFIG_H__
-#define __RF24_CONFIG_H__
+#ifndef RF24_CONFIG_H__
+#define RF24_CONFIG_H__
 
 #include <stdio.h>
 #include <string.h>
 
-#if defined(NDEBUG)
-#define IF_SERIAL_DEBUG(x)
-#else
-#define IF_SERIAL_DEBUG(x) ({ x; })
-#endif
+#include <FreeRTOS.h>
+#include <task.h>
 
-#define _BV(x) (1 << (x))
+/*
+ * Compatibility
+ *
+ * __millis() should return current system time in milliseconds
+ */
+static inline void __delay(uint32_t ms) {
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+}
+
+static inline void __delayMicroseconds(uint32_t us) {
+    __delay(1);
+}
+
+static inline uint32_t __millis() {
+    return (xTaskGetTickCount() * portTICK_PERIOD_MS);
+}
 
 #define PSTR(x) (x)
-#define printf_P printf
-#define strlen_P strlen
 #define PROGMEM
-#define pgm_read_word(p) (*(p))
+
 #define PRIPSTR "%s"
 
-//typedef char const char;
-typedef uint16_t prog_uint16_t;
+// typedef char const char;
+// typedef uint16_t prog_uint16_t;
 
-#endif // __RF24_CONFIG_H__
+#endif // RF24_CONFIG_H__
