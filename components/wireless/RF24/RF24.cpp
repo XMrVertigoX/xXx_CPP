@@ -279,7 +279,6 @@ void RF24::printDetails(void) {
 /****************************************************************************/
 
 void RF24::begin(void) {
-    csn(HIGH);
     _ce.clear();
 
     // Must allow the radio time to settle else configuration bits will not necessarily stick.
