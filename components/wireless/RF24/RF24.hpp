@@ -15,10 +15,9 @@
 #ifndef RF24_HPP_
 #define RF24_HPP_
 
+#include <xXx/components/wireless/RF24/RF24_config.h>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
-
-#include "RF24_config.h"
 
 /**
  * Power Amplifier level.
@@ -51,6 +50,8 @@ typedef enum {
     RF24_CRC_16
 } rf24_crclength_e;
 
+using namespace xXx;
+
 /**
  * Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
  */
@@ -58,9 +59,9 @@ typedef enum {
 class RF24 {
   private:
     /**< "Chip Enable" pin, activates the RX or TX role */
-    uint8_t ce_pin;
+    // uint8_t ce_pin;
     /**< SPI Chip select */
-    uint8_t csn_pin;
+    // uint8_t csn_pin;
     /* 2Mbs data rate in use? */
     bool wide_band;
     /* False for RF24L01 and true for RF24L01P */
@@ -75,6 +76,10 @@ class RF24 {
     uint8_t ack_payload_length;
     /**< Last address set on pipe 0 for reading. */
     uint64_t pipe0_reading_address;
+
+    IGpio &_ce;
+    IGpio &_irq;
+    ISpi &_spi;
 
   protected:
     /**
@@ -255,7 +260,7 @@ class RF24 {
    * @param _cepin The pin attached to Chip Enable on the RF module
    * @param _cspin The pin attached to Chip Select
    */
-    RF24(uint8_t _cepin, uint8_t _cspin);
+    RF24(ISpi &spi, IGpio &ce, IGpio &irq);
 
     /**
    * Begin operation of the chip

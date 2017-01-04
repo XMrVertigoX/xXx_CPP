@@ -6,11 +6,12 @@
  * version 2 as published by the Free Software Foundation.
  */
 
+#include <xXx/components/wireless/RF24/RF24.hpp>
+#include <xXx/components/wireless/RF24/RF24_config.h>
+#include <xXx/components/wireless/RF24/nRF24L01_definitions.h>
+#include <xXx/interfaces/igpio.hpp>
+#include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
-
-#include "RF24.hpp"
-#include "RF24_config.h"
-#include "nRF24L01.h"
 
 #define _BV(x) (1 << (x))
 #define pgm_read_byte(b) (*(b))
@@ -28,13 +29,16 @@ void RF24::csn(int mode) {
     SPI.setDataMode(SPI_MODE0);
     SPI.setClockDivider(SPI_CLOCK_DIV4);
 #endif
-    digitalWrite(csn_pin, mode);
 }
 
 /****************************************************************************/
 
 void RF24::ce(int level) {
-    digitalWrite(ce_pin, level);
+    if (level > 0) {
+        _ce.set();
+    } else {
+        _ce.clear();
+    }
 }
 
 /****************************************************************************/
@@ -214,8 +218,8 @@ void RF24::print_address_register(const char *name, uint8_t reg, uint8_t qty) {
 
 /****************************************************************************/
 
-RF24::RF24(uint8_t _cepin, uint8_t _cspin)
-    : ce_pin(_cepin), csn_pin(_cspin), wide_band(true), p_variant(false),
+RF24::RF24(ISpi &spi, IGpio &ce, IGpio &irq)
+    : _spi(spi), _ce(ce), _irq(irq), wide_band(true), p_variant(false),
       payload_size(32), ack_payload_available(false),
       dynamic_payloads_enabled(false), pipe0_reading_address(0),
       ack_payload_length(0) {}
@@ -299,13 +303,6 @@ void RF24::printDetails(void) {
 /****************************************************************************/
 
 void RF24::begin(void) {
-    // Initialize pins
-    // Todo: pinMode(ce_pin, OUTPUT);
-    // Todo: pinMode(csn_pin, OUTPUT);
-
-    // Initialize SPI bus
-    SPI.begin();
-
     ce(LOW);
     csn(HIGH);
 
