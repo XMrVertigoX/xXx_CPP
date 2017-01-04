@@ -19,30 +19,6 @@
 
 /****************************************************************************/
 
-void RF24::csn(int mode) {
-// Minimum ideal SPI bus speed is 2x data rate
-// If we assume 2Mbs data rate and 16Mhz clock, a
-// divider of 4 is the minimum we want.
-// CLK:BUS 8Mhz:2Mhz, 16Mhz:4Mhz, or 20Mhz:5Mhz
-#ifdef ARDUINO
-    SPI.setBitOrder(MSBFIRST);
-    SPI.setDataMode(SPI_MODE0);
-    SPI.setClockDivider(SPI_CLOCK_DIV4);
-#endif
-}
-
-/****************************************************************************/
-
-void RF24::ce(int level) {
-    if (level > 0) {
-        _ce.set();
-    } else {
-        _ce.clear();
-    }
-}
-
-/****************************************************************************/
-
 uint8_t RF24::read_register(uint8_t reg, uint8_t *buf, uint8_t len) {
     uint8_t status;
 
@@ -85,7 +61,7 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t *buf, uint8_t len) {
 uint8_t RF24::write_register(uint8_t reg, uint8_t value) {
     uint8_t status;
 
-    LOG(PSTR("write_register(%02x,%02x)"), reg, value);
+    LOG("write_register(%02x,%02x)", reg, value);
 
     csn(LOW);
     status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
@@ -175,8 +151,8 @@ uint8_t RF24::get_status(void) {
 /****************************************************************************/
 
 void RF24::print_status(uint8_t status) {
-    printf(PSTR("STATUS\t\t = 0x%02x RX_DR=%x TX_DS=%x MAX_RT=%x RX_P_NO=%x "
-                "TX_FULL=%x\r\n"),
+    printf("STATUS\t\t = 0x%02x RX_DR=%x TX_DS=%x MAX_RT=%x RX_P_NO=%x "
+           "TX_FULL=%x\r\n",
            status, (status & _BV(RX_DR)) ? 1 : 0, (status & _BV(TX_DS)) ? 1 : 0,
            (status & _BV(MAX_RT)) ? 1 : 0, ((status >> RX_P_NO) & 0b111),
            (status & _BV(TX_FULL)) ? 1 : 0);
@@ -185,7 +161,7 @@ void RF24::print_status(uint8_t status) {
 /****************************************************************************/
 
 void RF24::print_observe_tx(uint8_t value) {
-    printf(PSTR("OBSERVE_TX=%02x: POLS_CNT=%x ARC_CNT=%x\r\n"), value,
+    printf("OBSERVE_TX=%02x: POLS_CNT=%x ARC_CNT=%x\r\n", value,
            (value >> PLOS_CNT) & 0b1111, (value >> ARC_CNT) & 0b1111);
 }
 
@@ -193,27 +169,27 @@ void RF24::print_observe_tx(uint8_t value) {
 
 void RF24::print_byte_register(const char *name, uint8_t reg, uint8_t qty) {
     char extra_tab = strlen(name) < 8 ? '\t' : 0;
-    printf(PSTR(PRIPSTR "\t%c ="), name, extra_tab);
-    while (qty--) printf(PSTR(" 0x%02x"), read_register(reg++));
-    printf(PSTR("\r\n"));
+    printf("%s\t%c =", name, extra_tab);
+    while (qty--) printf(" 0x%02x", read_register(reg++));
+    printf("\r\n");
 }
 
 /****************************************************************************/
 
 void RF24::print_address_register(const char *name, uint8_t reg, uint8_t qty) {
     char extra_tab = strlen(name) < 8 ? '\t' : 0;
-    printf(PSTR(PRIPSTR "\t%c ="), name, extra_tab);
+    printf("%s\t%c =", name, extra_tab);
 
     while (qty--) {
         uint8_t buffer[5];
         read_register(reg++, buffer, sizeof buffer);
 
-        printf(PSTR(" 0x"));
+        printf(" 0x");
         uint8_t *bufptr = buffer + sizeof buffer;
-        while (--bufptr >= buffer) printf(PSTR("%02x"), *bufptr);
+        while (--bufptr >= buffer) printf("%02x", *bufptr);
     }
 
-    printf(PSTR("\r\n"));
+    printf("\r\n");
 }
 
 /****************************************************************************/
@@ -278,33 +254,33 @@ static const char *const rf24_pa_dbm_e_str_P[] = {
 void RF24::printDetails(void) {
     print_status(get_status());
 
-    print_address_register(PSTR("RX_ADDR_P0-1"), RX_ADDR_P0, 2);
-    print_byte_register(PSTR("RX_ADDR_P2-5"), RX_ADDR_P2, 4);
-    print_address_register(PSTR("TX_ADDR"), TX_ADDR);
+    print_address_register("RX_ADDR_P0-1", RX_ADDR_P0, 2);
+    print_byte_register("RX_ADDR_P2-5", RX_ADDR_P2, 4);
+    print_address_register("TX_ADDR", TX_ADDR);
 
-    print_byte_register(PSTR("RX_PW_P0-6"), RX_PW_P0, 6);
-    print_byte_register(PSTR("EN_AA"), EN_AA);
-    print_byte_register(PSTR("EN_RXADDR"), EN_RXADDR);
-    print_byte_register(PSTR("RF_CH"), RF_CH);
-    print_byte_register(PSTR("RF_SETUP"), RF_SETUP);
-    print_byte_register(PSTR("CONFIG"), CONFIG);
-    print_byte_register(PSTR("DYNPD/FEATURE"), DYNPD, 2);
+    print_byte_register("RX_PW_P0-6", RX_PW_P0, 6);
+    print_byte_register("EN_AA", EN_AA);
+    print_byte_register("EN_RXADDR", EN_RXADDR);
+    print_byte_register("RF_CH", RF_CH);
+    print_byte_register("RF_SETUP", RF_SETUP);
+    print_byte_register("CONFIG", CONFIG);
+    print_byte_register("DYNPD/FEATURE", DYNPD, 2);
 
-    printf(PSTR("Data Rate\t = %S\r\n"),
+    printf("Data Rate\t = %S\r\n",
            pgm_read_word(&rf24_datarate_e_str_P[getDataRate()]));
-    printf(PSTR("Model\t\t = %S\r\n"),
+    printf("Model\t\t = %S\r\n",
            pgm_read_word(&rf24_model_e_str_P[isPVariant()]));
-    printf(PSTR("CRC Length\t = %S\r\n"),
+    printf("CRC Length\t = %S\r\n",
            pgm_read_word(&rf24_crclength_e_str_P[getCRCLength()]));
-    printf(PSTR("PA Power\t = %S\r\n"),
+    printf("PA Power\t = %S\r\n",
            pgm_read_word(&rf24_pa_dbm_e_str_P[getPALevel()]));
 }
 
 /****************************************************************************/
 
 void RF24::begin(void) {
-    ce(LOW);
     csn(HIGH);
+    _ce.clear();
 
     // Must allow the radio time to settle else configuration bits will not necessarily stick.
     // This is actually only required following power up but some settling time also appears to
@@ -371,7 +347,7 @@ void RF24::startListening(void) {
     flush_tx();
 
     // Go!
-    ce(HIGH);
+    _ce.set();
 
     // wait for the radio to come up (130us actually only needed)
     __delayUs(130);
@@ -380,7 +356,7 @@ void RF24::startListening(void) {
 /****************************************************************************/
 
 void RF24::stopListening(void) {
-    ce(LOW);
+    _ce.clear();
     flush_tx();
     flush_rx();
 }
@@ -472,9 +448,9 @@ void RF24::startWrite(const void *buf, uint8_t len) {
     write_payload(buf, len);
 
     // Allons!
-    ce(HIGH);
+    _ce.set();
     __delayUs(15);
-    ce(LOW);
+    _ce.clear();
 }
 
 /****************************************************************************/
