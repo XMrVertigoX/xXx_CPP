@@ -13,16 +13,28 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
+static const uint8_t dummy = 0xFF;
+
 /****************************************************************************/
 
-uint8_t RF24::read_register(uint8_t reg, uint8_t *buf, uint8_t len) {
+uint8_t RF24::read_register(uint8_t command, uint8_t *bytes, uint8_t numBytes) {
+    // csn(LOW);
+    // status = SPI.transfer(R_REGISTER | (REGISTER_MASK & command));
+    // while (dataNumBytes--) *dataBytes++ = SPI.transfer(dummy);
+    // csn(HIGH);
+
     uint8_t status;
+    size_t transmissionNumBytes = numBytes + 1;
+    uint8_t mosiBytes[numBytes + 1];
+    uint8_t misoBytes[numBytes + 1];
 
-    csn(LOW);
-    status               = SPI.transfer(R_REGISTER | (REGISTER_MASK & reg));
-    while (len--) *buf++ = SPI.transfer(0xff);
+    mosiBytes[0] = R_REGISTER | (REGISTER_MASK & command);
+    memset(&mosiBytes[1], dummy, numBytes);
 
-    csn(HIGH);
+    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
+
+    memcpy(&misoBytes[1], bytes, numBytes);
+    status = misoBytes[0];
 
     return (status);
 }
@@ -30,11 +42,15 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t *buf, uint8_t len) {
 /****************************************************************************/
 
 uint8_t RF24::read_register(uint8_t reg) {
-    csn(LOW);
-    SPI.transfer(R_REGISTER | (REGISTER_MASK & reg));
-    uint8_t result = SPI.transfer(0xff);
+    // csn(LOW);
+    // SPI.transfer(R_REGISTER | (REGISTER_MASK & reg));
+    // result = SPI.transfer(0xff);
+    // csn(HIGH);
 
-    csn(HIGH);
+    uint8_t result;
+
+    read_register(reg, &result, 1);
+
     return (result);
 }
 
