@@ -13,10 +13,6 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
-#define _BV(x) (1 << (x))
-#define pgm_read_byte(b) (*(b))
-#define pgm_read_word(p) (*(p))
-
 /****************************************************************************/
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t *buf, uint8_t len) {

@@ -15,6 +15,10 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+#define _BV(x) (1 << (x))
+#define pgm_read_byte(b) (*(b))
+#define pgm_read_word(p) (*(p))
+
 static inline void __delayMs(uint32_t ms) {
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
