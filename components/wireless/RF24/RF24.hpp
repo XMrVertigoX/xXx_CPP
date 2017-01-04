@@ -670,7 +670,8 @@ class RF24 {
    * @return true if this is a legitimate radio
    */
     bool isValid() {
-        return (ce_pin != 0xff && csn_pin != 0xff);
+        // Todo: return (ce_pin != 0xff && csn_pin != 0xff);
+        return (true);
     }
 
     /**@}*/
