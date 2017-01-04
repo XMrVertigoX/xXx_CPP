@@ -20,8 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef RF24_CONFIG_H__
-#define RF24_CONFIG_H__
+#ifndef NRF24L01_DEFINITIONS_H_
+#define NRF24L01_DEFINITIONS_H_
 
 // clang-format off
 
@@ -129,4 +129,4 @@
 
 // clang-format on
 
-#endif // RF24_CONFIG_H__
+#endif // NRF24L01_DEFINITIONS_H_
