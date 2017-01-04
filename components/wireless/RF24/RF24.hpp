@@ -100,7 +100,7 @@ class RF24 {
    *
    * @param mode HIGH to take this unit off the SPI bus, LOW to put it on
    */
-    void csn(int mode);
+    // TODO: void csn(int mode);
 
     /**
    * Set chip enable
@@ -108,7 +108,7 @@ class RF24 {
    * @param level HIGH to actively begin transmission or LOW to put in standby.  Please see data sheet
    * for a much more detailed description of this pin.
    */
-    void ce(int level);
+    // TODO: void ce(int level);
 
     /**
    * Read a chunk of data in from a register

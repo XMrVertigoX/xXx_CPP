@@ -15,9 +15,6 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-/*
- * Compatibility functions
- */
 static inline void __delayMs(uint32_t ms) {
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
@@ -30,13 +27,5 @@ static inline void __delayUs(uint32_t us) {
 static inline uint32_t __millis() {
     return (xTaskGetTickCount() * portTICK_PERIOD_MS);
 }
-
-#define PSTR(x) (x)
-#define PROGMEM
-
-#define PRIPSTR "%s"
-
-// typedef char const char;
-// typedef uint16_t prog_uint16_t;
 
 #endif // RF24_CONFIG_H_
