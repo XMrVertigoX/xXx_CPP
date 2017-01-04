@@ -17,7 +17,7 @@ static const uint8_t dummy = 0xFF;
 
 /****************************************************************************/
 
-uint8_t RF24::read_register(uint8_t command, uint8_t *bytes, uint8_t numBytes) {
+uint8_t RF24::read_register(uint8_t reg, uint8_t *bytes, uint8_t numBytes) {
     // csn(LOW);
     // status = SPI.transfer(R_REGISTER | (REGISTER_MASK & command));
     // while (dataNumBytes--) *dataBytes++ = SPI.transfer(dummy);
@@ -28,7 +28,7 @@ uint8_t RF24::read_register(uint8_t command, uint8_t *bytes, uint8_t numBytes) {
     uint8_t mosiBytes[numBytes + 1];
     uint8_t misoBytes[numBytes + 1];
 
-    mosiBytes[0] = R_REGISTER | (REGISTER_MASK & command);
+    mosiBytes[0] = R_REGISTER | (REGISTER_MASK & reg);
     memset(&mosiBytes[1], dummy, numBytes);
 
     _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
@@ -56,14 +56,25 @@ uint8_t RF24::read_register(uint8_t reg) {
 
 /****************************************************************************/
 
-uint8_t RF24::write_register(uint8_t reg, const uint8_t *buf, uint8_t len) {
+uint8_t RF24::write_register(uint8_t reg, uint8_t const *bytes,
+                             uint8_t numBytes) {
+    // csn(LOW);
+    // status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
+    // while (len--) SPI.transfer(*buf++);
+    // csn(HIGH);
+
     uint8_t status;
+    size_t transmissionNumBytes = numBytes + 1;
+    uint8_t mosiBytes[numBytes + 1];
+    uint8_t misoBytes[numBytes + 1];
 
-    csn(LOW);
-    status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
-    while (len--) SPI.transfer(*buf++);
+    mosiBytes[0] = W_REGISTER | (REGISTER_MASK & reg);
+    memcpy(&mosiBytes[1], bytes, numBytes);
 
-    csn(HIGH);
+    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
+
+    memcpy(&misoBytes[1], bytes, numBytes);
+    status = misoBytes[0];
 
     return (status);
 }
@@ -71,14 +82,14 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t *buf, uint8_t len) {
 /****************************************************************************/
 
 uint8_t RF24::write_register(uint8_t reg, uint8_t value) {
+    // csn(LOW);
+    // status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
+    // SPI.transfer(value);
+    // csn(HIGH);
+
     uint8_t status;
 
-    LOG("write_register(%02x,%02x)", reg, value);
-
-    csn(LOW);
-    status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
-    SPI.transfer(value);
-    csn(HIGH);
+    status = write_register(reg, &value, 1);
 
     return (status);
 }
