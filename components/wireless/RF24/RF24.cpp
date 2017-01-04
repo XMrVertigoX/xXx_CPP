@@ -245,28 +245,28 @@ uint8_t RF24::getPayloadSize(void) {
 
 /****************************************************************************/
 
-static const char rf24_datarate_e_str_0[] PROGMEM        = "1MBPS";
-static const char rf24_datarate_e_str_1[] PROGMEM        = "2MBPS";
-static const char rf24_datarate_e_str_2[] PROGMEM        = "250KBPS";
-static const char *const rf24_datarate_e_str_P[] PROGMEM = {
+static const char rf24_datarate_e_str_0[]        = "1MBPS";
+static const char rf24_datarate_e_str_1[]        = "2MBPS";
+static const char rf24_datarate_e_str_2[]        = "250KBPS";
+static const char *const rf24_datarate_e_str_P[] = {
     rf24_datarate_e_str_0, rf24_datarate_e_str_1, rf24_datarate_e_str_2,
 };
-static const char rf24_model_e_str_0[] PROGMEM        = "nRF24L01";
-static const char rf24_model_e_str_1[] PROGMEM        = "nRF24L01+";
-static const char *const rf24_model_e_str_P[] PROGMEM = {
+static const char rf24_model_e_str_0[]        = "nRF24L01";
+static const char rf24_model_e_str_1[]        = "nRF24L01+";
+static const char *const rf24_model_e_str_P[] = {
     rf24_model_e_str_0, rf24_model_e_str_1,
 };
-static const char rf24_crclength_e_str_0[] PROGMEM        = "Disabled";
-static const char rf24_crclength_e_str_1[] PROGMEM        = "8 bits";
-static const char rf24_crclength_e_str_2[] PROGMEM        = "16 bits";
-static const char *const rf24_crclength_e_str_P[] PROGMEM = {
+static const char rf24_crclength_e_str_0[]        = "Disabled";
+static const char rf24_crclength_e_str_1[]        = "8 bits";
+static const char rf24_crclength_e_str_2[]        = "16 bits";
+static const char *const rf24_crclength_e_str_P[] = {
     rf24_crclength_e_str_0, rf24_crclength_e_str_1, rf24_crclength_e_str_2,
 };
-static const char rf24_pa_dbm_e_str_0[] PROGMEM        = "PA_MIN";
-static const char rf24_pa_dbm_e_str_1[] PROGMEM        = "PA_LOW";
-static const char rf24_pa_dbm_e_str_2[] PROGMEM        = "LA_MED";
-static const char rf24_pa_dbm_e_str_3[] PROGMEM        = "PA_HIGH";
-static const char *const rf24_pa_dbm_e_str_P[] PROGMEM = {
+static const char rf24_pa_dbm_e_str_0[]        = "PA_MIN";
+static const char rf24_pa_dbm_e_str_1[]        = "PA_LOW";
+static const char rf24_pa_dbm_e_str_2[]        = "LA_MED";
+static const char rf24_pa_dbm_e_str_3[]        = "PA_HIGH";
+static const char *const rf24_pa_dbm_e_str_P[] = {
     rf24_pa_dbm_e_str_0, rf24_pa_dbm_e_str_1, rf24_pa_dbm_e_str_2,
     rf24_pa_dbm_e_str_3,
 };
@@ -315,7 +315,7 @@ void RF24::begin(void) {
     // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
     // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
     // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-    __delay(5);
+    __delayMs(5);
 
     // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
     // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
@@ -377,7 +377,7 @@ void RF24::startListening(void) {
     ce(HIGH);
 
     // wait for the radio to come up (130us actually only needed)
-    __delayMicroseconds(130);
+    __delayUs(130);
 }
 
 /****************************************************************************/
@@ -469,14 +469,14 @@ void RF24::startWrite(const void *buf, uint8_t len) {
     // Transmitter power-up
     write_register(CONFIG,
                    (read_register(CONFIG) | _BV(PWR_UP)) & ~_BV(PRIM_RX));
-    __delayMicroseconds(150);
+    __delayUs(150);
 
     // Send the payload
     write_payload(buf, len);
 
     // Allons!
     ce(HIGH);
-    __delayMicroseconds(15);
+    __delayUs(15);
     ce(LOW);
 }
 
@@ -568,12 +568,12 @@ void RF24::openWritingPipe(uint64_t value) {
 
 /****************************************************************************/
 
-static const uint8_t child_pipe[] PROGMEM = {
-    RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
-static const uint8_t child_payload_size[] PROGMEM = {
-    RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5};
-static const uint8_t child_pipe_enable[] PROGMEM = {ERX_P0, ERX_P1, ERX_P2,
-                                                    ERX_P3, ERX_P4, ERX_P5};
+static const uint8_t child_pipe[] = {RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2,
+                                     RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
+static const uint8_t child_payload_size[] = {RX_PW_P0, RX_PW_P1, RX_PW_P2,
+                                             RX_PW_P3, RX_PW_P4, RX_PW_P5};
+static const uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
+                                            ERX_P3, ERX_P4, ERX_P5};
 
 void RF24::openReadingPipe(uint8_t child, uint64_t address) {
     // If this is pipe 0, cache the address.  This is needed because

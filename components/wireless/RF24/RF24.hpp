@@ -15,7 +15,10 @@
 #ifndef RF24_HPP_
 #define RF24_HPP_
 
-#include <RF24_config.h>
+#include <xXx/interfaces/igpio.hpp>
+#include <xXx/interfaces/ispi.hpp>
+
+#include "RF24_config.h"
 
 /**
  * Power Amplifier level.

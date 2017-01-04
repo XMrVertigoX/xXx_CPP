@@ -6,8 +6,8 @@
  * version 2 as published by the Free Software Foundation.
  */
 
-#ifndef RF24_CONFIG_H__
-#define RF24_CONFIG_H__
+#ifndef RF24_CONFIG_H_
+#define RF24_CONFIG_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -16,16 +16,15 @@
 #include <task.h>
 
 /*
- * Compatibility
- *
- * __millis() should return current system time in milliseconds
+ * Compatibility functions
  */
-static inline void __delay(uint32_t ms) {
+static inline void __delayMs(uint32_t ms) {
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-static inline void __delayMicroseconds(uint32_t us) {
-    __delay(1);
+static inline void __delayUs(uint32_t us) {
+    // Todo: Find better solution
+    __delayMs(1);
 }
 
 static inline uint32_t __millis() {
@@ -40,4 +39,4 @@ static inline uint32_t __millis() {
 // typedef char const char;
 // typedef uint16_t prog_uint16_t;
 
-#endif // RF24_CONFIG_H__
+#endif // RF24_CONFIG_H_
