@@ -20,6 +20,9 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef RF24_CONFIG_H__
+#define RF24_CONFIG_H__
+
 // clang-format off
 
 /* Memory Map */
@@ -125,3 +128,5 @@
 #define RF_PWR_HIGH (2)
 
 // clang-format on
+
+#endif // RF24_CONFIG_H__
