@@ -286,8 +286,6 @@ bool RF24::write(const uint8_t *buf, uint8_t len) {
     // Handle the ack packet
     if (ack_payload_available) {
         ack_payload_length = getDynamicPayloadSize();
-        LOG("[AckPacket]/");
-        // Todo: LOG(ack_payload_length, DEC);
     }
 
     // Yay, we are done.
@@ -575,6 +573,7 @@ bool RF24::setDataRate(RF24_DataRate_t speed) {
     //     }
     // }
 
+    // TODO: Set masks at once
     switch (speed) {
         case RF24_1MBPS: {
             clearBit(setup, RF_DR_LOW);
@@ -597,7 +596,11 @@ bool RF24::setDataRate(RF24_DataRate_t speed) {
 
     write_register(RF_SETUP, setup);
 
-    // Verify our result
+    /*
+     * Verify our result
+     *
+     * TODO: Necessary?
+     */
     if (read_register(RF_SETUP) == setup) {
         result = true;
     } else {
@@ -608,11 +611,12 @@ bool RF24::setDataRate(RF24_DataRate_t speed) {
 }
 
 RF24_DataRate_t RF24::getDataRate(void) {
-    RF24_DataRate_t result;
-    uint8_t rfSetup = read_register(RF_SETUP);
+    //    RF24_DataRate_t result;
 
     //    uint8_t setupRegister =
     //        read_register(RF_SETUP) & (_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
+
+    uint8_t rfSetup = read_register(RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
         return (RF24_250KBPS);
