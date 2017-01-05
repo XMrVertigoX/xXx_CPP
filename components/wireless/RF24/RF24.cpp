@@ -21,9 +21,9 @@ static const uint8_t dummy = 0xFF;
 static const uint8_t child_pipe[] = {RF24_MM_RX_ADDR_P0, RF24_MM_RX_ADDR_P1,
                                      RF24_MM_RX_ADDR_P2, RF24_MM_RX_ADDR_P3,
                                      RF24_MM_RX_ADDR_P4, RF24_MM_RX_ADDR_P5};
-static const uint8_t child_payload_size[] = {RF24_MM_RX_PW_P0, RF24_MM_RX_PW_P1,
-                                             RF24_MM_RX_PW_P2, RF24_MM_RX_PW_P3,
-                                             RF24_MM_RX_PW_P4, RF24_MM_RX_PW_P5};
+static const uint8_t child_payload_size[] = {
+    RF24_MM_RX_PW_P0, RF24_MM_RX_PW_P1, RF24_MM_RX_PW_P2,
+    RF24_MM_RX_PW_P3, RF24_MM_RX_PW_P4, RF24_MM_RX_PW_P5};
 static const uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
                                             ERX_P3, ERX_P4, ERX_P5};
 
@@ -66,9 +66,28 @@ static inline void setBit(uint8_t &byte, uint8_t bit) {
     byte |= (1 << bit);
 }
 
+static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
+    return (byte & mask);
+}
+
+static inline void bitwiseAND_r(uint8_t &byte, uint8_t mask) {
+    byte &= mask;
+}
+
+static inline uint8_t bitwiseOR(uint8_t byte, uint8_t mask) {
+    return (byte | mask);
+}
+
+static inline void bitwiseOR_r(uint8_t &byte, uint8_t mask) {
+    byte |= mask;
+}
+
 uint8_t RF24::read_register(uint8_t reg, uint8_t bytes[], uint8_t numBytes) {
-    uint8_t command = R_REGISTER | (REGISTER_MASK & reg);
-    uint8_t status  = transmit(_spi, command, NULL, bytes, numBytes);
+    // TODO: Find better names
+    bitwiseAND_r(reg, RF24_Instruction_REGISTER_MASK);
+    bitwiseOR_r(reg, RF24_Instruction_R_REGISTER);
+
+    uint8_t status = transmit(_spi, reg, NULL, bytes, numBytes);
 
     return (status);
 }
@@ -80,17 +99,13 @@ uint8_t RF24::read_register(uint8_t reg) {
     return (result);
 }
 
-uint8_t RF24::read_register2(RF24_MemoryMap_t reg) {
-    uint8_t result;
-    uint8_t status = read_register(reg, &result, 1);
-
-    return (result);
-}
-
 uint8_t RF24::write_register(uint8_t reg, uint8_t const bytes[],
                              uint8_t numBytes) {
-    uint8_t command = W_REGISTER | (REGISTER_MASK & reg);
-    uint8_t status  = transmit(_spi, command, bytes, NULL, numBytes);
+    // TODO: Find better names
+    bitwiseAND_r(reg, RF24_Instruction_REGISTER_MASK);
+    bitwiseOR_r(reg, RF24_Instruction_W_REGISTER);
+
+    uint8_t status = transmit(_spi, reg, bytes, NULL, numBytes);
 
     return (status);
 }
@@ -107,35 +122,35 @@ uint8_t RF24::write_payload(const uint8_t *buf, uint8_t len) {
     uint8_t tempBuffer[payload_size] = {};
     memcpy(tempBuffer, buf, data_len);
 
-    uint8_t command = W_TX_PAYLOAD;
+    uint8_t command = RF24_Instruction_W_TX_PAYLOAD;
     uint8_t status  = transmit(_spi, command, tempBuffer, NULL, payload_size);
 
     return (status);
 }
 
 uint8_t RF24::read_payload(uint8_t *buf, uint8_t len) {
-    uint8_t command = R_RX_PAYLOAD;
+    uint8_t command = RF24_Instruction_R_RX_PAYLOAD;
     uint8_t status = transmit(_spi, command, NULL, buf, min(len, payload_size));
 
     return (status);
 }
 
 uint8_t RF24::flush_rx(void) {
-    uint8_t command = FLUSH_RX;
+    uint8_t command = RF24_Instruction_FLUSH_RX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::flush_tx(void) {
-    uint8_t command = FLUSH_TX;
+    uint8_t command = RF24_Instruction_FLUSH_TX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::get_status(void) {
-    uint8_t command = NOP;
+    uint8_t command = RF24_Instruction_NOP;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
@@ -331,7 +346,7 @@ void RF24::startWrite(const uint8_t *buf, uint8_t len) {
 
 uint8_t RF24::getDynamicPayloadSize(void) {
 
-    uint8_t command = R_RX_PL_WID;
+    uint8_t command = RF24_Instruction_R_RX_PL_WID;
     uint8_t result;
     uint8_t status = transmit(_spi, command, NULL, &result, 1);
 
@@ -425,7 +440,7 @@ void RF24::openReadingPipe(uint8_t child, uint64_t address) {
 }
 
 void RF24::toggle_features(void) {
-    uint8_t command = ACTIVATE;
+    uint8_t command = RF24_Instruction_ACTIVATE;
     uint8_t foo     = 0x73;
     uint8_t result;
     uint8_t status = transmit(_spi, command, &foo, NULL, 1);
@@ -433,13 +448,15 @@ void RF24::toggle_features(void) {
 
 void RF24::enableDynamicPayloads(void) {
     // Enable dynamic payload throughout the system
-    write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
+    write_register(RF24_MM_FEATURE,
+                   read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
 
     // If it didn't work, the features are not enabled
     if (!read_register(RF24_MM_FEATURE)) {
         // So enable them and try again
         toggle_features();
-        write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
+        write_register(RF24_MM_FEATURE,
+                       read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
     }
 
     LOG("FEATURE=%i\r\n", read_register(RF24_MM_FEATURE));
@@ -449,8 +466,8 @@ void RF24::enableDynamicPayloads(void) {
     // Not sure the use case of only having dynamic payload on certain
     // pipes, so the library does not support it.
     write_register(RF24_MM_DYNPD, read_register(RF24_MM_DYNPD) | _BV(DPL_P5) |
-                                   _BV(DPL_P4) | _BV(DPL_P3) | _BV(DPL_P2) |
-                                   _BV(DPL_P1) | _BV(DPL_P0));
+                                      _BV(DPL_P4) | _BV(DPL_P3) | _BV(DPL_P2) |
+                                      _BV(DPL_P1) | _BV(DPL_P0));
 
     dynamic_payloads_enabled = true;
 }
@@ -460,15 +477,15 @@ void RF24::enableAckPayload(void) {
     // enable ack payload and dynamic payload features
     //
 
-    write_register(RF24_MM_FEATURE,
-                   read_register(RF24_MM_FEATURE) | _BV(EN_ACK_PAY) | _BV(EN_DPL));
+    write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) |
+                                        _BV(EN_ACK_PAY) | _BV(EN_DPL));
 
     // If it didn't work, the features are not enabled
     if (!read_register(RF24_MM_FEATURE)) {
         // So enable them and try again
         toggle_features();
         write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) |
-                                         _BV(EN_ACK_PAY) | _BV(EN_DPL));
+                                            _BV(EN_ACK_PAY) | _BV(EN_DPL));
     }
 
     LOG("FEATURE=%i\r\n", read_register(RF24_MM_FEATURE));
@@ -484,7 +501,7 @@ void RF24::enableAckPayload(void) {
 void RF24::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     const uint8_t max_payload_size = 32;
     uint8_t data_len               = min(len, max_payload_size);
-    uint8_t command                = W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t command = RF24_Instruction_W_ACK_PAYLOAD | (pipe & 0b111);
     uint8_t status = transmit(_spi, command, buf, NULL, data_len);
 }
 

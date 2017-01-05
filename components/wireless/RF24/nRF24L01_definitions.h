@@ -71,6 +71,21 @@ enum RF24_ENAA_t {
     RF24_ENAA_P0 = 0
 };
 
+enum RF24_Instruction_t {
+    RF24_Instruction_R_REGISTER    = 0x00,
+    RF24_Instruction_W_REGISTER    = 0x20,
+    RF24_Instruction_REGISTER_MASK = 0x1F,
+    RF24_Instruction_ACTIVATE      = 0x50,
+    RF24_Instruction_R_RX_PL_WID   = 0x60,
+    RF24_Instruction_R_RX_PAYLOAD  = 0x61,
+    RF24_Instruction_W_TX_PAYLOAD  = 0xA0,
+    RF24_Instruction_W_ACK_PAYLOAD = 0xA8,
+    RF24_Instruction_FLUSH_TX      = 0xE1,
+    RF24_Instruction_FLUSH_RX      = 0xE2,
+    RF24_Instruction_REUSE_TX_PL   = 0xE3,
+    RF24_Instruction_NOP           = 0xFF
+};
+
 // clang-format off
 
 /* Bit Mnemonics */
@@ -107,20 +122,6 @@ enum RF24_ENAA_t {
 #define EN_DPL        (2)
 #define EN_ACK_PAY    (1)
 #define EN_DYN_ACK    (0)
-
-/* Instruction Mnemonics */
-#define R_REGISTER    (0x00)
-#define W_REGISTER    (0x20)
-#define REGISTER_MASK (0x1F)
-#define ACTIVATE      (0x50)
-#define R_RX_PL_WID   (0x60)
-#define R_RX_PAYLOAD  (0x61)
-#define W_TX_PAYLOAD  (0xA0)
-#define W_ACK_PAYLOAD (0xA8)
-#define FLUSH_TX      (0xE1)
-#define FLUSH_RX      (0xE2)
-#define REUSE_TX_PL   (0xE3)
-#define NOP           (0xFF)
 
 /* Non-P omissions */
 #define LNA_HCURR     (0)

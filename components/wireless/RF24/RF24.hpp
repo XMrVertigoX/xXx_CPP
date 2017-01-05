@@ -99,7 +99,6 @@ class RF24 {
    * @return Current value of register @p reg
    */
     uint8_t read_register(uint8_t reg);
-    uint8_t read_register2(RF24_MemoryMap_t reg);
 
     /**
    * Write a chunk of data to a register
