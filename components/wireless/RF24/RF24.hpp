@@ -58,10 +58,6 @@ using namespace xXx;
 
 class RF24 {
   private:
-    /**< "Chip Enable" pin, activates the RX or TX role */
-    // uint8_t ce_pin;
-    /**< SPI Chip select */
-    // uint8_t csn_pin;
     /* 2Mbs data rate in use? */
     bool wide_band;
     /* False for RF24L01 and true for RF24L01P */

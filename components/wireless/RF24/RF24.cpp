@@ -15,7 +15,7 @@
 
 static const uint8_t dummy = 0xFF;
 
-static uint8_t transmit(ISpi &spi, uint8_t reg, uint8_t const txBytes[],
+static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
                         uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
 
@@ -23,7 +23,7 @@ static uint8_t transmit(ISpi &spi, uint8_t reg, uint8_t const txBytes[],
     uint8_t mosiBytes[transmitNumBytes];
     uint8_t misoBytes[transmitNumBytes];
 
-    mosiBytes[0] = reg;
+    mosiBytes[0] = command;
 
     if (txBytes != NULL) {
         memcpy(&mosiBytes[1], txBytes, numBytes);
@@ -43,11 +43,6 @@ static uint8_t transmit(ISpi &spi, uint8_t reg, uint8_t const txBytes[],
 }
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t *bytes, uint8_t numBytes) {
-    // csn(LOW);
-    // status = SPI.transfer(R_REGISTER | (REGISTER_MASK & command));
-    // while (dataNumBytes--) *dataBytes++ = SPI.transfer(dummy);
-    // csn(HIGH);
-
     uint8_t command = R_REGISTER | (REGISTER_MASK & reg);
     uint8_t status  = transmit(_spi, command, NULL, bytes, numBytes);
 
@@ -55,11 +50,6 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t *bytes, uint8_t numBytes) {
 }
 
 uint8_t RF24::read_register(uint8_t reg) {
-    // csn(LOW);
-    // SPI.transfer(R_REGISTER | (REGISTER_MASK & reg));
-    // result = SPI.transfer(0xff);
-    // csn(HIGH);
-
     uint8_t command = R_REGISTER | (REGISTER_MASK & reg);
     uint8_t result;
     uint8_t status = transmit(_spi, reg, NULL, &result, 1);
@@ -69,11 +59,6 @@ uint8_t RF24::read_register(uint8_t reg) {
 
 uint8_t RF24::write_register(uint8_t reg, uint8_t const *bytes,
                              uint8_t numBytes) {
-    // csn(LOW);
-    // status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
-    // while (len--) SPI.transfer(*buf++);
-    // csn(HIGH);
-
     uint8_t command = W_REGISTER | (REGISTER_MASK & reg);
     uint8_t status  = transmit(_spi, command, bytes, NULL, numBytes);
 
@@ -81,11 +66,6 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t const *bytes,
 }
 
 uint8_t RF24::write_register(uint8_t reg, uint8_t value) {
-    // csn(LOW);
-    // status = SPI.transfer(W_REGISTER | (REGISTER_MASK & reg));
-    // SPI.transfer(value);
-    // csn(HIGH);
-
     uint8_t command = W_REGISTER | (REGISTER_MASK & reg);
     uint8_t status  = transmit(_spi, command, &value, NULL, 1);
 
@@ -93,24 +73,13 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t value) {
 }
 
 uint8_t RF24::write_payload(const void *buf, uint8_t len) {
-    // uint8_t status;
-
     const uint8_t *current = reinterpret_cast<const uint8_t *>(buf);
 
     uint8_t data_len = min(len, payload_size);
-    // TODO: uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
 
     uint8_t tempBuffer[payload_size] = {};
     memcpy(tempBuffer, current, data_len);
     memset(&tempBuffer[data_len], 0, payload_size - data_len);
-
-    //printf("[Writing %u bytes %u blanks]",data_len,blank_len);
-
-    // csn(LOW);
-    // status = SPI.transfer(W_TX_PAYLOAD);
-    // while (data_len--) SPI.transfer(*current++);
-    // while (blank_len--) SPI.transfer(0);
-    // csn(HIGH);
 
     uint8_t command = W_TX_PAYLOAD;
     uint8_t status  = transmit(_spi, command, tempBuffer, NULL, payload_size);
@@ -119,22 +88,9 @@ uint8_t RF24::write_payload(const void *buf, uint8_t len) {
 }
 
 uint8_t RF24::read_payload(void *buf, uint8_t len) {
-    // uint8_t status;
     uint8_t *current = reinterpret_cast<uint8_t *>(buf);
-
     uint8_t data_len = min(len, payload_size);
-    // uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
-
-    //printf("[Reading %u bytes %u blanks]",data_len,blank_len);
-
-    // csn(LOW);
-    // status                        = SPI.transfer(R_RX_PAYLOAD);
-    // while (data_len--) *current++ = SPI.transfer(0xff);
-    // while (blank_len--) SPI.transfer(0xff);
-    // csn(HIGH);
-
     uint8_t tempBuffer[payload_size] = {};
-
     uint8_t command = R_RX_PAYLOAD;
     uint8_t status  = transmit(_spi, command, NULL, tempBuffer, 1);
 
@@ -142,10 +98,6 @@ uint8_t RF24::read_payload(void *buf, uint8_t len) {
 }
 
 uint8_t RF24::flush_rx(void) {
-    // csn(LOW);
-    // status = SPI.transfer(FLUSH_RX);
-    // csn(HIGH);
-
     uint8_t command = FLUSH_RX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
@@ -153,10 +105,6 @@ uint8_t RF24::flush_rx(void) {
 }
 
 uint8_t RF24::flush_tx(void) {
-    // csn(LOW);
-    // status = SPI.transfer(FLUSH_TX);
-    // csn(HIGH);
-
     uint8_t command = FLUSH_TX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
@@ -164,10 +112,6 @@ uint8_t RF24::flush_tx(void) {
 }
 
 uint8_t RF24::get_status(void) {
-    // csn(LOW);
-    // status = SPI.transfer(NOP);
-    // csn(HIGH);
-
     uint8_t command = NOP;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
@@ -801,5 +745,3 @@ void RF24::disableCRC(void) {
 void RF24::setRetries(uint8_t delay, uint8_t count) {
     write_register(SETUP_RETR, (delay & 0xf) << ARD | (count & 0xf) << ARC);
 }
-
-// vim:ai:cin:sts=2 sw=2 ft=cpp

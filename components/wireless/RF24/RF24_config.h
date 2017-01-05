@@ -24,7 +24,7 @@ static inline void __delayMs(uint32_t ms) {
 }
 
 static inline void __delayUs(uint32_t us) {
-    // Todo: Find better solution
+    // TODO: Find better solution
     __delayMs(1);
 }
 
