@@ -24,78 +24,56 @@
 #define NRF24L01_DEFINITIONS_H_
 
 enum RF24_MemoryMap_t {
-    RF24_CONFIG      = 0x00,
-    RF24_EN_AA       = 0x01,
-    RF24_EN_RXADDR   = 0x02,
-    RF24_SETUP_AW    = 0x03,
-    RF24_SETUP_RETR  = 0x04,
-    RF24_RF_CH       = 0x05,
-    RF24_RF_SETUP    = 0x06,
-    RF24_STATUS      = 0x07,
-    RF24_OBSERVE_TX  = 0x08,
-    RF24_CD          = 0x09,
-    RF24_RX_ADDR_P0  = 0x0A,
-    RF24_RX_ADDR_P1  = 0x0B,
-    RF24_RX_ADDR_P2  = 0x0C,
-    RF24_RX_ADDR_P3  = 0x0D,
-    RF24_RX_ADDR_P4  = 0x0E,
-    RF24_RX_ADDR_P5  = 0x0F,
-    RF24_TX_ADDR     = 0x10,
-    RF24_RX_PW_P0    = 0x11,
-    RF24_RX_PW_P1    = 0x12,
-    RF24_RX_PW_P2    = 0x13,
-    RF24_RX_PW_P3    = 0x14,
-    RF24_RX_PW_P4    = 0x15,
-    RF24_RX_PW_P5    = 0x16,
-    RF24_FIFO_STATUS = 0x17,
-    RF24_DYNPD       = 0x1C,
-    RF24_FEATURE     = 0x1D
+    RF24_MM_CONFIG      = 0x00,
+    RF24_MM_EN_AA       = 0x01,
+    RF24_MM_EN_RXADDR   = 0x02,
+    RF24_MM_SETUP_AW    = 0x03,
+    RF24_MM_SETUP_RETR  = 0x04,
+    RF24_MM_RF_CH       = 0x05,
+    RF24_MM_RF_SETUP    = 0x06,
+    RF24_MM_STATUS      = 0x07,
+    RF24_MM_OBSERVE_TX  = 0x08,
+    RF24_MM_CD          = 0x09,
+    RF24_MM_RX_ADDR_P0  = 0x0A,
+    RF24_MM_RX_ADDR_P1  = 0x0B,
+    RF24_MM_RX_ADDR_P2  = 0x0C,
+    RF24_MM_RX_ADDR_P3  = 0x0D,
+    RF24_MM_RX_ADDR_P4  = 0x0E,
+    RF24_MM_RX_ADDR_P5  = 0x0F,
+    RF24_MM_TX_ADDR     = 0x10,
+    RF24_MM_RX_PW_P0    = 0x11,
+    RF24_MM_RX_PW_P1    = 0x12,
+    RF24_MM_RX_PW_P2    = 0x13,
+    RF24_MM_RX_PW_P3    = 0x14,
+    RF24_MM_RX_PW_P4    = 0x15,
+    RF24_MM_RX_PW_P5    = 0x16,
+    RF24_MM_FIFO_STATUS = 0x17,
+    RF24_MM_DYNPD       = 0x1C,
+    RF24_MM_FEATURE     = 0x1D
+};
+
+enum RF24_Config_t {
+    RF24_Config_PRIM_RX     = 0,
+    RF24_Config_PWR_UP      = 1,
+    RF24_Config_CRCO        = 2,
+    RF24_Config_EN_CRC      = 3,
+    RF24_Config_MASK_MAX_RT = 4,
+    RF24_Config_MASK_TX_DS  = 5,
+    RF24_Config_MASK_RX_DR  = 6
+};
+
+enum RF24_ENAA_t {
+    RF24_ENAA_P5 = 5,
+    RF24_ENAA_P4 = 4,
+    RF24_ENAA_P3 = 3,
+    RF24_ENAA_P2 = 2,
+    RF24_ENAA_P1 = 1,
+    RF24_ENAA_P0 = 0
 };
 
 // clang-format off
 
-/* Memory Map */
-// #define CONFIG        (0x00)
-// #define EN_AA         (0x01)
-// #define EN_RXADDR     (0x02)
-// #define SETUP_AW      (0x03)
-// #define SETUP_RETR    (0x04)
-// #define RF_CH         (0x05)
-// #define RF_SETUP      (0x06)
-// #define STATUS        (0x07)
-// #define OBSERVE_TX    (0x08)
-// #define CD            (0x09)
-// #define RX_ADDR_P0    (0x0A)
-// #define RX_ADDR_P1    (0x0B)
-// #define RX_ADDR_P2    (0x0C)
-// #define RX_ADDR_P3    (0x0D)
-// #define RX_ADDR_P4    (0x0E)
-// #define RX_ADDR_P5    (0x0F)
-// #define TX_ADDR       (0x10)
-// #define RX_PW_P0      (0x11)
-// #define RX_PW_P1      (0x12)
-// #define RX_PW_P2      (0x13)
-// #define RX_PW_P3      (0x14)
-// #define RX_PW_P4      (0x15)
-// #define RX_PW_P5      (0x16)
-// #define FIFO_STATUS   (0x17)
-// #define DYNPD         (0x1C)
-// #define FEATURE       (0x1D)
-
 /* Bit Mnemonics */
-#define MASK_RX_DR    (6)
-#define MASK_TX_DS    (5)
-#define MASK_MAX_RT   (4)
-#define EN_CRC        (3)
-#define CRCO          (2)
-#define PWR_UP        (1)
-#define PRIM_RX       (0)
-#define ENAA_P5       (5)
-#define ENAA_P4       (4)
-#define ENAA_P3       (3)
-#define ENAA_P2       (2)
-#define ENAA_P1       (1)
-#define ENAA_P0       (0)
 #define ERX_P5        (5)
 #define ERX_P4        (4)
 #define ERX_P3        (3)
