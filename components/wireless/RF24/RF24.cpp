@@ -15,24 +15,41 @@
 
 static const uint8_t dummy = 0xFF;
 
+static uint8_t transmit(ISpi &spi, uint8_t reg, uint8_t const txBytes[],
+                        uint8_t rxBytes[], size_t numBytes) {
+    uint8_t status;
+
+    size_t transmitNumBytes = numBytes + 1;
+    uint8_t mosiBytes[transmitNumBytes];
+    uint8_t misoBytes[transmitNumBytes];
+
+    mosiBytes[0] = reg;
+
+    if (txBytes != NULL) {
+        memcpy(&mosiBytes[1], txBytes, numBytes);
+    } else {
+        memset(&mosiBytes[1], dummy, numBytes);
+    }
+
+    spi.transmit(mosiBytes, misoBytes, transmitNumBytes);
+
+    if (rxBytes != NULL) {
+        memcpy(&misoBytes[1], rxBytes, numBytes);
+    }
+
+    status = misoBytes[0];
+
+    return (status);
+}
+
 uint8_t RF24::read_register(uint8_t reg, uint8_t *bytes, uint8_t numBytes) {
     // csn(LOW);
     // status = SPI.transfer(R_REGISTER | (REGISTER_MASK & command));
     // while (dataNumBytes--) *dataBytes++ = SPI.transfer(dummy);
     // csn(HIGH);
 
-    uint8_t status;
-    size_t transmissionNumBytes = numBytes + 1;
-    uint8_t mosiBytes[numBytes + 1];
-    uint8_t misoBytes[numBytes + 1];
-
-    mosiBytes[0] = R_REGISTER | (REGISTER_MASK & reg);
-    memset(&mosiBytes[1], dummy, numBytes);
-
-    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
-
-    memcpy(&misoBytes[1], bytes, numBytes);
-    status = misoBytes[0];
+    uint8_t command = R_REGISTER | (REGISTER_MASK & reg);
+    uint8_t status  = transmit(_spi, command, NULL, bytes, numBytes);
 
     return (status);
 }
@@ -43,9 +60,9 @@ uint8_t RF24::read_register(uint8_t reg) {
     // result = SPI.transfer(0xff);
     // csn(HIGH);
 
+    uint8_t command = R_REGISTER | (REGISTER_MASK & reg);
     uint8_t result;
-
-    read_register(reg, &result, 1);
+    uint8_t status = transmit(_spi, reg, NULL, &result, 1);
 
     return (result);
 }
@@ -57,18 +74,8 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t const *bytes,
     // while (len--) SPI.transfer(*buf++);
     // csn(HIGH);
 
-    uint8_t status;
-    size_t transmissionNumBytes = numBytes + 1;
-    uint8_t mosiBytes[numBytes + 1];
-    uint8_t misoBytes[numBytes + 1];
-
-    mosiBytes[0] = W_REGISTER | (REGISTER_MASK & reg);
-    memcpy(&mosiBytes[1], bytes, numBytes);
-
-    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
-
-    memcpy(&misoBytes[1], bytes, numBytes);
-    status = misoBytes[0];
+    uint8_t command = W_REGISTER | (REGISTER_MASK & reg);
+    uint8_t status  = transmit(_spi, command, bytes, NULL, numBytes);
 
     return (status);
 }
@@ -79,76 +86,90 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t value) {
     // SPI.transfer(value);
     // csn(HIGH);
 
-    uint8_t status;
-
-    status = write_register(reg, &value, 1);
+    uint8_t command = W_REGISTER | (REGISTER_MASK & reg);
+    uint8_t status  = transmit(_spi, command, &value, NULL, 1);
 
     return (status);
 }
 
 uint8_t RF24::write_payload(const void *buf, uint8_t len) {
-    uint8_t status;
+    // uint8_t status;
 
     const uint8_t *current = reinterpret_cast<const uint8_t *>(buf);
 
-    uint8_t data_len  = min(len, payload_size);
-    uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
+    uint8_t data_len = min(len, payload_size);
+    // TODO: uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
+
+    uint8_t tempBuffer[payload_size] = {};
+    memcpy(tempBuffer, current, data_len);
+    memset(&tempBuffer[data_len], 0, payload_size - data_len);
 
     //printf("[Writing %u bytes %u blanks]",data_len,blank_len);
 
-    csn(LOW);
-    status = SPI.transfer(W_TX_PAYLOAD);
-    while (data_len--) SPI.transfer(*current++);
-    while (blank_len--) SPI.transfer(0);
-    csn(HIGH);
+    // csn(LOW);
+    // status = SPI.transfer(W_TX_PAYLOAD);
+    // while (data_len--) SPI.transfer(*current++);
+    // while (blank_len--) SPI.transfer(0);
+    // csn(HIGH);
+
+    uint8_t command = W_TX_PAYLOAD;
+    uint8_t status  = transmit(_spi, command, tempBuffer, NULL, payload_size);
 
     return (status);
 }
 
 uint8_t RF24::read_payload(void *buf, uint8_t len) {
-    uint8_t status;
+    // uint8_t status;
     uint8_t *current = reinterpret_cast<uint8_t *>(buf);
 
-    uint8_t data_len  = min(len, payload_size);
-    uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
+    uint8_t data_len = min(len, payload_size);
+    // uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
 
     //printf("[Reading %u bytes %u blanks]",data_len,blank_len);
 
-    csn(LOW);
-    status                        = SPI.transfer(R_RX_PAYLOAD);
-    while (data_len--) *current++ = SPI.transfer(0xff);
-    while (blank_len--) SPI.transfer(0xff);
-    csn(HIGH);
+    // csn(LOW);
+    // status                        = SPI.transfer(R_RX_PAYLOAD);
+    // while (data_len--) *current++ = SPI.transfer(0xff);
+    // while (blank_len--) SPI.transfer(0xff);
+    // csn(HIGH);
+
+    uint8_t tempBuffer[payload_size] = {};
+
+    uint8_t command = R_RX_PAYLOAD;
+    uint8_t status  = transmit(_spi, command, NULL, tempBuffer, 1);
 
     return (status);
 }
 
 uint8_t RF24::flush_rx(void) {
-    uint8_t status;
+    // csn(LOW);
+    // status = SPI.transfer(FLUSH_RX);
+    // csn(HIGH);
 
-    csn(LOW);
-    status = SPI.transfer(FLUSH_RX);
-    csn(HIGH);
+    uint8_t command = FLUSH_RX;
+    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::flush_tx(void) {
-    uint8_t status;
+    // csn(LOW);
+    // status = SPI.transfer(FLUSH_TX);
+    // csn(HIGH);
 
-    csn(LOW);
-    status = SPI.transfer(FLUSH_TX);
-    csn(HIGH);
+    uint8_t command = FLUSH_TX;
+    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::get_status(void) {
-    uint8_t status;
+    // csn(LOW);
+    // status = SPI.transfer(NOP);
+    // csn(HIGH);
 
-    csn(LOW);
-    status = SPI.transfer(NOP);
-    csn(HIGH);
+    uint8_t command = NOP;
+    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
@@ -429,12 +450,14 @@ void RF24::startWrite(const void *buf, uint8_t len) {
 }
 
 uint8_t RF24::getDynamicPayloadSize(void) {
-    uint8_t result = 0;
+    // csn(LOW);
+    // SPI.transfer(R_RX_PL_WID);
+    // result = SPI.transfer(0xff);
+    // csn(HIGH);
 
-    csn(LOW);
-    SPI.transfer(R_RX_PL_WID);
-    result = SPI.transfer(0xff);
-    csn(HIGH);
+    uint8_t command = R_RX_PL_WID;
+    uint8_t result;
+    uint8_t status = transmit(_spi, command, NULL, &result, 1);
 
     return (result);
 }
@@ -536,10 +559,15 @@ void RF24::openReadingPipe(uint8_t child, uint64_t address) {
 }
 
 void RF24::toggle_features(void) {
-    csn(LOW);
-    SPI.transfer(ACTIVATE);
-    SPI.transfer(0x73);
-    csn(HIGH);
+    // csn(LOW);
+    // SPI.transfer(ACTIVATE);
+    // SPI.transfer(0x73);
+    // csn(HIGH);
+
+    uint8_t command = ACTIVATE;
+    uint8_t foo     = 0x73;
+    uint8_t result;
+    uint8_t status = transmit(_spi, command, &foo, NULL, 1);
 }
 
 void RF24::enableDynamicPayloads(void) {
@@ -594,13 +622,15 @@ void RF24::enableAckPayload(void) {
 void RF24::writeAckPayload(uint8_t pipe, const void *buf, uint8_t len) {
     const uint8_t *current = reinterpret_cast<const uint8_t *>(buf);
 
-    csn(LOW);
-    SPI.transfer(W_ACK_PAYLOAD | (pipe & 0b111));
+    // csn(LOW);
+    // SPI.transfer(W_ACK_PAYLOAD | (pipe & 0b111));
     const uint8_t max_payload_size = 32;
     uint8_t data_len               = min(len, max_payload_size);
-    while (data_len--) SPI.transfer(*current++);
+    // while (data_len--) SPI.transfer(*current++);
+    // csn(HIGH);
 
-    csn(HIGH);
+    uint8_t command = W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t status  = transmit(_spi, command, current, NULL, data_len);
 }
 
 bool RF24::isAckPayloadAvailable(void) {
