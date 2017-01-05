@@ -24,31 +24,27 @@
  *
  * For use with setPALevel()
  */
-typedef enum {
+enum RF24_pa_dbm_t {
     RF24_PA_MIN,
     RF24_PA_LOW,
     RF24_PA_HIGH,
     RF24_PA_MAX,
     RF24_PA_ERROR
-} rf24_pa_dbm_e;
+};
 
 /**
  * Data rate.  How fast data moves through the air.
  *
  * For use with setDataRate()
  */
-typedef enum { RF24_1MBPS = 0, RF24_2MBPS, RF24_250KBPS } rf24_datarate_e;
+enum RF24_datarate_t { RF24_1MBPS, RF24_2MBPS, RF24_250KBPS };
 
 /**
  * CRC Length.  How big (if any) of a CRC is included.
  *
  * For use with setCRCLength()
  */
-typedef enum {
-    RF24_CRC_DISABLED = 0,
-    RF24_CRC_8,
-    RF24_CRC_16
-} rf24_crclength_e;
+enum RF24_crclength_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
 
 using namespace xXx;
 
@@ -85,26 +81,6 @@ class RF24 {
  *  ever call these.  They are documented for completeness and for
  *  developers who may want to extend this class.
 /**@{*/
-
-    /**
-   * Set chip select pin
-   *
-   * Running SPI bus at PI_CLOCK_DIV2 so we don't waste time transferring data
-   * and best of all, we make use of the radio's FIFO buffers. A lower speed
-   * means we're less likely to effectively leverage our FIFOs and pay a higher
-   * AVR runtime cost as toll.
-   *
-   * @param mode HIGH to take this unit off the SPI bus, LOW to put it on
-   */
-    // TODO: void csn(int mode);
-
-    /**
-   * Set chip enable
-   *
-   * @param level HIGH to actively begin transmission or LOW to put in standby.  Please see data sheet
-   * for a much more detailed description of this pin.
-   */
-    // TODO: void ce(int level);
 
     /**
    * Read a chunk of data in from a register
@@ -152,7 +128,7 @@ class RF24 {
    * @param len Number of bytes to be sent
    * @return Current value of status register
    */
-    uint8_t write_payload(const void *buf, uint8_t len);
+    uint8_t write_payload(const uint8_t *buf, uint8_t len);
 
     /**
    * Read the receive payload
@@ -163,7 +139,7 @@ class RF24 {
    * @param len Maximum number of bytes to read
    * @return Current value of status register
    */
-    uint8_t read_payload(void *buf, uint8_t len);
+    uint8_t read_payload(uint8_t *buf, uint8_t len);
 
     /**
    * Empty the receive buffer
@@ -185,37 +161,6 @@ class RF24 {
    * @return Current value of status register
    */
     uint8_t get_status(void);
-
-    /**
-   * Decode and print the given status to stdout
-   *
-   * @param status Status value to print
-   *
-   * @warning Does nothing if stdout is not defined.  See fdevopen in stdio.h
-   */
-    void print_status(uint8_t status);
-
-    /**
-   * Decode and print the given 'observe_tx' value to stdout
-   *
-   * @param value The observe_tx value to print
-   *
-   * @warning Does nothing if stdout is not defined.  See fdevopen in stdio.h
-   */
-    void print_observe_tx(uint8_t value);
-
-    /**
-   * Print the name and value of an 8-bit register to stdout
-   *
-   * Optionally it can print some quantity of successive
-   * registers on the same line.  This is useful for printing a group
-   * of related registers on one line.
-   *
-   * @param name Name of the register
-   * @param reg Which register. Use constants from nRF24L01.h
-   * @param qty How many successive registers to print
-   */
-    void print_byte_register(const char *name, uint8_t reg, uint8_t qty = 1);
 
     /**
    * Print the name and value of a 40-bit address register to stdout
@@ -299,7 +244,7 @@ class RF24 {
    * @param len Number of bytes to be sent
    * @return True if the payload was delivered successfully false if not
    */
-    bool write(const void *buf, uint8_t len);
+    bool write(const uint8_t *buf, uint8_t len);
 
     /**
    * Test whether there are bytes available to be read
@@ -322,7 +267,7 @@ class RF24 {
    * @param len Maximum number of bytes to read into the buffer
    * @return True if the payload was delivered successfully false if not
    */
-    bool read(void *buf, uint8_t len);
+    bool read(uint8_t *buf, uint8_t len);
 
     /**
    * Open a pipe for writing
@@ -486,7 +431,7 @@ class RF24 {
    *
    * @param level Desired PA level.
    */
-    void setPALevel(rf24_pa_dbm_e level);
+    void setPALevel(RF24_pa_dbm_t level);
 
     /**
    * Fetches the current PA level.
@@ -496,7 +441,7 @@ class RF24 {
    * by the enum mnemonics are negative dBm. See setPALevel for
    * return value descriptions.
    */
-    rf24_pa_dbm_e getPALevel(void);
+    RF24_pa_dbm_t getPALevel(void);
 
     /**
    * Set the transmission data rate
@@ -506,7 +451,7 @@ class RF24 {
    * @param speed RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
    * @return true if the change was successful
    */
-    bool setDataRate(rf24_datarate_e speed);
+    bool setDataRate(RF24_datarate_t speed);
 
     /**
    * Fetches the transmission data rate
@@ -515,21 +460,21 @@ class RF24 {
    * is one of 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS, as defined in the
    * rf24_datarate_e enum.
    */
-    rf24_datarate_e getDataRate(void);
+    RF24_datarate_t getDataRate(void);
 
     /**
    * Set the CRC length
    *
    * @param length RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    void setCRCLength(rf24_crclength_e length);
+    void setCRCLength(RF24_crclength_t length);
 
     /**
    * Get the CRC length
    *
    * @return RF24_DISABLED if disabled or RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    rf24_crclength_e getCRCLength(void);
+    RF24_crclength_t getCRCLength(void);
 
     /**
    * Disable CRC validation
@@ -550,7 +495,7 @@ class RF24 {
    *
    * @warning Does nothing if stdout is not defined.  See fdevopen in stdio.h
    */
-    void printDetails(void);
+    //    void printDetails(void);
 
     /**
    * Enter low-power mode
@@ -591,7 +536,7 @@ class RF24 {
    * @param len Number of bytes to be sent
    * @return True if the payload was delivered successfully false if not
    */
-    void startWrite(const void *buf, uint8_t len);
+    void startWrite(const uint8_t *buf, uint8_t len);
 
     /**
    * Write an ack payload for the specified pipe
