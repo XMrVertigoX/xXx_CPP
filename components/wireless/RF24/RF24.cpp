@@ -611,11 +611,6 @@ bool RF24::setDataRate(RF24_DataRate_t speed) {
 }
 
 RF24_DataRate_t RF24::getDataRate(void) {
-    //    RF24_DataRate_t result;
-
-    //    uint8_t setupRegister =
-    //        read_register(RF_SETUP) & (_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
-
     uint8_t rfSetup = read_register(RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
@@ -627,21 +622,6 @@ RF24_DataRate_t RF24::getDataRate(void) {
     }
 
     return (RF24_1MBPS);
-
-    //    // switch uses RAM (evil!)
-    //    // Order matters in our case below
-    //    if (setupRegister == _BV(RF_DR_LOW)) {
-    //        // '10' = 250KBPS
-    //        result = RF24_250KBPS;
-    //    } else if (setupRegister == _BV(RF_DR_HIGH)) {
-    //        // '01' = 2MBPS
-    //        result = RF24_2MBPS;
-    //    } else {
-    //        // '00' = 1MBPS
-    //        result = RF24_1MBPS;
-    //    }
-
-    //    return (result);
 }
 
 void RF24::setCRCLength(RF24_CRCLength_t length) {
