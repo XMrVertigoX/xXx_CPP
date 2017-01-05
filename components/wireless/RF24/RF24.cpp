@@ -24,8 +24,9 @@ static const uint8_t child_pipe[] = {RF24_MM_RX_ADDR_P0, RF24_MM_RX_ADDR_P1,
 static const uint8_t child_payload_size[] = {
     RF24_MM_RX_PW_P0, RF24_MM_RX_PW_P1, RF24_MM_RX_PW_P2,
     RF24_MM_RX_PW_P3, RF24_MM_RX_PW_P4, RF24_MM_RX_PW_P5};
-static const uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
-                                            ERX_P3, ERX_P4, ERX_P5};
+static const uint8_t child_pipe_enable[] = {RF24_ERX_P0, RF24_ERX_P1,
+                                            RF24_ERX_P2, RF24_ERX_P3,
+                                            RF24_ERX_P4, RF24_ERX_P5};
 
 static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
                         uint8_t rxBytes[], size_t numBytes) {
@@ -66,26 +67,18 @@ static inline void setBit(uint8_t &byte, uint8_t bit) {
     byte |= (1 << bit);
 }
 
-static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
-    return (byte & mask);
-}
-
-static inline void bitwiseAND_r(uint8_t &byte, uint8_t mask) {
+static inline void bitwiseAND(uint8_t &byte, uint8_t mask) {
     byte &= mask;
 }
 
-static inline uint8_t bitwiseOR(uint8_t byte, uint8_t mask) {
-    return (byte | mask);
-}
-
-static inline void bitwiseOR_r(uint8_t &byte, uint8_t mask) {
+static inline void bitwiseOR(uint8_t &byte, uint8_t mask) {
     byte |= mask;
 }
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t bytes[], uint8_t numBytes) {
     // TODO: Find better names
-    bitwiseAND_r(reg, RF24_Instruction_REGISTER_MASK);
-    bitwiseOR_r(reg, RF24_Instruction_R_REGISTER);
+    bitwiseAND(reg, RF24_Command_REGISTER_MASK);
+    bitwiseOR(reg, RF24_Command_R_REGISTER);
 
     uint8_t status = transmit(_spi, reg, NULL, bytes, numBytes);
 
@@ -102,8 +95,8 @@ uint8_t RF24::read_register(uint8_t reg) {
 uint8_t RF24::write_register(uint8_t reg, uint8_t const bytes[],
                              uint8_t numBytes) {
     // TODO: Find better names
-    bitwiseAND_r(reg, RF24_Instruction_REGISTER_MASK);
-    bitwiseOR_r(reg, RF24_Instruction_W_REGISTER);
+    bitwiseAND(reg, RF24_Command_REGISTER_MASK);
+    bitwiseOR(reg, RF24_Command_W_REGISTER);
 
     uint8_t status = transmit(_spi, reg, bytes, NULL, numBytes);
 
@@ -122,35 +115,35 @@ uint8_t RF24::write_payload(const uint8_t *buf, uint8_t len) {
     uint8_t tempBuffer[payload_size] = {};
     memcpy(tempBuffer, buf, data_len);
 
-    uint8_t command = RF24_Instruction_W_TX_PAYLOAD;
+    uint8_t command = RF24_Command_W_TX_PAYLOAD;
     uint8_t status  = transmit(_spi, command, tempBuffer, NULL, payload_size);
 
     return (status);
 }
 
 uint8_t RF24::read_payload(uint8_t *buf, uint8_t len) {
-    uint8_t command = RF24_Instruction_R_RX_PAYLOAD;
+    uint8_t command = RF24_Command_R_RX_PAYLOAD;
     uint8_t status = transmit(_spi, command, NULL, buf, min(len, payload_size));
 
     return (status);
 }
 
 uint8_t RF24::flush_rx(void) {
-    uint8_t command = RF24_Instruction_FLUSH_RX;
+    uint8_t command = RF24_Command_FLUSH_RX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::flush_tx(void) {
-    uint8_t command = RF24_Instruction_FLUSH_TX;
+    uint8_t command = RF24_Command_FLUSH_TX;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t RF24::get_status(void) {
-    uint8_t command = RF24_Instruction_NOP;
+    uint8_t command = RF24_Command_NOP;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
     return (status);
@@ -346,7 +339,7 @@ void RF24::startWrite(const uint8_t *buf, uint8_t len) {
 
 uint8_t RF24::getDynamicPayloadSize(void) {
 
-    uint8_t command = RF24_Instruction_R_RX_PL_WID;
+    uint8_t command = RF24_Command_R_RX_PL_WID;
     uint8_t result;
     uint8_t status = transmit(_spi, command, NULL, &result, 1);
 
@@ -440,7 +433,7 @@ void RF24::openReadingPipe(uint8_t child, uint64_t address) {
 }
 
 void RF24::toggle_features(void) {
-    uint8_t command = RF24_Instruction_ACTIVATE;
+    uint8_t command = RF24_Command_ACTIVATE;
     uint8_t foo     = 0x73;
     uint8_t result;
     uint8_t status = transmit(_spi, command, &foo, NULL, 1);
@@ -501,8 +494,8 @@ void RF24::enableAckPayload(void) {
 void RF24::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     const uint8_t max_payload_size = 32;
     uint8_t data_len               = min(len, max_payload_size);
-    uint8_t command = RF24_Instruction_W_ACK_PAYLOAD | (pipe & 0b111);
-    uint8_t status = transmit(_spi, command, buf, NULL, data_len);
+    uint8_t command = RF24_Command_W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t status  = transmit(_spi, command, buf, NULL, data_len);
 }
 
 bool RF24::isAckPayloadAvailable(void) {
@@ -702,9 +695,8 @@ RF24_CRC_t RF24::getCRCLength(void) {
 }
 
 void RF24::setRetries(uint8_t delay, uint8_t count) {
-    // TODO: Find more desciptive solution
-    count &= 0xf;
-    delay &= 0xf;
+    bitwiseAND(count, 0xf);
+    bitwiseAND(delay, 0xf);
 
     write_register(RF24_MM_SETUP_RETR, (count << ARC | delay << ARD));
 }

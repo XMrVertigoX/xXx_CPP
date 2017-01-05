@@ -23,6 +23,21 @@
 #ifndef NRF24L01_DEFINITIONS_H_
 #define NRF24L01_DEFINITIONS_H_
 
+enum RF24_Command_t {
+    RF24_Command_R_REGISTER    = 0x00,
+    RF24_Command_W_REGISTER    = 0x20,
+    RF24_Command_REGISTER_MASK = 0x1F,
+    RF24_Command_ACTIVATE      = 0x50,
+    RF24_Command_R_RX_PL_WID   = 0x60,
+    RF24_Command_R_RX_PAYLOAD  = 0x61,
+    RF24_Command_W_TX_PAYLOAD  = 0xA0,
+    RF24_Command_W_ACK_PAYLOAD = 0xA8,
+    RF24_Command_FLUSH_TX      = 0xE1,
+    RF24_Command_FLUSH_RX      = 0xE2,
+    RF24_Command_REUSE_TX_PL   = 0xE3,
+    RF24_Command_NOP           = 0xFF
+};
+
 enum RF24_MemoryMap_t {
     RF24_MM_CONFIG      = 0x00,
     RF24_MM_EN_AA       = 0x01,
@@ -53,48 +68,36 @@ enum RF24_MemoryMap_t {
 };
 
 enum RF24_Config_t {
-    RF24_Config_PRIM_RX     = 0,
-    RF24_Config_PWR_UP      = 1,
-    RF24_Config_CRCO        = 2,
-    RF24_Config_EN_CRC      = 3,
-    RF24_Config_MASK_MAX_RT = 4,
-    RF24_Config_MASK_TX_DS  = 5,
-    RF24_Config_MASK_RX_DR  = 6
+    RF24_Config_PRIM_RX,
+    RF24_Config_PWR_UP,
+    RF24_Config_CRCO,
+    RF24_Config_EN_CRC,
+    RF24_Config_MASK_MAX_RT,
+    RF24_Config_MASK_TX_DS,
+    RF24_Config_MASK_RX_DR
 };
 
-enum RF24_ENAA_t {
-    RF24_ENAA_P5 = 5,
-    RF24_ENAA_P4 = 4,
-    RF24_ENAA_P3 = 3,
-    RF24_ENAA_P2 = 2,
-    RF24_ENAA_P1 = 1,
-    RF24_ENAA_P0 = 0
+enum RF24_EN_AA_t {
+    RF24_ENAA_P0,
+    RF24_ENAA_P1,
+    RF24_ENAA_P2,
+    RF24_ENAA_P3,
+    RF24_ENAA_P4,
+    RF24_ENAA_P5
 };
 
-enum RF24_Instruction_t {
-    RF24_Instruction_R_REGISTER    = 0x00,
-    RF24_Instruction_W_REGISTER    = 0x20,
-    RF24_Instruction_REGISTER_MASK = 0x1F,
-    RF24_Instruction_ACTIVATE      = 0x50,
-    RF24_Instruction_R_RX_PL_WID   = 0x60,
-    RF24_Instruction_R_RX_PAYLOAD  = 0x61,
-    RF24_Instruction_W_TX_PAYLOAD  = 0xA0,
-    RF24_Instruction_W_ACK_PAYLOAD = 0xA8,
-    RF24_Instruction_FLUSH_TX      = 0xE1,
-    RF24_Instruction_FLUSH_RX      = 0xE2,
-    RF24_Instruction_REUSE_TX_PL   = 0xE3,
-    RF24_Instruction_NOP           = 0xFF
+enum RF24_EN_RXADDR_t {
+    RF24_ERX_P0,
+    RF24_ERX_P1,
+    RF24_ERX_P2,
+    RF24_ERX_P3,
+    RF24_ERX_P4,
+    RF24_ERX_P5
 };
 
 // clang-format off
 
 /* Bit Mnemonics */
-#define ERX_P5        (5)
-#define ERX_P4        (4)
-#define ERX_P3        (3)
-#define ERX_P2        (2)
-#define ERX_P1        (1)
-#define ERX_P0        (0)
 #define AW            (0)
 #define ARD           (4)
 #define ARC           (0)
