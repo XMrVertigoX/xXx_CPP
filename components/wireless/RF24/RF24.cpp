@@ -550,8 +550,8 @@ RF24_PALevel_t RF24::getPALevel(void) {
 }
 
 bool RF24::setDataRate(RF24_DataRate_t speed) {
-    bool result   = false;
-    uint8_t setup = read_register(RF_SETUP);
+    bool result     = false;
+    uint8_t rfSetup = read_register(RF_SETUP);
 
     // // HIGH and LOW '00' is 1Mbs - our default
     // wide_band = false;
@@ -576,32 +576,32 @@ bool RF24::setDataRate(RF24_DataRate_t speed) {
     // TODO: Set masks at once
     switch (speed) {
         case RF24_1MBPS: {
-            clearBit(setup, RF_DR_LOW);
-            clearBit(setup, RF_DR_HIGH);
+            clearBit(rfSetup, RF_DR_LOW);
+            clearBit(rfSetup, RF_DR_HIGH);
             wide_band = false;
         } break;
         case RF24_2MBPS: {
             //setup |= _BV(RF_DR_HIGH);
-            clearBit(setup, RF_DR_LOW);
-            setBit(setup, RF_DR_HIGH);
+            clearBit(rfSetup, RF_DR_LOW);
+            setBit(rfSetup, RF_DR_HIGH);
             wide_band = true;
         } break;
         case RF24_250KBPS: {
             //setup |= _BV(RF_DR_LOW);
-            setBit(setup, RF_DR_LOW);
-            clearBit(setup, RF_DR_HIGH);
+            setBit(rfSetup, RF_DR_LOW);
+            clearBit(rfSetup, RF_DR_HIGH);
             wide_band = false;
         } break;
     }
 
-    write_register(RF_SETUP, setup);
+    write_register(RF_SETUP, rfSetup);
 
     /*
      * Verify our result
      *
      * TODO: Necessary?
      */
-    if (read_register(RF_SETUP) == setup) {
+    if (read_register(RF_SETUP) == rfSetup) {
         result = true;
     } else {
         wide_band = false;
@@ -655,10 +655,16 @@ RF24_CRCLength_t RF24::getCRCLength(void) {
 }
 
 void RF24::disableCRC(void) {
-    uint8_t disable = read_register(CONFIG) & ~_BV(EN_CRC);
-    write_register(CONFIG, disable);
+    uint8_t config = read_register(CONFIG);
+
+    clearBit(config, EN_CRC);
+
+    write_register(CONFIG, config);
 }
 
 void RF24::setRetries(uint8_t delay, uint8_t count) {
-    write_register(SETUP_RETR, (delay & 0xf) << ARD | (count & 0xf) << ARC);
+    count &= 0xf;
+    delay &= 0xf;
+
+    write_register(SETUP_RETR, (count << ARC | delay << ARD));
 }
