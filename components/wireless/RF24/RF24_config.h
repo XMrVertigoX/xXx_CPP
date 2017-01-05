@@ -9,9 +9,6 @@
 #ifndef RF24_CONFIG_H_
 #define RF24_CONFIG_H_
 
-#include <stdio.h>
-#include <string.h>
-
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -19,16 +16,16 @@
 #define pgm_read_byte(b) (*(b))
 #define pgm_read_word(p) (*(p))
 
-static inline void __delayMs(uint32_t ms) {
+static inline void delayMs(uint32_t ms) {
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-static inline void __delayUs(uint32_t us) {
+static inline void delayUs(uint32_t us) {
     // TODO: Find better solution
-    __delayMs(1);
+    delayMs(1);
 }
 
-static inline uint32_t __millis() {
+static inline uint32_t getMillis() {
     return (xTaskGetTickCount() * portTICK_PERIOD_MS);
 }
 

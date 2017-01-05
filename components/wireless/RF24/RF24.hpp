@@ -24,7 +24,7 @@
  *
  * For use with setPALevel()
  */
-enum RF24_pa_dbm_t {
+enum RF24_PALevel_t {
     RF24_PA_MIN,
     RF24_PA_LOW,
     RF24_PA_HIGH,
@@ -33,18 +33,18 @@ enum RF24_pa_dbm_t {
 };
 
 /**
- * Data rate.  How fast data moves through the air.
+ * Data rate. How fast data moves through the air.
  *
  * For use with setDataRate()
  */
-enum RF24_datarate_t { RF24_1MBPS, RF24_2MBPS, RF24_250KBPS };
+enum RF24_DataRate_t { RF24_1MBPS, RF24_2MBPS, RF24_250KBPS };
 
 /**
- * CRC Length.  How big (if any) of a CRC is included.
+ * CRC Length. How big (if any) of a CRC is included.
  *
  * For use with setCRCLength()
  */
-enum RF24_crclength_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
+enum RF24_CRCLength_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
 
 using namespace xXx;
 
@@ -431,7 +431,7 @@ class RF24 {
    *
    * @param level Desired PA level.
    */
-    void setPALevel(RF24_pa_dbm_t level);
+    void setPALevel(RF24_PALevel_t level);
 
     /**
    * Fetches the current PA level.
@@ -441,7 +441,7 @@ class RF24 {
    * by the enum mnemonics are negative dBm. See setPALevel for
    * return value descriptions.
    */
-    RF24_pa_dbm_t getPALevel(void);
+    RF24_PALevel_t getPALevel(void);
 
     /**
    * Set the transmission data rate
@@ -451,7 +451,7 @@ class RF24 {
    * @param speed RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
    * @return true if the change was successful
    */
-    bool setDataRate(RF24_datarate_t speed);
+    bool setDataRate(RF24_DataRate_t speed);
 
     /**
    * Fetches the transmission data rate
@@ -460,21 +460,21 @@ class RF24 {
    * is one of 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS, as defined in the
    * rf24_datarate_e enum.
    */
-    RF24_datarate_t getDataRate(void);
+    RF24_DataRate_t getDataRate(void);
 
     /**
    * Set the CRC length
    *
    * @param length RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    void setCRCLength(RF24_crclength_t length);
+    void setCRCLength(RF24_CRCLength_t length);
 
     /**
    * Get the CRC length
    *
    * @return RF24_DISABLED if disabled or RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    RF24_crclength_t getCRCLength(void);
+    RF24_CRCLength_t getCRCLength(void);
 
     /**
    * Disable CRC validation
