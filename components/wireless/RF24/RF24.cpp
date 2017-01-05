@@ -15,7 +15,13 @@
 
 static const uint8_t dummy = 0xFF;
 
-// TODO: Get rid of all the copies...
+static const uint8_t child_pipe[] = {RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2,
+                                     RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
+static const uint8_t child_payload_size[] = {RX_PW_P0, RX_PW_P1, RX_PW_P2,
+                                             RX_PW_P3, RX_PW_P4, RX_PW_P5};
+static const uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
+                                            ERX_P3, ERX_P4, ERX_P5};
+
 static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
                         uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
@@ -112,15 +118,16 @@ uint8_t RF24::get_status(void) {
 }
 
 RF24::RF24(ISpi &spi, IGpio &ce, IGpio &irq)
-    : _spi(spi), _ce(ce), _irq(irq), wide_band(true), p_variant(false),
+    : _spi(spi), _ce(ce), _irq(irq), wide_band(true), p_variant(true),
       payload_size(32), ack_payload_available(false),
       dynamic_payloads_enabled(false), pipe0_reading_address(0),
       ack_payload_length(0) {}
 
 void RF24::setChannel(uint8_t channel) {
-    // TODO: This method could take advantage of the 'wide_band' calculation
-    // done in setChannel() to require certain channel spacing.
-
+    /*
+     * TODO: This method could take advantage of the 'wide_band' calculation
+     * done in setChannel() to require certain channel spacing.
+     */
     const uint8_t max_channel = 127;
     write_register(RF_CH, min(channel, max_channel));
 }
@@ -245,7 +252,6 @@ bool RF24::write(const uint8_t *buf, uint8_t len) {
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
         status = read_register(OBSERVE_TX, &observe_tx, 1);
-        // Todo: LOG(observe_tx, HEX);
     } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
              (__millis() - sent_at < timeout));
 
@@ -261,10 +267,7 @@ bool RF24::write(const uint8_t *buf, uint8_t len) {
     bool tx_ok, tx_fail;
     whatHappened(tx_ok, tx_fail, ack_payload_available);
 
-    //printf("%u%u%u\r\n",tx_ok,tx_fail,ack_payload_available);
-
     result = tx_ok;
-    LOG(result ? "...OK." : "...Failed");
 
     // Handle the ack packet
     if (ack_payload_available) {
@@ -368,13 +371,6 @@ void RF24::openWritingPipe(uint64_t value) {
     write_register(RX_PW_P0, min(payload_size, max_payload_size));
 }
 
-static const uint8_t child_pipe[] = {RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2,
-                                     RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
-static const uint8_t child_payload_size[] = {RX_PW_P0, RX_PW_P1, RX_PW_P2,
-                                             RX_PW_P3, RX_PW_P4, RX_PW_P5};
-static const uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
-                                            ERX_P3, ERX_P4, ERX_P5};
-
 void RF24::openReadingPipe(uint8_t child, uint64_t address) {
     // If this is pipe 0, cache the address.  This is needed because
     // openWritingPipe() will overwrite the pipe 0 address, so
@@ -457,18 +453,11 @@ void RF24::enableAckPayload(void) {
     write_register(DYNPD, read_register(DYNPD) | _BV(DPL_P1) | _BV(DPL_P0));
 }
 
-void RF24::writeAckPayload(uint8_t pipe, const void *buf, uint8_t len) {
-    const uint8_t *current = reinterpret_cast<const uint8_t *>(buf);
-
-    // csn(LOW);
-    // SPI.transfer(W_ACK_PAYLOAD | (pipe & 0b111));
+void RF24::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     const uint8_t max_payload_size = 32;
     uint8_t data_len               = min(len, max_payload_size);
-    // while (data_len--) SPI.transfer(*current++);
-    // csn(HIGH);
-
     uint8_t command = W_ACK_PAYLOAD | (pipe & 0b111);
-    uint8_t status  = transmit(_spi, command, current, NULL, data_len);
+    uint8_t status = transmit(_spi, command, buf, NULL, data_len);
 }
 
 bool RF24::isAckPayloadAvailable(void) {

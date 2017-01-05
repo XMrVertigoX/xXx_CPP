@@ -552,7 +552,7 @@ class RF24 {
    * @param len Length of the data to send, up to 32 bytes max.  Not affected
    * by the static payload set by setPayloadSize().
    */
-    void writeAckPayload(uint8_t pipe, const void *buf, uint8_t len);
+    void writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len);
 
     /**
    * Determine if an ack payload was received in the most recent call to
