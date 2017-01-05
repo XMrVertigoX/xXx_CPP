@@ -16,6 +16,7 @@
 #define RF24_HPP_
 
 #include <xXx/components/wireless/RF24/RF24_config.h>
+#include <xXx/components/wireless/RF24/nRF24L01_definitions.h>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
@@ -24,12 +25,11 @@
  *
  * For use with setPALevel()
  */
-enum RF24_PALevel_t {
-    RF24_PA_MIN,
-    RF24_PA_LOW,
-    RF24_PA_HIGH,
-    RF24_PA_MAX,
-    RF24_PA_ERROR
+enum RF24_PowerLevel_t {
+    RF24_PA_18dBm,
+    RF24_PA_12dBm,
+    RF24_PA_6dBm,
+    RF24_PA_0dBm,
 };
 
 /**
@@ -44,7 +44,7 @@ enum RF24_DataRate_t { RF24_1MBPS, RF24_2MBPS, RF24_250KBPS };
  *
  * For use with setCRCLength()
  */
-enum RF24_CRCLength_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
+enum RF24_CRC_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
 
 using namespace xXx;
 
@@ -99,6 +99,7 @@ class RF24 {
    * @return Current value of register @p reg
    */
     uint8_t read_register(uint8_t reg);
+    uint8_t read_register2(RF24_MemoryMap_t reg);
 
     /**
    * Write a chunk of data to a register
@@ -431,7 +432,7 @@ class RF24 {
    *
    * @param level Desired PA level.
    */
-    void setPALevel(RF24_PALevel_t level);
+    void setPALevel(RF24_PowerLevel_t level);
 
     /**
    * Fetches the current PA level.
@@ -441,7 +442,7 @@ class RF24 {
    * by the enum mnemonics are negative dBm. See setPALevel for
    * return value descriptions.
    */
-    RF24_PALevel_t getPALevel(void);
+    RF24_PowerLevel_t getPALevel(void);
 
     /**
    * Set the transmission data rate
@@ -467,20 +468,14 @@ class RF24 {
    *
    * @param length RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    void setCRCLength(RF24_CRCLength_t length);
+    void setCRCLength(RF24_CRC_t length);
 
     /**
    * Get the CRC length
    *
    * @return RF24_DISABLED if disabled or RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
-    RF24_CRCLength_t getCRCLength(void);
-
-    /**
-   * Disable CRC validation
-   *
-   */
-    void disableCRC(void);
+    RF24_CRC_t getCRCLength(void);
 
     /**@}*/
     /**
