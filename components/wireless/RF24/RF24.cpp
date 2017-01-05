@@ -11,6 +11,7 @@
 
 #include <xXx/components/wireless/RF24/RF24.hpp>
 #include <xXx/components/wireless/RF24/RF24_config.h>
+#include <xXx/components/wireless/RF24/RF24_utilities.h>
 #include <xXx/components/wireless/RF24/nRF24L01_definitions.h>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
@@ -55,25 +56,7 @@ static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
     return (status);
 }
 
-static inline void clearBit(uint8_t &byte, uint8_t bit) {
-    byte &= ~(1 << bit);
-}
 
-static inline bool readBit(uint8_t byte, uint8_t bit) {
-    return (byte & (1 << bit));
-}
-
-static inline void setBit(uint8_t &byte, uint8_t bit) {
-    byte |= (1 << bit);
-}
-
-static inline void bitwiseAND(uint8_t &byte, uint8_t mask) {
-    byte &= mask;
-}
-
-static inline void bitwiseOR(uint8_t &byte, uint8_t mask) {
-    byte |= mask;
-}
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t bytes[], uint8_t numBytes) {
     // TODO: Find better names
