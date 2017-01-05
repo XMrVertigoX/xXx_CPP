@@ -12,11 +12,11 @@
  * Class declaration for RF24 and helper enums
  */
 
-#ifndef RF24_HPP_
-#define RF24_HPP_
+#ifndef NRF24L01_HPP_
+#define NRF24L01_HPP_
 
-#include <xXx/components/wireless/RF24/RF24_config.h>
-#include <xXx/components/wireless/RF24/nRF24L01_definitions.h>
+#include <xXx/components/wireless/RF24/nRF24L01_config.h>
+#include <xXx/components/wireless/RF24/nRF24L01_types.h>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
@@ -52,7 +52,7 @@ using namespace xXx;
  * Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
  */
 
-class RF24 {
+class nRF24L01 {
   private:
     /* 2Mbs data rate in use? */
     bool wide_band;
@@ -108,7 +108,7 @@ class RF24 {
    * @param len How many bytes of data to transfer
    * @return Current value of status register
    */
-    uint8_t write_register(uint8_t reg, const uint8_t *buf, uint8_t len);
+    uint8_t write_register(uint8_t reg, uint8_t *buf, uint8_t len);
 
     /**
    * Write a single byte to a register
@@ -201,7 +201,7 @@ class RF24 {
    * @param _cepin The pin attached to Chip Enable on the RF module
    * @param _cspin The pin attached to Chip Select
    */
-    RF24(ISpi &spi, IGpio &ce, IGpio &irq);
+    nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq);
 
     /**
    * Begin operation of the chip
@@ -612,4 +612,4 @@ class RF24 {
     /**@}*/
 };
 
-#endif // RF24_HPP_
+#endif // NRF24L01_HPP_

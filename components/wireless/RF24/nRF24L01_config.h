@@ -6,8 +6,8 @@
  * version 2 as published by the Free Software Foundation.
  */
 
-#ifndef RF24_CONFIG_H_
-#define RF24_CONFIG_H_
+#ifndef NRF24L01_CONFIG_H_
+#define NRF24L01_CONFIG_H_
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -29,4 +29,4 @@ static inline uint32_t getMillis() {
     return (xTaskGetTickCount() * portTICK_PERIOD_MS);
 }
 
-#endif // RF24_CONFIG_H_
+#endif // NRF24L01_CONFIG_H_

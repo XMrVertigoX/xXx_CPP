@@ -1,41 +1,20 @@
-/*
- * Copyright (c) 2007 Stefan Engelke <mbox@stefanengelke.de>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-#ifndef NRF24L01_DEFINITIONS_H_
-#define NRF24L01_DEFINITIONS_H_
+#ifndef NRF24L01_TYPES_H_
+#define NRF24L01_TYPES_H_
 
 enum RF24_Command_t {
-    RF24_Command_R_REGISTER    = 0x00,
-    RF24_Command_W_REGISTER    = 0x20,
-    RF24_Command_REGISTER_MASK = 0x1F,
-    RF24_Command_ACTIVATE      = 0x50,
-    RF24_Command_R_RX_PL_WID   = 0x60,
-    RF24_Command_R_RX_PAYLOAD  = 0x61,
-    RF24_Command_W_TX_PAYLOAD  = 0xA0,
-    RF24_Command_W_ACK_PAYLOAD = 0xA8,
-    RF24_Command_FLUSH_TX      = 0xE1,
-    RF24_Command_FLUSH_RX      = 0xE2,
-    RF24_Command_REUSE_TX_PL   = 0xE3,
-    RF24_Command_NOP           = 0xFF
+    RF24_Command_R_REGISTER          = 0x00,
+    RF24_Command_W_REGISTER          = 0x20,
+    RF24_Command_R_RX_PAYLOAD        = 0x61,
+    RF24_Command_W_TX_PAYLOAD        = 0xA0,
+    RF24_Command_FLUSH_TX            = 0xE1,
+    RF24_Command_FLUSH_RX            = 0xE2,
+    RF24_Command_REUSE_TX_PL         = 0xE3,
+    RF24_Command_R_RX_PL_WID         = 0x60,
+    RF24_Command_W_ACK_PAYLOAD       = 0xA8,
+    RF24_Command_W_TX_PAYLOAD_NO_ACK = 0xB0,
+    RF24_Command_NOP                 = 0xFF,
+    RF24_Command_ACTIVATE            = 0x50,
+    RF24_Command_REGISTER_MASK       = 0x1F,
 };
 
 enum RF24_MemoryMap_t {
@@ -95,12 +74,18 @@ enum RF24_EN_RXADDR_t {
     RF24_ERX_P5
 };
 
+enum RF24_SETUP_AW_t {
+    RF24_SETUP_AW,
+};
+
+enum RF24_SETUP_RETR_t {
+    RF24_SETUP_RETR_ARC = 0,
+    RF24_SETUP_RETR_ARD = 4,
+};
+
 // clang-format off
 
 /* Bit Mnemonics */
-#define AW            (0)
-#define ARD           (4)
-#define ARC           (0)
 #define PLL_LOCK      (4)
 #define RF_DR         (3)
 #define RF_PWR        (6)
@@ -140,4 +125,4 @@ enum RF24_EN_RXADDR_t {
 
 // clang-format on
 
-#endif // NRF24L01_DEFINITIONS_H_
+#endif // NRF24L01_TYPES_H_
