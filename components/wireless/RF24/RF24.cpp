@@ -6,6 +6,8 @@
  * version 2 as published by the Free Software Foundation.
  */
 
+#include <string.h>
+
 #include <xXx/components/wireless/RF24/RF24.hpp>
 #include <xXx/components/wireless/RF24/RF24_config.h>
 #include <xXx/components/wireless/RF24/nRF24L01_definitions.h>
@@ -47,6 +49,18 @@ static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
     status = misoBytes[0];
 
     return (status);
+}
+
+static inline void clearBit(uint8_t &byte, uint8_t bit) {
+    byte &= ~(1 << bit);
+}
+
+static inline bool readBit(uint8_t byte, uint8_t bit) {
+    return (byte & (1 << bit));
+}
+
+static inline void setBit(uint8_t &byte, uint8_t bit) {
+    byte |= (1 << bit);
 }
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t bytes[], uint8_t numBytes) {
@@ -150,7 +164,7 @@ void RF24::begin(void) {
     // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
     // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
     // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-    __delayMs(5);
+    delayMs(5);
 
     // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
     // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
@@ -210,7 +224,7 @@ void RF24::startListening(void) {
     _ce.set();
 
     // wait for the radio to come up (130us actually only needed)
-    __delayUs(130);
+    delayUs(130);
 }
 
 void RF24::stopListening(void) {
@@ -248,12 +262,12 @@ bool RF24::write(const uint8_t *buf, uint8_t len) {
     // Monitor the send
     uint8_t observe_tx;
     uint8_t status;
-    uint32_t sent_at       = __millis();
+    uint32_t sent_at       = getMillis();
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
         status = read_register(OBSERVE_TX, &observe_tx, 1);
     } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
-             (__millis() - sent_at < timeout));
+             (getMillis() - sent_at < timeout));
 
     // The part above is what you could recreate with your own interrupt handler,
     // and then call this when you got an interrupt
@@ -291,14 +305,14 @@ void RF24::startWrite(const uint8_t *buf, uint8_t len) {
     // Transmitter power-up
     write_register(CONFIG,
                    (read_register(CONFIG) | _BV(PWR_UP)) & ~_BV(PRIM_RX));
-    __delayUs(150);
+    delayUs(150);
 
     // Send the payload
     write_payload(buf, len);
 
     // Allons!
     _ce.set();
-    __delayUs(15);
+    delayUs(15);
     _ce.clear();
 }
 
@@ -456,7 +470,7 @@ void RF24::enableAckPayload(void) {
 void RF24::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     const uint8_t max_payload_size = 32;
     uint8_t data_len               = min(len, max_payload_size);
-    uint8_t command = W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t command                = W_ACK_PAYLOAD | (pipe & 0b111);
     uint8_t status = transmit(_spi, command, buf, NULL, data_len);
 }
 
@@ -497,7 +511,7 @@ bool RF24::testRPD(void) {
     return (read_register(RPD) & 1);
 }
 
-void RF24::setPALevel(RF24_pa_dbm_t level) {
+void RF24::setPALevel(RF24_PALevel_t level) {
     uint8_t setup = read_register(RF_SETUP);
     setup &= ~(_BV(RF_PWR_LOW) | _BV(RF_PWR_HIGH));
 
@@ -518,8 +532,8 @@ void RF24::setPALevel(RF24_pa_dbm_t level) {
     write_register(RF_SETUP, setup);
 }
 
-RF24_pa_dbm_t RF24::getPALevel(void) {
-    RF24_pa_dbm_t result = RF24_PA_ERROR;
+RF24_PALevel_t RF24::getPALevel(void) {
+    RF24_PALevel_t result = RF24_PA_ERROR;
     uint8_t power =
         read_register(RF_SETUP) & (_BV(RF_PWR_LOW) | _BV(RF_PWR_HIGH));
 
@@ -537,29 +551,50 @@ RF24_pa_dbm_t RF24::getPALevel(void) {
     return (result);
 }
 
-bool RF24::setDataRate(RF24_datarate_t speed) {
+bool RF24::setDataRate(RF24_DataRate_t speed) {
     bool result   = false;
     uint8_t setup = read_register(RF_SETUP);
 
-    // HIGH and LOW '00' is 1Mbs - our default
-    wide_band = false;
-    setup &= ~(_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
-    if (speed == RF24_250KBPS) {
-        // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
-        // Making it '10'.
-        wide_band = false;
-        setup |= _BV(RF_DR_LOW);
-    } else {
-        // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
-        // Making it '01'
-        if (speed == RF24_2MBPS) {
-            wide_band = true;
-            setup |= _BV(RF_DR_HIGH);
-        } else {
-            // 1Mbs
+    // // HIGH and LOW '00' is 1Mbs - our default
+    // wide_band = false;
+    // setup &= ~(_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
+    // if (speed == RF24_250KBPS) {
+    //     // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
+    //     // Making it '10'.
+    //     wide_band = false;
+    //     setup |= _BV(RF_DR_LOW);
+    // } else {
+    //     // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
+    //     // Making it '01'
+    //     if (speed == RF24_2MBPS) {
+    //         wide_band = true;
+    //         setup |= _BV(RF_DR_HIGH);
+    //     } else {
+    //         // 1Mbs
+    //         wide_band = false;
+    //     }
+    // }
+
+    switch (speed) {
+        case RF24_1MBPS: {
+            clearBit(setup, RF_DR_LOW);
+            clearBit(setup, RF_DR_HIGH);
             wide_band = false;
-        }
+        } break;
+        case RF24_2MBPS: {
+            //setup |= _BV(RF_DR_HIGH);
+            clearBit(setup, RF_DR_LOW);
+            setBit(setup, RF_DR_HIGH);
+            wide_band = true;
+        } break;
+        case RF24_250KBPS: {
+            //setup |= _BV(RF_DR_LOW);
+            setBit(setup, RF_DR_LOW);
+            clearBit(setup, RF_DR_HIGH);
+            wide_band = false;
+        } break;
     }
+
     write_register(RF_SETUP, setup);
 
     // Verify our result
@@ -572,26 +607,40 @@ bool RF24::setDataRate(RF24_datarate_t speed) {
     return (result);
 }
 
-RF24_datarate_t RF24::getDataRate(void) {
-    RF24_datarate_t result;
-    uint8_t dr = read_register(RF_SETUP) & (_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
+RF24_DataRate_t RF24::getDataRate(void) {
+    RF24_DataRate_t result;
+    uint8_t rfSetup = read_register(RF_SETUP);
 
-    // switch uses RAM (evil!)
-    // Order matters in our case below
-    if (dr == _BV(RF_DR_LOW)) {
-        // '10' = 250KBPS
-        result = RF24_250KBPS;
-    } else if (dr == _BV(RF_DR_HIGH)) {
-        // '01' = 2MBPS
-        result = RF24_2MBPS;
-    } else {
-        // '00' = 1MBPS
-        result = RF24_1MBPS;
+    //    uint8_t setupRegister =
+    //        read_register(RF_SETUP) & (_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
+
+    if (readBit(rfSetup, RF_DR_LOW)) {
+        return (RF24_250KBPS);
     }
-    return (result);
+
+    if (readBit(rfSetup, RF_DR_HIGH)) {
+        return (RF24_2MBPS);
+    }
+
+    return (RF24_1MBPS);
+
+    //    // switch uses RAM (evil!)
+    //    // Order matters in our case below
+    //    if (setupRegister == _BV(RF_DR_LOW)) {
+    //        // '10' = 250KBPS
+    //        result = RF24_250KBPS;
+    //    } else if (setupRegister == _BV(RF_DR_HIGH)) {
+    //        // '01' = 2MBPS
+    //        result = RF24_2MBPS;
+    //    } else {
+    //        // '00' = 1MBPS
+    //        result = RF24_1MBPS;
+    //    }
+
+    //    return (result);
 }
 
-void RF24::setCRCLength(RF24_crclength_t length) {
+void RF24::setCRCLength(RF24_CRCLength_t length) {
     uint8_t config = read_register(CONFIG) & ~(_BV(CRCO) | _BV(EN_CRC));
 
     // switch uses RAM (evil!)
@@ -607,8 +656,8 @@ void RF24::setCRCLength(RF24_crclength_t length) {
     write_register(CONFIG, config);
 }
 
-RF24_crclength_t RF24::getCRCLength(void) {
-    RF24_crclength_t result = RF24_CRC_DISABLED;
+RF24_CRCLength_t RF24::getCRCLength(void) {
+    RF24_CRCLength_t result = RF24_CRC_DISABLED;
     uint8_t config          = read_register(CONFIG) & (_BV(CRCO) | _BV(EN_CRC));
 
     if (config & _BV(EN_CRC)) {
