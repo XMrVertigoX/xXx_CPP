@@ -43,7 +43,7 @@ static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
     spi.transmit(mosiBytes, misoBytes, transmitNumBytes);
 
     if (rxBytes != NULL) {
-        memcpy(&misoBytes[1], rxBytes, numBytes);
+        memcpy(rxBytes, &misoBytes[1], numBytes);
     }
 
     status = misoBytes[0];
