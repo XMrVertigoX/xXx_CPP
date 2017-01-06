@@ -559,11 +559,9 @@ void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
 RF24_PowerLevel_t nRF24L01::getPALevel(void) {
     uint8_t rfSetup = read_register(RF24_MM_RF_SETUP);
 
-    // TODO: Find more readable solution
-    rfSetup &= 0b00000110;
-    rfSetup >>= 1;
-
-    assert(rfSetup <= 0b11);
+    // TODO: Use macros instead of magic numbers!
+    bitwiseAND_r(rfSetup, 0b00000110);
+    shiftRight_r(rfSetup, 1);
 
     return ((RF24_PowerLevel_t)rfSetup);
 }
