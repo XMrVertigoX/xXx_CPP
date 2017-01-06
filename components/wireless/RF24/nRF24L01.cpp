@@ -377,13 +377,12 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
     rx_ready = status & _BV(RX_DR);
 }
 
-void nRF24L01::openWritingPipe(uint64_t value) {
-    write_register(RF24_MM_RX_ADDR_P0, reinterpret_cast<uint8_t *>(&value), 5);
-    write_register(RF24_MM_TX_ADDR, reinterpret_cast<uint8_t *>(&value), 5);
+void nRF24L01::openWritingPipe(uint64_t address) {
+    // TODO: Check if order is correct
+    uint8_t *addressArray = reinterpret_cast<uint8_t *>(&address);
 
-    // TODO: GET RID OF THIS CONSTANT!
-    const uint8_t max_payload_size = 32;
-
+    write_register(RF24_MM_RX_ADDR_P0, addressArray, max_address_length);
+    write_register(RF24_MM_TX_ADDR, addressArray, max_address_length);
     write_register(RF24_MM_RX_PW_P0, min(payload_size, max_payload_size));
 }
 
@@ -473,10 +472,9 @@ void nRF24L01::enableAckPayload(void) {
 }
 
 void nRF24L01::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
-    const uint8_t max_payload_size = 32;
-    uint8_t data_len               = min(len, max_payload_size);
-    uint8_t command = RF24_Command_W_ACK_PAYLOAD | (pipe & 0b111);
-    uint8_t status  = transmit(_spi, command, buf, NULL, data_len);
+    uint8_t data_len = min(len, max_payload_size);
+    uint8_t command  = RF24_Command_W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t status   = transmit(_spi, command, buf, NULL, data_len);
 }
 
 bool nRF24L01::isAckPayloadAvailable(void) {
