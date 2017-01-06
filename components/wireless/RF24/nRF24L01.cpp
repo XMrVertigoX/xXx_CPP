@@ -677,11 +677,11 @@ RF24_CRC_t nRF24L01::getCRCLength(void) {
 }
 
 void nRF24L01::setRetries(uint8_t delay, uint8_t count) {
+    bitwiseAND_r(delay, 0xf);
+    shiftLeft_r(delay, RF24_SETUP_RETR_ARD);
+
     bitwiseAND_r(count, 0xf);
     shiftLeft_r(count, RF24_SETUP_RETR_ARC);
 
-    bitwiseAND_r(delay, 0xf);
-    shiftLeft_r(count, RF24_SETUP_RETR_ARD);
-
-    write_register(RF24_MM_SETUP_RETR, (count | delay));
+    write_register(RF24_MM_SETUP_RETR, (delay | count));
 }
