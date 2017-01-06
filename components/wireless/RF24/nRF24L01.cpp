@@ -1,11 +1,3 @@
-/*
- * Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- */
-
 #include <assert.h>
 #include <string.h>
 
@@ -29,8 +21,8 @@ static const uint8_t child_pipe_enable[] = {RF24_ERX_P0, RF24_ERX_P1,
                                             RF24_ERX_P2, RF24_ERX_P3,
                                             RF24_ERX_P4, RF24_ERX_P5};
 
-static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
-                        uint8_t rxBytes[], size_t numBytes) {
+uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
+                           uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
     size_t dataNumBytes = numBytes + 1;
     uint8_t mosiBytes[dataNumBytes];
@@ -44,7 +36,7 @@ static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
         memset(&mosiBytes[1], dummy, numBytes);
     }
 
-    spi.transmit(mosiBytes, misoBytes, dataNumBytes);
+    _spi.transmit(mosiBytes, misoBytes, dataNumBytes);
 
     status = misoBytes[0];
 
@@ -60,7 +52,7 @@ uint8_t nRF24L01::read_register(uint8_t reg, uint8_t bytes[],
     bitwiseAND_r(reg, RF24_Command_REGISTER_MASK);
     bitwiseOR_r(reg, RF24_Command_R_REGISTER);
 
-    uint8_t status = transmit(_spi, reg, NULL, bytes, numBytes);
+    uint8_t status = transmit(reg, NULL, bytes, numBytes);
 
     return (status);
 }
@@ -77,7 +69,7 @@ uint8_t nRF24L01::write_register(uint8_t reg, uint8_t bytes[],
     bitwiseAND_r(reg, RF24_Command_REGISTER_MASK);
     bitwiseOR_r(reg, RF24_Command_W_REGISTER);
 
-    uint8_t status = transmit(_spi, reg, bytes, NULL, numBytes);
+    uint8_t status = transmit(reg, bytes, NULL, numBytes);
 
     return (status);
 }
@@ -93,35 +85,35 @@ uint8_t nRF24L01::write_payload(const uint8_t *buf, uint8_t len) {
     memcpy(tempBuffer, buf, data_len);
 
     uint8_t command = RF24_Command_W_TX_PAYLOAD;
-    uint8_t status  = transmit(_spi, command, tempBuffer, NULL, payload_size);
+    uint8_t status  = transmit(command, tempBuffer, NULL, payload_size);
 
     return (status);
 }
 
 uint8_t nRF24L01::read_payload(uint8_t *buf, uint8_t len) {
     uint8_t command = RF24_Command_R_RX_PAYLOAD;
-    uint8_t status = transmit(_spi, command, NULL, buf, min(len, payload_size));
+    uint8_t status  = transmit(command, NULL, buf, min(len, payload_size));
 
     return (status);
 }
 
 uint8_t nRF24L01::flush_rx(void) {
     uint8_t command = RF24_Command_FLUSH_RX;
-    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
+    uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t nRF24L01::flush_tx(void) {
     uint8_t command = RF24_Command_FLUSH_TX;
-    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
+    uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t nRF24L01::getStatus(void) {
     uint8_t command = RF24_Command_NOP;
-    uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
+    uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
@@ -338,7 +330,7 @@ uint8_t nRF24L01::getDynamicPayloadSize(void) {
 
     uint8_t command = RF24_Command_R_RX_PL_WID;
     uint8_t result;
-    uint8_t status = transmit(_spi, command, NULL, &result, 1);
+    uint8_t status = transmit(command, NULL, &result, 1);
 
     return (result);
 }
@@ -432,7 +424,7 @@ void nRF24L01::toggle_features(void) {
     uint8_t command = RF24_Command_ACTIVATE;
     uint8_t foo     = 0x73;
     uint8_t result;
-    uint8_t status = transmit(_spi, command, &foo, NULL, 1);
+    uint8_t status = transmit(command, &foo, NULL, 1);
 }
 
 void nRF24L01::enableDynamicPayloads(void) {
@@ -490,7 +482,7 @@ void nRF24L01::enableAckPayload(void) {
 void nRF24L01::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     uint8_t data_len = min(len, max_payload_size);
     uint8_t command  = RF24_Command_W_ACK_PAYLOAD | (pipe & 0b111);
-    uint8_t status   = transmit(_spi, command, buf, NULL, data_len);
+    uint8_t status   = transmit(command, buf, NULL, data_len);
 }
 
 bool nRF24L01::isAckPayloadAvailable(void) {

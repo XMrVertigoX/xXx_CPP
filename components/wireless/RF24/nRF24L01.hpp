@@ -73,6 +73,9 @@ class nRF24L01 {
     IGpio &_irq;
     ISpi &_spi;
 
+    uint8_t transmit(uint8_t command, uint8_t const txBytes[],
+                     uint8_t rxBytes[], size_t numBytes);
+
   protected:
     /**
  * @name Low-level internal interface.
