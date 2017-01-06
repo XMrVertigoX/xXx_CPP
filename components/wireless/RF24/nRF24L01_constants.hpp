@@ -8,7 +8,7 @@ static const uint8_t dummy              = 0xFF;
 // TODO: Search in data sheet
 // #define RF24_Command_ACTIVATE  0x50
 
-enum class RF24_Command : uint8_t {
+enum class nRF24L01_Command_t : uint8_t {
     R_REGISTER          = 0x00,
     W_REGISTER          = 0x20,
     R_RX_PAYLOAD        = 0x61,
@@ -22,7 +22,7 @@ enum class RF24_Command : uint8_t {
     NOP                 = 0xFF,
 };
 
-enum class RF24_MemoryMap : uint8_t {
+enum class nRF24L01_MemoryMap_t : uint8_t {
     CONFIG      = 0x00,
     EN_AA       = 0x01,
     EN_RXADDR   = 0x02,
