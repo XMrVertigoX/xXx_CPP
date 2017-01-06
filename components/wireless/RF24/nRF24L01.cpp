@@ -11,14 +11,6 @@
 
 static const uint8_t dummy = 0xFF;
 
-static inline uint8_t __castCMD(nRF24L01_Command_t command) {
-    return (static_cast<uint8_t>(command));
-}
-
-static inline uint8_t __castMEM(nRF24L01_MemoryMap_t command) {
-    return (static_cast<uint8_t>(command));
-}
-
 // XXX
 static const nRF24L01_MemoryMap_t child_pipe[] = {
     nRF24L01_MemoryMap_t::RX_ADDR_P0, nRF24L01_MemoryMap_t::RX_ADDR_P1,
@@ -155,23 +147,18 @@ uint8_t nRF24L01::getPayloadSize(void) {
     return (payload_size);
 }
 
+void nRF24L01::resetIRQ() {
+    uint8_t status = read_register(nRF24L01_MemoryMap_t::STATUS);
+    setBit_r(status, RX_DR);
+    setBit_r(status, TX_DS);
+    setBit_r(status, MAX_RT);
+    write_register(nRF24L01_MemoryMap_t::STATUS, status);
+}
+
 void nRF24L01::init(void) {
     _ce.clear();
 
-    /*
-     * Must allow the radio time to settle else configuration bits will not
-     * necessarily stick. This is actually only required following power up but
-     * some settling time also appears to be required after resets too. For
-     * full coverage, we'll always assume the worst. Enabling 16b CRC is by far
-     * the most obvious case if the wrong timing is used - or skipped. Enabling
-     * 16b CRC is by far the most obvious case if the wrong timing is used - or
-     * skipped. Technically we require 4.5ms + 14us as a worst case. We'll just
-     * call it 5ms for good measure.
-     *
-     * WARNING: Delay is based on P-variant whereby non-P *may* require
-     * different timing.
-     */
-    delayMs(5);
+    setPowerState(true);
 
     /*
      * Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make
@@ -181,27 +168,12 @@ void nRF24L01::init(void) {
      * or maximum packet sizes must never be used. See documentation for a more
      * complete explanation.
      */
-    setRetries(0b0100, 0b1111);
+    setRetries(0b1111, 0b1111);
 
     setCRCLength(RF24_CRC_16);
 
-    // Reset current status
-    // Notice reset and flush is the last thing we do
-    //    write_register(RF24_MemoryMap::STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+    resetIRQ();
 
-    /*
-     * Set up default configuration.  Callers can always change it later.
-     * This channel should be universally safe and not bleed over into adjacent
-     * spectrum.
-     *
-     * XXX: We use the default for the moment.
-     */
-    // setChannel(76);
-
-    /*
-     * Flush buffers
-     * TODO: Why?
-     */
     // flush_rx();
     // flush_tx();
 }
@@ -213,8 +185,8 @@ void nRF24L01::startListening(void) {
     setBit_r(config, RF24_Config_PRIM_RX);
 
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
-    write_register(nRF24L01_MemoryMap_t::STATUS,
-                   _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+
+    resetIRQ();
 
     // Restore the pipe0 adddress, if exists
     if (pipe0_reading_address)
@@ -238,16 +210,33 @@ void nRF24L01::stopListening(void) {
     flush_rx();
 }
 
-void nRF24L01::powerDown(void) {
+void nRF24L01::setPowerState(bool enable) {
     uint8_t config = read_register(nRF24L01_MemoryMap_t::CONFIG);
-    clearBit_r(config, RF24_Config_PWR_UP);
-    write_register(nRF24L01_MemoryMap_t::CONFIG, config);
-}
 
-void nRF24L01::powerUp(void) {
-    uint8_t config = read_register(nRF24L01_MemoryMap_t::CONFIG);
-    setBit_r(config, RF24_Config_PWR_UP);
+    if (enable) {
+        setBit_r(config, RF24_Config_PWR_UP);
+    } else {
+        clearBit_r(config, RF24_Config_PWR_UP);
+    }
+
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
+
+    /*
+	 * Must allow the radio time to settle else configuration bits will not
+	 * necessarily stick. This is actually only required following power up but
+	 * some settling time also appears to be required after resets too. For
+	 * full coverage, we'll always assume the worst. Enabling 16b CRC is by far
+	 * the most obvious case if the wrong timing is used - or skipped. Enabling
+	 * 16b CRC is by far the most obvious case if the wrong timing is used - or
+	 * skipped. Technically we require 4.5ms + 14us as a worst case. We'll just
+	 * call it 5ms for good measure.
+	 *
+	 * WARNING: Delay is based on P-variant whereby non-P *may* require
+	 * different timing.
+	 */
+    delayMs(5);
+
+    assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 }
 
 /******************************************************************/
@@ -300,11 +289,10 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
 
     // Yay, we are done.
 
-    // Power down
-    powerDown();
-
     // Flush buffers (Is this a relic of past experimentation, and not needed anymore??)
     flush_tx();
+
+    // setPowerState(false);
 
     return (result);
 }
@@ -560,7 +548,7 @@ bool nRF24L01::testRPD(void) {
     return ((bool)rpd);
 }
 
-void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
+void nRF24L01::setPowerLevel(RF24_PowerLevel_t level) {
     uint8_t rf_setup = read_register(nRF24L01_MemoryMap_t::RF_SETUP);
 
     switch (level) {
@@ -587,7 +575,7 @@ void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
     assert(rf_setup == read_register(nRF24L01_MemoryMap_t::RF_SETUP));
 }
 
-RF24_PowerLevel_t nRF24L01::getPALevel(void) {
+RF24_PowerLevel_t nRF24L01::getPowerLevel(void) {
     uint8_t rfSetup = read_register(nRF24L01_MemoryMap_t::RF_SETUP);
 
     bitwiseAND_r(rfSetup, RF_PWR_MASK);

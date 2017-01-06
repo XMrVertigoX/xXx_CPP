@@ -1,17 +1,3 @@
-/*
- * Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published
- * by the Free Software Foundation.
- */
-
-/**
- * @file RF24.h
- *
- * Class declaration for RF24 and helper enums
- */
-
 #ifndef NRF24L01_HPP_
 #define NRF24L01_HPP_
 
@@ -23,14 +9,8 @@
 
 using namespace xXx;
 
-/**
- * Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
- */
-
 class nRF24L01 {
   private:
-    /* 2Mbs data rate in use? */
-    //    bool wide_band;
     /* False for RF24L01 and true for RF24L01P */
     bool p_variant;
     /**< Fixed size of payloads */
@@ -50,6 +30,7 @@ class nRF24L01 {
 
     uint8_t transmit(uint8_t command, uint8_t const txBytes[],
                      uint8_t rxBytes[], size_t numBytes);
+    void resetIRQ();
 
   protected:
     /**
@@ -401,7 +382,7 @@ class nRF24L01 {
    *
    * @param level Desired PA level.
    */
-    void setPALevel(RF24_PowerLevel_t level);
+    void setPowerLevel(RF24_PowerLevel_t level);
 
     /**
    * Fetches the current PA level.
@@ -411,7 +392,7 @@ class nRF24L01 {
    * by the enum mnemonics are negative dBm. See setPALevel for
    * return value descriptions.
    */
-    RF24_PowerLevel_t getPALevel(void);
+    RF24_PowerLevel_t getPowerLevel(void);
 
     /**
    * Set the transmission data rate
@@ -461,19 +442,11 @@ class nRF24L01 {
     //    void printDetails(void);
 
     /**
-   * Enter low-power mode
-   *
-   * To return to normal power mode, either write() some data or
-   * startListening, or powerUp().
-   */
-    void powerDown(void);
-
-    /**
    * Leave low-power mode - making radio more responsive
    *
    * To return to low power mode, call powerDown().
    */
-    void powerUp(void);
+    void setPowerState(bool enable);
 
     /**
    * Test whether there are bytes available to be read
@@ -565,20 +538,6 @@ class nRF24L01 {
    * @return true if signal => -64dBm, false if not
    */
     bool testRPD(void);
-
-    /**
-   * Test whether this is a real radio, or a mock shim for
-   * debugging.  Setting either pin to 0xff is the way to
-   * indicate that this is not a real radio.
-   *
-   * @return true if this is a legitimate radio
-   */
-    bool isValid() {
-        // Todo: return (ce_pin != 0xff && csn_pin != 0xff);
-        return (true);
-    }
-
-    /**@}*/
 };
 
 #endif // NRF24L01_HPP_

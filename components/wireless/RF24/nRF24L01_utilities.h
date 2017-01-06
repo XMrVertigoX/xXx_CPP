@@ -1,6 +1,8 @@
 #ifndef NRF24L01_UTILITIES_H_
 #define NRF24L01_UTILITIES_H_
 
+#include <xXx/components/wireless/RF24/nRF24L01_constants.hpp>
+
 static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
     return (byte & mask);
 }
@@ -43,6 +45,14 @@ static inline void shiftLeft_r(uint8_t &byte, uint8_t amount) {
 
 static inline void shiftRight_r(uint8_t &byte, uint8_t amount) {
     byte >>= amount;
+}
+
+static inline uint8_t __castCMD(nRF24L01_Command_t command) {
+    return (static_cast<uint8_t>(command));
+}
+
+static inline uint8_t __castMEM(nRF24L01_MemoryMap_t command) {
+    return (static_cast<uint8_t>(command));
 }
 
 #endif /* NRF24L01_UTILITIES_H_ */
