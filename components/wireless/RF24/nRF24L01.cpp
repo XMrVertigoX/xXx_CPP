@@ -47,35 +47,36 @@ uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
     return (status);
 }
 
-uint8_t nRF24L01::read_register(uint8_t reg, uint8_t bytes[],
+uint8_t nRF24L01::read_register(uint8_t address, uint8_t bytes[],
                                 uint8_t numBytes) {
-    bitwiseAND_r(reg, RF24_Command_REGISTER_MASK);
-    bitwiseOR_r(reg, RF24_Command_R_REGISTER);
+    bitwiseAND_r(address, RF24_Command_REGISTER_MASK);
+    bitwiseOR_r(address, RF24_Command_R_REGISTER);
 
-    uint8_t status = transmit(reg, NULL, bytes, numBytes);
+    uint8_t status = transmit(address, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t nRF24L01::read_register(uint8_t reg) {
+uint8_t nRF24L01::read_register(uint8_t address) {
     uint8_t result;
-    read_register(reg, &result, 1);
+
+    read_register(address, &result, 1);
 
     return (result);
 }
 
-uint8_t nRF24L01::write_register(uint8_t reg, uint8_t bytes[],
-                                 uint8_t numBytes) {
-    bitwiseAND_r(reg, RF24_Command_REGISTER_MASK);
-    bitwiseOR_r(reg, RF24_Command_W_REGISTER);
+uint8_t nRF24L01::write_register(uint8_t address, uint8_t bytes[],
+                                uint8_t numBytes) {
+    bitwiseAND_r(address, RF24_Command_REGISTER_MASK);
+    bitwiseOR_r(address, RF24_Command_W_REGISTER);
 
-    uint8_t status = transmit(reg, bytes, NULL, numBytes);
+    uint8_t status = transmit(address, bytes, NULL, numBytes);
 
     return (status);
 }
 
-void nRF24L01::write_register(uint8_t reg, uint8_t value) {
-    write_register(reg, &value, 1);
+void nRF24L01::write_register(uint8_t address, uint8_t value) {
+    write_register(address, &value, 1);
 }
 
 uint8_t nRF24L01::write_payload(const uint8_t *buf, uint8_t len) {
@@ -220,7 +221,7 @@ void nRF24L01::startListening(void) {
     // Restore the pipe0 adddress, if exists
     if (pipe0_reading_address)
         write_register(RF24_MM_RX_ADDR_P0,
-                       reinterpret_cast<uint8_t *>(&pipe0_reading_address), 5);
+                      reinterpret_cast<uint8_t *>(&pipe0_reading_address), 5);
 
     // Flush buffers
     flush_rx();
@@ -404,10 +405,10 @@ void nRF24L01::openReadingPipe(uint8_t child, uint64_t address) {
         // For pipes 2-5, only write the LSB
         if (child < 2)
             write_register(pgm_read_byte(&child_pipe[child]),
-                           reinterpret_cast<uint8_t *>(&address), 5);
+                          reinterpret_cast<uint8_t *>(&address), 5);
         else
             write_register(pgm_read_byte(&child_pipe[child]),
-                           reinterpret_cast<uint8_t *>(&address), 1);
+                          reinterpret_cast<uint8_t *>(&address), 1);
 
         write_register(pgm_read_byte(&child_payload_size[child]), payload_size);
 
@@ -645,10 +646,10 @@ RF24_DataRate_t nRF24L01::getDataRate(void) {
 /*
  * TODO: This function also enables CRC!
  */
-void nRF24L01::setCRCLength(RF24_CRC_t length) {
+void nRF24L01::setCRCLength(RF24_CRC_t crc) {
     uint8_t config = read_register(RF24_MM_CONFIG);
 
-    switch (length) {
+    switch (crc) {
         case RF24_CRC_DISABLED: {
             clearBit_r(config, RF24_Config_EN_CRC);
         } break;
@@ -662,10 +663,13 @@ void nRF24L01::setCRCLength(RF24_CRC_t length) {
         } break;
         default: break;
     }
+
+    // TODO: Can this cause Timing issues?
+    assert(config == read_register(RF24_MM_CONFIG));
 }
 
 /*
- * TODO: This function also checks whether CRC is enables or not.
+ * TODO: This function also checks whether CRC is enabled or not.
  */
 RF24_CRC_t nRF24L01::getCRCLength(void) {
     uint8_t config = read_register(RF24_MM_CONFIG);
@@ -682,11 +686,18 @@ RF24_CRC_t nRF24L01::getCRCLength(void) {
 }
 
 void nRF24L01::setRetries(uint8_t delay, uint8_t count) {
+    uint8_t data;
+
     bitwiseAND_r(delay, 0xf);
     shiftLeft_r(delay, RF24_SETUP_RETR_ARD);
 
     bitwiseAND_r(count, 0xf);
     shiftLeft_r(count, RF24_SETUP_RETR_ARC);
 
-    write_register(RF24_MM_SETUP_RETR, (delay | count));
+    data = bitwiseOR(delay, count);
+
+    write_register(RF24_MM_SETUP_RETR, data);
+
+    // TODO: Can this cause Timing issues?
+    assert(data == read_register(RF24_MM_SETUP_RETR));
 }
