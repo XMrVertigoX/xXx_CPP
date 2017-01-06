@@ -382,7 +382,9 @@ void nRF24L01::openWritingPipe(uint64_t value) {
     write_register(RF24_MM_RX_ADDR_P0, reinterpret_cast<uint8_t *>(&value), 5);
     write_register(RF24_MM_TX_ADDR, reinterpret_cast<uint8_t *>(&value), 5);
 
+    // TODO: GET RID OF THIS CONSTANT!
     const uint8_t max_payload_size = 32;
+
     write_register(RF24_MM_RX_PW_P0, min(payload_size, max_payload_size));
 }
 
@@ -676,10 +678,10 @@ RF24_CRC_t nRF24L01::getCRCLength(void) {
 
 void nRF24L01::setRetries(uint8_t delay, uint8_t count) {
     bitwiseAND_r(count, 0xf);
-    shiftLeft(count, RF24_SETUP_RETR_ARC);
+    shiftLeft_r(count, RF24_SETUP_RETR_ARC);
 
     bitwiseAND_r(delay, 0xf);
-    shiftLeft(count, RF24_SETUP_RETR_ARD);
+    shiftLeft_r(count, RF24_SETUP_RETR_ARD);
 
     write_register(RF24_MM_SETUP_RETR, (count | delay));
 }
