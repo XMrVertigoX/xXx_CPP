@@ -155,53 +155,71 @@ uint8_t nRF24L01::getPayloadSize(void) {
 void nRF24L01::begin(void) {
     _ce.clear();
 
-    // Must allow the radio time to settle else configuration bits will not necessarily stick.
-    // This is actually only required following power up but some settling time also appears to
-    // be required after resets too. For full coverage, we'll always assume the worst.
-    // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
-    // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
-    // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
+    /*
+     * Must allow the radio time to settle else configuration bits will not
+     * necessarily stick. This is actually only required following power up but
+     * some settling time also appears to be required after resets too. For
+     * full coverage, we'll always assume the worst. Enabling 16b CRC is by far
+     * the most obvious case if the wrong timing is used - or skipped. Enabling
+     * 16b CRC is by far the most obvious case if the wrong timing is used - or
+     * skipped. Technically we require 4.5ms + 14us as a worst case. We'll just
+     * call it 5ms for good measure.
+     *
+     * WARNING: Delay is based on P-variant whereby non-P *may* require
+     * different timing.
+     */
     delayMs(5);
 
-    // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
-    // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
-    // sizes must never be used. See documentation for a more complete explanation.
-    write_register(RF24_MM_SETUP_RETR, (0b0100 << RF24_SETUP_RETR_ARD) |
-                                           (0b1111 << RF24_SETUP_RETR_ARC));
-
-    // Restore our default PA level
-    setPALevel(RF24_PA_0dBm);
+    /*
+     * Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make
+     * testing a little easier.
+     *
+     * WARNING: If this is ever lowered, either 250KBS mode with AA is broken
+     * or maximum packet sizes must never be used. See documentation for a more
+     * complete explanation.
+     */
+    setRetries(0b0100, 0b1111);
 
     // Determine if this is a p or non-p RF24 module and then
     // reset our data rate back to default value. This works
     // because a non-P variant won't allow the data rate to
     // be set to 250Kbps.
-    if (setDataRate(RF24_250KBPS)) {
-        p_variant = true;
-    }
+    // if (setDataRate(RF24_250KBPS)) {
+    //     p_variant = true;
+    // }
 
     // Then set the data rate to the slowest (and most reliable) speed supported by all
     // hardware.
-    setDataRate(RF24_1MBPS);
+    // setDataRate(RF24_1MBPS);
 
     // Initialize CRC and request 2-byte (16bit) CRC
-    setCRCLength(RF24_CRC_16);
+    // setCRCLength(RF24_CRC_16);
 
-    // Disable dynamic payloads, to match dynamic_payloads_enabled setting
-    write_register(RF24_MM_DYNPD, 0);
+    /*
+     * Disable dynamic payloads, to match dynamic_payloads_enabled setting
+     * TODO: Not necessary, is default
+     */
+    // write_register(RF24_MM_DYNPD, 0);
 
     // Reset current status
     // Notice reset and flush is the last thing we do
-    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+    //    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
 
-    // Set up default configuration.  Callers can always change it later.
-    // This channel should be universally safe and not bleed over into adjacent
-    // spectrum.
-    setChannel(76);
+    /*
+     * Set up default configuration.  Callers can always change it later.
+     * This channel should be universally safe and not bleed over into adjacent
+     * spectrum.
+     *
+     * XXX: We use the default for the moment.
+     */
+    // setChannel(76);
 
-    // Flush buffers
-    flush_rx();
-    flush_tx();
+    /*
+     * Flush buffers
+     * TODO: Why?
+     */
+    // flush_rx();
+    // flush_tx();
 }
 
 void nRF24L01::startListening(void) {
