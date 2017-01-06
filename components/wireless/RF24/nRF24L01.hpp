@@ -93,7 +93,7 @@ class nRF24L01 {
    * @param len How many bytes of data to transfer
    * @return Current value of status register
    */
-    uint8_t read_register(uint8_t reg, uint8_t *buf, uint8_t len);
+    uint8_t read_register(RF24_MemoryMap reg, uint8_t *buf, uint8_t len);
 
     /**
    * Read single byte from a register
@@ -101,7 +101,7 @@ class nRF24L01 {
    * @param reg Which register. Use constants from nRF24L01.h
    * @return Current value of register @p reg
    */
-    uint8_t read_register(uint8_t reg);
+    uint8_t read_register(RF24_MemoryMap reg);
 
     /**
    * Write a chunk of data to a register
@@ -111,7 +111,7 @@ class nRF24L01 {
    * @param len How many bytes of data to transfer
    * @return Current value of status register
    */
-    uint8_t write_register(uint8_t reg, uint8_t *buf, uint8_t len);
+    uint8_t write_register(RF24_MemoryMap reg, uint8_t const *buf, uint8_t len);
 
     /**
    * Write a single byte to a register
@@ -119,7 +119,7 @@ class nRF24L01 {
    * @param reg Which register. Use constants from nRF24L01.h
    * @param value The new value to write
    */
-    void write_register(uint8_t reg, uint8_t value);
+    void write_register(RF24_MemoryMap reg, uint8_t value);
 
     /**
    * Write the transmit payload

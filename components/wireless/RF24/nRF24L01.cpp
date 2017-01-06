@@ -9,14 +9,22 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
-#define CAST(x) static_cast<uint8_t>(x)
+static inline uint8_t __castCMD(RF24_Command command) {
+    return (static_cast<uint8_t>(command));
+}
 
-static const uint8_t child_pipe[] = {RF24_MM_RX_ADDR_P0, RF24_MM_RX_ADDR_P1,
-                                     RF24_MM_RX_ADDR_P2, RF24_MM_RX_ADDR_P3,
-                                     RF24_MM_RX_ADDR_P4, RF24_MM_RX_ADDR_P5};
-static const uint8_t child_payload_size[] = {
-    RF24_MM_RX_PW_P0, RF24_MM_RX_PW_P1, RF24_MM_RX_PW_P2,
-    RF24_MM_RX_PW_P3, RF24_MM_RX_PW_P4, RF24_MM_RX_PW_P5};
+static inline uint8_t __castMEM(RF24_MemoryMap command) {
+    return (static_cast<uint8_t>(command));
+}
+
+static const RF24_MemoryMap child_pipe[] = {
+    RF24_MemoryMap::RX_ADDR_P0, RF24_MemoryMap::RX_ADDR_P1,
+    RF24_MemoryMap::RX_ADDR_P2, RF24_MemoryMap::RX_ADDR_P3,
+    RF24_MemoryMap::RX_ADDR_P4, RF24_MemoryMap::RX_ADDR_P5};
+static const RF24_MemoryMap child_payload_size[] = {
+    RF24_MemoryMap::RX_PW_P0, RF24_MemoryMap::RX_PW_P1,
+    RF24_MemoryMap::RX_PW_P2, RF24_MemoryMap::RX_PW_P3,
+    RF24_MemoryMap::RX_PW_P4, RF24_MemoryMap::RX_PW_P5};
 static const uint8_t child_pipe_enable[] = {RF24_ERX_P0, RF24_ERX_P1,
                                             RF24_ERX_P2, RF24_ERX_P3,
                                             RF24_ERX_P4, RF24_ERX_P5};
@@ -47,17 +55,17 @@ uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
     return (status);
 }
 
-uint8_t nRF24L01::read_register(uint8_t address, uint8_t bytes[],
+uint8_t nRF24L01::read_register(RF24_MemoryMap address, uint8_t bytes[],
                                 uint8_t numBytes) {
-    bitwiseAND_r(address, RF24_Command_REGISTER_MASK);
-    bitwiseOR_r(address, RF24_Command_R_REGISTER);
+    uint8_t command =
+        bitwiseOR(__castCMD(RF24_Command::R_REGISTER), __castMEM(address));
 
-    uint8_t status = transmit(address, NULL, bytes, numBytes);
+    uint8_t status = transmit(command, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t nRF24L01::read_register(uint8_t address) {
+uint8_t nRF24L01::read_register(RF24_MemoryMap address) {
     uint8_t result;
 
     read_register(address, &result, 1);
@@ -65,17 +73,16 @@ uint8_t nRF24L01::read_register(uint8_t address) {
     return (result);
 }
 
-uint8_t nRF24L01::write_register(uint8_t address, uint8_t bytes[],
-                                uint8_t numBytes) {
-    bitwiseAND_r(address, RF24_Command_REGISTER_MASK);
-    bitwiseOR_r(address, RF24_Command_W_REGISTER);
-
-    uint8_t status = transmit(address, bytes, NULL, numBytes);
+uint8_t nRF24L01::write_register(RF24_MemoryMap address, uint8_t const bytes[],
+                                 uint8_t numBytes) {
+    uint8_t command =
+        bitwiseOR(__castCMD(RF24_Command::W_REGISTER), __castMEM(address));
+    uint8_t status = transmit(command, bytes, NULL, numBytes);
 
     return (status);
 }
 
-void nRF24L01::write_register(uint8_t address, uint8_t value) {
+void nRF24L01::write_register(RF24_MemoryMap address, uint8_t value) {
     write_register(address, &value, 1);
 }
 
@@ -85,35 +92,35 @@ uint8_t nRF24L01::write_payload(const uint8_t *buf, uint8_t len) {
     uint8_t tempBuffer[payload_size] = {};
     memcpy(tempBuffer, buf, data_len);
 
-    uint8_t command = RF24_Command_W_TX_PAYLOAD;
+    uint8_t command = __castCMD(RF24_Command::W_TX_PAYLOAD);
     uint8_t status  = transmit(command, tempBuffer, NULL, payload_size);
 
     return (status);
 }
 
 uint8_t nRF24L01::read_payload(uint8_t *buf, uint8_t len) {
-    uint8_t command = RF24_Command_R_RX_PAYLOAD;
+    uint8_t command = __castCMD(RF24_Command::R_RX_PAYLOAD);
     uint8_t status  = transmit(command, NULL, buf, min(len, payload_size));
 
     return (status);
 }
 
 uint8_t nRF24L01::flush_rx(void) {
-    uint8_t command = RF24_Command_FLUSH_RX;
+    uint8_t command = __castCMD(RF24_Command::FLUSH_RX);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t nRF24L01::flush_tx(void) {
-    uint8_t command = RF24_Command_FLUSH_TX;
+    uint8_t command = __castCMD(RF24_Command::FLUSH_TX);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
 uint8_t nRF24L01::getStatus(void) {
-    uint8_t command = RF24_Command_NOP;
+    uint8_t command = __castCMD(RF24_Command::NOP);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
@@ -131,7 +138,7 @@ void nRF24L01::setChannel(uint8_t channel) {
      * done in setChannel() to require certain channel spacing.
      */
     const uint8_t max_channel = 127;
-    write_register(RF24_MM_RF_CH, min(channel, max_channel));
+    write_register(RF24_MemoryMap::RF_CH, min(channel, max_channel));
 }
 
 void nRF24L01::setPayloadSize(uint8_t size) {
@@ -189,11 +196,11 @@ void nRF24L01::init(void) {
      * Disable dynamic payloads, to match dynamic_payloads_enabled setting
      * TODO: Not necessary, is default
      */
-    // write_register(RF24_MM_DYNPD, 0);
+    // write_register(RF24_MemoryMap::DYNPD, 0);
 
     // Reset current status
     // Notice reset and flush is the last thing we do
-    //    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+    //    write_register(RF24_MemoryMap::STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
 
     /*
      * Set up default configuration.  Callers can always change it later.
@@ -213,15 +220,19 @@ void nRF24L01::init(void) {
 }
 
 void nRF24L01::startListening(void) {
-    write_register(RF24_MM_CONFIG, read_register(RF24_MM_CONFIG) |
-                                       _BV(RF24_Config_PWR_UP) |
-                                       _BV(RF24_Config_PRIM_RX));
-    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
+
+    setBit_r(config, RF24_Config_PWR_UP);
+    setBit_r(config, RF24_Config_PRIM_RX);
+
+    write_register(RF24_MemoryMap::CONFIG, config);
+    write_register(RF24_MemoryMap::STATUS,
+                   _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
 
     // Restore the pipe0 adddress, if exists
     if (pipe0_reading_address)
-        write_register(RF24_MM_RX_ADDR_P0,
-                      reinterpret_cast<uint8_t *>(&pipe0_reading_address), 5);
+        write_register(RF24_MemoryMap::RX_ADDR_P0,
+                       reinterpret_cast<uint8_t *>(&pipe0_reading_address), 5);
 
     // Flush buffers
     flush_rx();
@@ -241,15 +252,15 @@ void nRF24L01::stopListening(void) {
 }
 
 void nRF24L01::powerDown(void) {
-    uint8_t config = read_register(RF24_MM_CONFIG);
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
     clearBit_r(config, RF24_Config_PWR_UP);
-    write_register(RF24_MM_CONFIG, config);
+    write_register(RF24_MemoryMap::CONFIG, config);
 }
 
 void nRF24L01::powerUp(void) {
-    uint8_t config = read_register(RF24_MM_CONFIG);
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
     setBit_r(config, RF24_Config_PWR_UP);
-    write_register(RF24_MM_CONFIG, config);
+    write_register(RF24_MemoryMap::CONFIG, config);
 }
 
 /******************************************************************/
@@ -276,7 +287,7 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     uint32_t sent_at       = getMillis();
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
-        // status = read_register(RF24_MM_OBSERVE_TX, &observe_tx, 1);
+        // status = read_register(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
         status = getStatus();
     } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
              (getMillis() - sent_at < timeout));
@@ -312,10 +323,13 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
 }
 
 void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
-    // Transmitter power-up
-    write_register(RF24_MM_CONFIG,
-                   (read_register(RF24_MM_CONFIG) | _BV(RF24_Config_PWR_UP)) &
-                       ~_BV(RF24_Config_PRIM_RX));
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
+
+    setBit_r(config, RF24_Config_PWR_UP);
+    setBit_r(config, RF24_Config_PRIM_RX);
+
+    write_register(RF24_MemoryMap::CONFIG, config);
+
     delayUs(150);
 
     // Send the payload
@@ -328,10 +342,9 @@ void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
 }
 
 uint8_t nRF24L01::getDynamicPayloadSize(void) {
-
-    uint8_t command = RF24_Command_R_RX_PL_WID;
     uint8_t result;
-    uint8_t status = transmit(command, NULL, &result, 1);
+
+    transmit(__castCMD(RF24_Command::R_RX_PL_WID), NULL, &result, 1);
 
     return (result);
 }
@@ -340,6 +353,7 @@ bool nRF24L01::available(void) {
     return (available(NULL));
 }
 
+// XXX
 bool nRF24L01::available(uint8_t *pipe_num) {
     uint8_t status = getStatus();
 
@@ -357,11 +371,11 @@ bool nRF24L01::available(uint8_t *pipe_num) {
         // ??? Should this REALLY be cleared now?  Or wait until we
         // actually READ the payload?
 
-        write_register(RF24_MM_STATUS, _BV(RX_DR));
+        write_register(RF24_MemoryMap::STATUS, _BV(RX_DR));
 
         // Handle ack payload receipt
         if (status & _BV(TX_DS)) {
-            write_register(RF24_MM_STATUS, _BV(TX_DS));
+            write_register(RF24_MemoryMap::STATUS, _BV(TX_DS));
         }
     }
 
@@ -369,32 +383,39 @@ bool nRF24L01::available(uint8_t *pipe_num) {
 }
 
 bool nRF24L01::read(uint8_t *buf, uint8_t len) {
+    uint8_t fifo_status = read_register(RF24_MemoryMap::FIFO_STATUS);
+
     // Fetch the payload
     read_payload(buf, len);
 
-    // was this the last of the data available?
-    return (read_register(RF24_MM_FIFO_STATUS) & _BV(RX_EMPTY));
+    // Was this the last of the data available?
+    return (readBit(fifo_status, RX_EMPTY));
 }
 
+// XXX
 void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
     uint8_t status = getStatus();
-    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
 
-    // Report to the user what happened
+    // Clear flags
+    write_register(RF24_MemoryMap::STATUS,
+                   _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+
     tx_ok    = status & _BV(TX_DS);
     tx_fail  = status & _BV(MAX_RT);
     rx_ready = status & _BV(RX_DR);
 }
 
 void nRF24L01::openWritingPipe(uint64_t address) {
-    // TODO: Check if order is correct
     uint8_t *addressArray = reinterpret_cast<uint8_t *>(&address);
 
-    write_register(RF24_MM_RX_ADDR_P0, addressArray, max_address_length);
-    write_register(RF24_MM_TX_ADDR, addressArray, max_address_length);
-    write_register(RF24_MM_RX_PW_P0, min(payload_size, max_payload_size));
+    write_register(RF24_MemoryMap::RX_ADDR_P0, addressArray,
+                   max_address_length);
+    write_register(RF24_MemoryMap::TX_ADDR, addressArray, max_address_length);
+    write_register(RF24_MemoryMap::RX_PW_P0,
+                   min(payload_size, max_payload_size));
 }
 
+// XXX
 void nRF24L01::openReadingPipe(uint8_t child, uint64_t address) {
     // If this is pipe 0, cache the address.  This is needed because
     // openWritingPipe() will overwrite the pipe 0 address, so
@@ -405,109 +426,126 @@ void nRF24L01::openReadingPipe(uint8_t child, uint64_t address) {
         // For pipes 2-5, only write the LSB
         if (child < 2)
             write_register(pgm_read_byte(&child_pipe[child]),
-                          reinterpret_cast<uint8_t *>(&address), 5);
+                           reinterpret_cast<uint8_t *>(&address), 5);
         else
             write_register(pgm_read_byte(&child_pipe[child]),
-                          reinterpret_cast<uint8_t *>(&address), 1);
+                           reinterpret_cast<uint8_t *>(&address), 1);
 
         write_register(pgm_read_byte(&child_payload_size[child]), payload_size);
 
         // Note it would be more efficient to set all of the bits for all open
         // pipes at once.  However, I thought it would make the calling code
         // more simple to do it this way.
-        write_register(RF24_MM_EN_RXADDR,
-                       read_register(RF24_MM_EN_RXADDR) |
-                           _BV(pgm_read_byte(&child_pipe_enable[child])));
+        uint8_t en_rxaddr = read_register(RF24_MemoryMap::EN_RXADDR);
+
+        setBit_r(en_rxaddr, pgm_read_byte(&child_pipe_enable[child]));
+        write_register(RF24_MemoryMap::EN_RXADDR, en_rxaddr);
     }
 }
 
+// TODO: Find in data sheet
 void nRF24L01::toggle_features(void) {
-    uint8_t command = RF24_Command_ACTIVATE;
-    uint8_t foo     = 0x73;
-    uint8_t result;
-    uint8_t status = transmit(command, &foo, NULL, 1);
+    // uint8_t command = RF24_Command_ACTIVATE;
+    // uint8_t foo     = 0x73;
+    // uint8_t result;
+    // uint8_t status = transmit(command, &foo, NULL, 1);
 }
 
+// XXX
 void nRF24L01::enableDynamicPayloads(void) {
     // Enable dynamic payload throughout the system
-    write_register(RF24_MM_FEATURE,
-                   read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
+    uint8_t feature = read_register(RF24_MemoryMap::FEATURE);
+    setBit_r(feature, EN_DPL);
+    write_register(RF24_MemoryMap::FEATURE, feature);
 
     // If it didn't work, the features are not enabled
-    if (!read_register(RF24_MM_FEATURE)) {
+    if (!read_register(RF24_MemoryMap::FEATURE)) {
         // So enable them and try again
         toggle_features();
-        write_register(RF24_MM_FEATURE,
-                       read_register(RF24_MM_FEATURE) | _BV(EN_DPL));
+        read_register(RF24_MemoryMap::FEATURE);
+        setBit_r(feature, EN_DPL);
+        write_register(RF24_MemoryMap::FEATURE, feature);
     }
-
-    LOG("FEATURE=%i\r\n", read_register(RF24_MM_FEATURE));
 
     // Enable dynamic payload on all pipes
     //
     // Not sure the use case of only having dynamic payload on certain
     // pipes, so the library does not support it.
-    write_register(RF24_MM_DYNPD, read_register(RF24_MM_DYNPD) | _BV(DPL_P5) |
-                                      _BV(DPL_P4) | _BV(DPL_P3) | _BV(DPL_P2) |
-                                      _BV(DPL_P1) | _BV(DPL_P0));
+    uint8_t dynpd = read_register(RF24_MemoryMap::DYNPD);
+    setBit_r(dynpd, DPL_P0);
+    setBit_r(dynpd, DPL_P1);
+    setBit_r(dynpd, DPL_P2);
+    setBit_r(dynpd, DPL_P3);
+    setBit_r(dynpd, DPL_P4);
+    setBit_r(dynpd, DPL_P5);
+    write_register(RF24_MemoryMap::DYNPD, dynpd);
 
     dynamic_payloads_enabled = true;
 }
 
+// XXX
 void nRF24L01::enableAckPayload(void) {
     //
     // enable ack payload and dynamic payload features
     //
-
-    write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) |
-                                        _BV(EN_ACK_PAY) | _BV(EN_DPL));
+    uint8_t feature = read_register(RF24_MemoryMap::FEATURE);
+    setBit_r(feature, EN_ACK_PAY);
+    setBit_r(feature, EN_DPL);
+    write_register(RF24_MemoryMap::FEATURE, feature);
 
     // If it didn't work, the features are not enabled
-    if (!read_register(RF24_MM_FEATURE)) {
+    if (!read_register(RF24_MemoryMap::FEATURE)) {
         // So enable them and try again
         toggle_features();
-        write_register(RF24_MM_FEATURE, read_register(RF24_MM_FEATURE) |
-                                            _BV(EN_ACK_PAY) | _BV(EN_DPL));
+        read_register(RF24_MemoryMap::FEATURE);
+        setBit_r(feature, EN_ACK_PAY);
+        setBit_r(feature, EN_DPL);
+        write_register(RF24_MemoryMap::FEATURE, feature);
     }
 
-    LOG("FEATURE=%i\r\n", read_register(RF24_MM_FEATURE));
+    LOG("FEATURE=%i\r\n", read_register(RF24_MemoryMap::FEATURE));
 
     //
     // Enable dynamic payload on pipes 0 & 1
     //
-
-    write_register(RF24_MM_DYNPD,
-                   read_register(RF24_MM_DYNPD) | _BV(DPL_P1) | _BV(DPL_P0));
+    uint8_t dynpd = read_register(RF24_MemoryMap::DYNPD);
+    setBit_r(dynpd, DPL_P0);
+    setBit_r(dynpd, DPL_P1);
+    write_register(RF24_MemoryMap::DYNPD, dynpd);
 }
 
+// XXX
 void nRF24L01::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
     uint8_t data_len = min(len, max_payload_size);
-    uint8_t command  = RF24_Command_W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t command  = __castCMD(RF24_Command::W_ACK_PAYLOAD) | (pipe & 0b111);
     uint8_t status   = transmit(command, buf, NULL, data_len);
 }
 
+// XXX
 bool nRF24L01::isAckPayloadAvailable(void) {
     bool result           = ack_payload_available;
     ack_payload_available = false;
     return (result);
 }
 
+// XXX
 bool nRF24L01::isPVariant(void) {
     return (p_variant);
 }
 
+// XXX
 void nRF24L01::setAutoAck(bool enable) {
     if (enable)
-        write_register(RF24_MM_EN_AA, 0b111111);
+        write_register(RF24_MemoryMap::EN_AA, 0b111111);
     else
-        write_register(RF24_MM_EN_AA, 0);
+        write_register(RF24_MemoryMap::EN_AA, 0);
 }
 
 /*
  * TODO: Use enum for pipes
  */
 void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
-    uint8_t en_aa = read_register(RF24_MM_EN_AA);
+    uint8_t en_aa = read_register(RF24_MemoryMap::EN_AA);
 
     if (pipe >= 6) {
         return;
@@ -519,21 +557,22 @@ void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
         en_aa &= ~_BV(pipe);
     }
 
-    write_register(RF24_MM_EN_AA, en_aa);
+    write_register(RF24_MemoryMap::EN_AA, en_aa);
 }
 
+// XXX
 bool nRF24L01::testCarrier(void) {
-    return (read_register(RF24_MM_CD) & 1);
+    return (read_register(RF24_MemoryMap::CD) & 1);
 }
 
+// XXX
 bool nRF24L01::testRPD(void) {
-    return (read_register(RPD) & 1);
+    return (read_register(RF24_MemoryMap::RPD) & 1);
 }
 
 void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
-    uint8_t rf_setup = read_register(RF24_MM_RF_SETUP);
+    uint8_t rf_setup = read_register(RF24_MemoryMap::RF_SETUP);
 
-    // TODO: Set masks at once
     switch (level) {
         case RF24_PA_18dBm: {
             clearBit_r(rf_setup, RF_PWR_LOW);
@@ -553,11 +592,14 @@ void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
         } break;
     }
 
-    write_register(RF24_MM_RF_SETUP, rf_setup);
+    write_register(RF24_MemoryMap::RF_SETUP, rf_setup);
+
+    // TODO: Can this cause Timing issues?
+    assert(rf_setup == read_register(RF24_MemoryMap::RF_SETUP));
 }
 
 RF24_PowerLevel_t nRF24L01::getPALevel(void) {
-    uint8_t rfSetup = read_register(RF24_MM_RF_SETUP);
+    uint8_t rfSetup = read_register(RF24_MemoryMap::RF_SETUP);
 
     // TODO: Use macros instead of magic numbers!
     bitwiseAND_r(rfSetup, 0b00000110);
@@ -566,9 +608,10 @@ RF24_PowerLevel_t nRF24L01::getPALevel(void) {
     return ((RF24_PowerLevel_t)rfSetup);
 }
 
+// XXX
 bool nRF24L01::setDataRate(RF24_DataRate_t speed) {
     bool result     = false;
-    uint8_t rfSetup = read_register(RF24_MM_RF_SETUP);
+    uint8_t rfSetup = read_register(RF24_MemoryMap::RF_SETUP);
 
     // // HIGH and LOW '00' is 1Mbs - our default
     // wide_band = false;
@@ -611,14 +654,14 @@ bool nRF24L01::setDataRate(RF24_DataRate_t speed) {
         } break;
     }
 
-    write_register(RF24_MM_RF_SETUP, rfSetup);
+    write_register(RF24_MemoryMap::RF_SETUP, rfSetup);
 
     /*
      * Verify our result
      *
      * TODO: Necessary?
      */
-    if (read_register(RF24_MM_RF_SETUP) == rfSetup) {
+    if (read_register(RF24_MemoryMap::RF_SETUP) == rfSetup) {
         result = true;
     } else {
         wide_band = false;
@@ -628,7 +671,7 @@ bool nRF24L01::setDataRate(RF24_DataRate_t speed) {
 }
 
 RF24_DataRate_t nRF24L01::getDataRate(void) {
-    uint8_t rfSetup = read_register(RF24_MM_RF_SETUP);
+    uint8_t rfSetup = read_register(RF24_MemoryMap::RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
         return (RF24_250KBPS);
@@ -645,7 +688,7 @@ RF24_DataRate_t nRF24L01::getDataRate(void) {
  * TODO: This function also enables CRC!
  */
 void nRF24L01::setCRCLength(RF24_CRC_t crc) {
-    uint8_t config = read_register(RF24_MM_CONFIG);
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
 
     switch (crc) {
         case RF24_CRC_DISABLED: {
@@ -663,14 +706,14 @@ void nRF24L01::setCRCLength(RF24_CRC_t crc) {
     }
 
     // TODO: Can this cause Timing issues?
-    assert(config == read_register(RF24_MM_CONFIG));
+    assert(config == read_register(RF24_MemoryMap::CONFIG));
 }
 
 /*
  * TODO: This function also checks whether CRC is enabled or not.
  */
 RF24_CRC_t nRF24L01::getCRCLength(void) {
-    uint8_t config = read_register(RF24_MM_CONFIG);
+    uint8_t config = read_register(RF24_MemoryMap::CONFIG);
 
     if (!readBit(config, RF24_Config_EN_CRC)) {
         return (RF24_CRC_DISABLED);
@@ -694,8 +737,8 @@ void nRF24L01::setRetries(uint8_t delay, uint8_t count) {
 
     data = bitwiseOR(delay, count);
 
-    write_register(RF24_MM_SETUP_RETR, data);
+    write_register(RF24_MemoryMap::SETUP_RETR, data);
 
     // TODO: Can this cause Timing issues?
-    assert(data == read_register(RF24_MM_SETUP_RETR));
+    assert(data == read_register(RF24_MemoryMap::SETUP_RETR));
 }
