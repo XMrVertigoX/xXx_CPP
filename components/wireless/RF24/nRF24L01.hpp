@@ -16,7 +16,7 @@
 #define NRF24L01_HPP_
 
 #include <xXx/components/wireless/RF24/nRF24L01_config.h>
-#include <xXx/components/wireless/RF24/nRF24L01_types.h>
+#include <xXx/components/wireless/RF24/nRF24L01_constants.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
