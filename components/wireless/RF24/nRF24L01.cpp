@@ -9,6 +9,8 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
+static const uint8_t dummy = 0xFF;
+
 static inline uint8_t __castCMD(nRF24L01_Command_t command) {
     return (static_cast<uint8_t>(command));
 }
@@ -146,7 +148,7 @@ void nRF24L01::setChannel(uint8_t channel) {
 }
 
 void nRF24L01::setPayloadSize(uint8_t size) {
-    payload_size = min(size, max_payload_size);
+    payload_size = min(size, maxPayloadSize);
 }
 
 uint8_t nRF24L01::getPayloadSize(void) {
@@ -181,26 +183,7 @@ void nRF24L01::init(void) {
      */
     setRetries(0b0100, 0b1111);
 
-    // Determine if this is a p or non-p RF24 module and then
-    // reset our data rate back to default value. This works
-    // because a non-P variant won't allow the data rate to
-    // be set to 250Kbps.
-    // if (setDataRate(RF24_250KBPS)) {
-    //     p_variant = true;
-    // }
-
-    // Then set the data rate to the slowest (and most reliable) speed supported by all
-    // hardware.
-    // setDataRate(RF24_1MBPS);
-
-    // Initialize CRC and request 2-byte (16bit) CRC
-    // setCRCLength(RF24_CRC_16);
-
-    /*
-     * Disable dynamic payloads, to match dynamic_payloads_enabled setting
-     * TODO: Not necessary, is default
-     */
-    // write_register(RF24_MemoryMap::DYNPD, 0);
+    setCRCLength(RF24_CRC_16);
 
     // Reset current status
     // Notice reset and flush is the last thing we do
@@ -334,6 +317,8 @@ void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
 
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
 
+    assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
+
     delayUs(150);
 
     // Send the payload
@@ -410,14 +395,12 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
 }
 
 void nRF24L01::openWritingPipe(uint64_t address) {
-    uint8_t *addressArray = reinterpret_cast<uint8_t *>(&address);
-
-    write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, addressArray,
-                   max_address_length);
-    write_register(nRF24L01_MemoryMap_t::TX_ADDR, addressArray,
-                   max_address_length);
+    write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0,
+                   reinterpret_cast<uint8_t *>(&address), maxAddressLength);
+    write_register(nRF24L01_MemoryMap_t::TX_ADDR,
+                   reinterpret_cast<uint8_t *>(&address), maxAddressLength);
     write_register(nRF24L01_MemoryMap_t::RX_PW_P0,
-                   min(payload_size, max_payload_size));
+                   min(payload_size, maxPayloadSize));
 }
 
 // XXX
@@ -521,7 +504,7 @@ void nRF24L01::enableAckPayload(void) {
 
 // XXX
 void nRF24L01::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
-    uint8_t data_len = min(len, max_payload_size);
+    uint8_t data_len = min(len, maxPayloadSize);
     uint8_t command =
         __castCMD(nRF24L01_Command_t::W_ACK_PAYLOAD) | (pipe & 0b111);
     uint8_t status = transmit(command, buf, NULL, data_len);
@@ -534,12 +517,7 @@ bool nRF24L01::isAckPayloadAvailable(void) {
     return (result);
 }
 
-// XXX
-bool nRF24L01::isPVariant(void) {
-    return (p_variant);
-}
-
-// XXX
+// TODO: Split into two functions: enable and disable.
 void nRF24L01::setAutoAck(bool enable) {
     if (enable)
         write_register(nRF24L01_MemoryMap_t::EN_AA, 0b111111);
@@ -548,7 +526,7 @@ void nRF24L01::setAutoAck(bool enable) {
 }
 
 /*
- * TODO: Use enum for pipes
+ * TODO: Use enum for pipes, split into two functions
  */
 void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
     uint8_t en_aa = read_register(nRF24L01_MemoryMap_t::EN_AA);
@@ -564,16 +542,22 @@ void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
     }
 
     write_register(nRF24L01_MemoryMap_t::EN_AA, en_aa);
+
+    assert(en_aa == read_register(nRF24L01_MemoryMap_t::EN_AA));
 }
 
 // XXX
 bool nRF24L01::testCarrier(void) {
-    return (read_register(nRF24L01_MemoryMap_t::CD) & 1);
+    uint8_t rpd = read_register(nRF24L01_MemoryMap_t::CD);
+
+    return ((bool)rpd);
 }
 
 // XXX
 bool nRF24L01::testRPD(void) {
-    return (read_register(nRF24L01_MemoryMap_t::RPD) & 1);
+    uint8_t rpd = read_register(nRF24L01_MemoryMap_t::RPD);
+
+    return ((bool)rpd);
 }
 
 void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
@@ -600,57 +584,53 @@ void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
 
     write_register(nRF24L01_MemoryMap_t::RF_SETUP, rf_setup);
 
-    // TODO: Can this cause Timing issues?
     assert(rf_setup == read_register(nRF24L01_MemoryMap_t::RF_SETUP));
 }
 
 RF24_PowerLevel_t nRF24L01::getPALevel(void) {
     uint8_t rfSetup = read_register(nRF24L01_MemoryMap_t::RF_SETUP);
 
-    // TODO: Use macros instead of magic numbers!
-    bitwiseAND_r(rfSetup, 0b00000110);
+    bitwiseAND_r(rfSetup, RF_PWR_MASK);
     shiftRight_r(rfSetup, 1);
 
     return ((RF24_PowerLevel_t)rfSetup);
 }
 
-void nRF24L01::setDataRate(RF24_DataRate_t dataRate) {
+void nRF24L01::setDataRate(nRF24L01_DataRate_t dataRate) {
     uint8_t rfSetup = read_register(nRF24L01_MemoryMap_t::RF_SETUP);
 
     switch (dataRate) {
-        case RF24_1MBPS: {
+        case (nRF24L01_DataRate_t::SPEED_1MBPS): {
             clearBit_r(rfSetup, RF_DR_LOW);
             clearBit_r(rfSetup, RF_DR_HIGH);
         } break;
-        case RF24_2MBPS: {
+        case nRF24L01_DataRate_t::SPEED_2MBPS: {
             clearBit_r(rfSetup, RF_DR_LOW);
             setBit_r(rfSetup, RF_DR_HIGH);
         } break;
-        case RF24_250KBPS: {
+        case nRF24L01_DataRate_t::SPEED_250KBPS: {
             setBit_r(rfSetup, RF_DR_LOW);
             clearBit_r(rfSetup, RF_DR_HIGH);
         } break;
     }
-
-    bool result = false;
 
     write_register(nRF24L01_MemoryMap_t::RF_SETUP, rfSetup);
 
     assert(dataRate == getDataRate());
 }
 
-RF24_DataRate_t nRF24L01::getDataRate(void) {
+nRF24L01_DataRate_t nRF24L01::getDataRate(void) {
     uint8_t rfSetup = read_register(nRF24L01_MemoryMap_t::RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
-        return (RF24_250KBPS);
+        return (nRF24L01_DataRate_t::SPEED_250KBPS);
     }
 
     if (readBit(rfSetup, RF_DR_HIGH)) {
-        return (RF24_2MBPS);
+        return (nRF24L01_DataRate_t::SPEED_2MBPS);
     }
 
-    return (RF24_1MBPS);
+    return (nRF24L01_DataRate_t::SPEED_1MBPS);
 }
 
 /*
@@ -673,6 +653,8 @@ void nRF24L01::setCRCLength(RF24_CRC_t crc) {
         } break;
         default: break;
     }
+
+    write_register(nRF24L01_MemoryMap_t::CONFIG, config);
 
     assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 }

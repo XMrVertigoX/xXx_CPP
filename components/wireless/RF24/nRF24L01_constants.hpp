@@ -1,9 +1,8 @@
 #ifndef NRF24L01_CONSTANTS_HPP_
 #define NRF24L01_CONSTANTS_HPP_
 
-static const uint8_t max_payload_size   = 32;
-static const uint8_t max_address_length = 5;
-static const uint8_t dummy              = 0xFF;
+static const uint8_t maxPayloadSize   = 32;
+static const uint8_t maxAddressLength = 5;
 
 // TODO: Search in data sheet
 // #define RF24_Command_ACTIVATE  0x50
@@ -52,6 +51,21 @@ enum class nRF24L01_MemoryMap_t : uint8_t {
     FEATURE     = 0x1D
 };
 
+enum class nRF24L01_DataRate_t : uint8_t {
+    SPEED_1MBPS,
+    SPEED_2MBPS,
+    SPEED_250KBPS
+};
+
+enum RF24_CRC_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
+
+enum RF24_PowerLevel_t {
+    RF24_PA_18dBm,
+    RF24_PA_12dBm,
+    RF24_PA_6dBm,
+    RF24_PA_0dBm
+};
+
 enum RF24_Config_t {
     RF24_Config_PRIM_RX,
     RF24_Config_PWR_UP,
@@ -94,7 +108,7 @@ enum RF24_SETUP_RETR_t {
 /* Bit Mnemonics */
 #define PLL_LOCK      (4)
 #define RF_DR         (3)
-#define RF_PWR        (6)
+#define RF_PWR_MASK   (6)
 #define RX_DR         (6)
 #define TX_DS         (5)
 #define MAX_RT        (4)

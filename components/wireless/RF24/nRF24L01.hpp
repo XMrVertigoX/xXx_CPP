@@ -21,32 +21,6 @@
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
-/**
- * Power Amplifier level.
- *
- * For use with setPALevel()
- */
-enum RF24_PowerLevel_t {
-    RF24_PA_18dBm,
-    RF24_PA_12dBm,
-    RF24_PA_6dBm,
-    RF24_PA_0dBm,
-};
-
-/**
- * Data rate. How fast data moves through the air.
- *
- * For use with setDataRate()
- */
-enum RF24_DataRate_t { RF24_1MBPS, RF24_2MBPS, RF24_250KBPS };
-
-/**
- * CRC Length. How big (if any) of a CRC is included.
- *
- * For use with setCRCLength()
- */
-enum RF24_CRC_t { RF24_CRC_DISABLED, RF24_CRC_8, RF24_CRC_16 };
-
 using namespace xXx;
 
 /**
@@ -398,14 +372,6 @@ class nRF24L01 {
     void enableDynamicPayloads(void);
 
     /**
-   * Determine whether the hardware is an nRF24L01+ or not.
-   *
-   * @return true if the hardware is nRF24L01+ (or compatible) and false
-   * if its not.
-   */
-    bool isPVariant(void);
-
-    /**
    * Enable or disable auto-acknowlede packets
    *
    * This is enabled by default, so it's only needed if you want to turn
@@ -454,7 +420,7 @@ class nRF24L01 {
    *
    * @param speed RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
    */
-    void setDataRate(RF24_DataRate_t speed);
+    void setDataRate(nRF24L01_DataRate_t speed);
 
     /**
    * Fetches the transmission data rate
@@ -463,7 +429,7 @@ class nRF24L01 {
    * is one of 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS, as defined in the
    * rf24_datarate_e enum.
    */
-    RF24_DataRate_t getDataRate(void);
+    nRF24L01_DataRate_t getDataRate(void);
 
     /**
    * Set the CRC length
