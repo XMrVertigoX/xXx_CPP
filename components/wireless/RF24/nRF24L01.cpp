@@ -307,14 +307,18 @@ void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
 
     assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 
-    delayUs(150);
+    // XXX: See data sheet
+    delayUs(130);
 
     // Send the payload
     write_payload(buf, len);
 
     // Allons!
     _ce.set();
-    delayUs(15);
+
+    // XXX: See data sheet
+    delayUs(10);
+
     _ce.clear();
 }
 
