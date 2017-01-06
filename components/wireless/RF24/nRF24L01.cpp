@@ -529,20 +529,20 @@ void nRF24L01::setPALevel(RF24_PowerLevel_t level) {
     // TODO: Set masks at once
     switch (level) {
         case RF24_PA_18dBm: {
-            clearBit(rf_setup, RF_PWR_LOW);
-            clearBit(rf_setup, RF_PWR_HIGH);
+            clearBit_r(rf_setup, RF_PWR_LOW);
+            clearBit_r(rf_setup, RF_PWR_HIGH);
         } break;
         case RF24_PA_12dBm: {
-            setBit(rf_setup, RF_PWR_LOW);
-            clearBit(rf_setup, RF_PWR_HIGH);
+            setBit_r(rf_setup, RF_PWR_LOW);
+            clearBit_r(rf_setup, RF_PWR_HIGH);
         } break;
         case RF24_PA_6dBm: {
-            clearBit(rf_setup, RF_PWR_LOW);
-            setBit(rf_setup, RF_PWR_HIGH);
+            clearBit_r(rf_setup, RF_PWR_LOW);
+            setBit_r(rf_setup, RF_PWR_HIGH);
         } break;
         case RF24_PA_0dBm: {
-            setBit(rf_setup, RF_PWR_LOW);
-            setBit(rf_setup, RF_PWR_HIGH);
+            setBit_r(rf_setup, RF_PWR_LOW);
+            setBit_r(rf_setup, RF_PWR_HIGH);
         } break;
     }
 
@@ -588,20 +588,20 @@ bool nRF24L01::setDataRate(RF24_DataRate_t speed) {
     // TODO: Set masks at once
     switch (speed) {
         case RF24_1MBPS: {
-            clearBit(rfSetup, RF_DR_LOW);
-            clearBit(rfSetup, RF_DR_HIGH);
+            clearBit_r(rfSetup, RF_DR_LOW);
+            clearBit_r(rfSetup, RF_DR_HIGH);
             wide_band = false;
         } break;
         case RF24_2MBPS: {
             //setup |= _BV(RF_DR_HIGH);
-            clearBit(rfSetup, RF_DR_LOW);
-            setBit(rfSetup, RF_DR_HIGH);
+            clearBit_r(rfSetup, RF_DR_LOW);
+            setBit_r(rfSetup, RF_DR_HIGH);
             wide_band = true;
         } break;
         case RF24_250KBPS: {
             //setup |= _BV(RF_DR_LOW);
-            setBit(rfSetup, RF_DR_LOW);
-            clearBit(rfSetup, RF_DR_HIGH);
+            setBit_r(rfSetup, RF_DR_LOW);
+            clearBit_r(rfSetup, RF_DR_HIGH);
             wide_band = false;
         } break;
     }
@@ -644,15 +644,15 @@ void nRF24L01::setCRCLength(RF24_CRC_t length) {
 
     switch (length) {
         case RF24_CRC_DISABLED: {
-            clearBit(config, RF24_Config_EN_CRC);
+            clearBit_r(config, RF24_Config_EN_CRC);
         } break;
         case RF24_CRC_8: {
-            setBit(config, RF24_Config_EN_CRC);
-            clearBit(config, RF24_Config_CRCO);
+            setBit_r(config, RF24_Config_EN_CRC);
+            clearBit_r(config, RF24_Config_CRCO);
         } break;
         case RF24_CRC_16: {
-            setBit(config, RF24_Config_EN_CRC);
-            setBit(config, RF24_Config_CRCO);
+            setBit_r(config, RF24_Config_EN_CRC);
+            setBit_r(config, RF24_Config_CRCO);
         } break;
         default: break;
     }
