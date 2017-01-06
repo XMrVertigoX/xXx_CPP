@@ -261,12 +261,13 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     // IN the end, the send should be blocking.  It comes back in 60ms worst case, or much faster
     // if I tighted up the retry logic.  (Default settings will be 1500us.
     // Monitor the send
-    uint8_t observe_tx;
+    // uint8_t observe_tx;
     uint8_t status;
     uint32_t sent_at       = getMillis();
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
-        status = read_register(RF24_MM_OBSERVE_TX, &observe_tx, 1);
+        // status = read_register(RF24_MM_OBSERVE_TX, &observe_tx, 1);
+        status = get_status();
     } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
              (getMillis() - sent_at < timeout));
 
