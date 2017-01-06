@@ -32,10 +32,9 @@ static const uint8_t child_pipe_enable[] = {RF24_ERX_P0, RF24_ERX_P1,
 static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
                         uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
-
-    size_t transmitNumBytes = numBytes + 1;
-    uint8_t mosiBytes[transmitNumBytes];
-    uint8_t misoBytes[transmitNumBytes];
+    size_t dataNumBytes = numBytes + 1;
+    uint8_t mosiBytes[dataNumBytes];
+    uint8_t misoBytes[dataNumBytes];
 
     mosiBytes[0] = command;
 
@@ -45,13 +44,13 @@ static uint8_t transmit(ISpi &spi, uint8_t command, uint8_t const txBytes[],
         memset(&mosiBytes[1], dummy, numBytes);
     }
 
-    spi.transmit(mosiBytes, misoBytes, transmitNumBytes);
+    spi.transmit(mosiBytes, misoBytes, dataNumBytes);
+
+    status = misoBytes[0];
 
     if (rxBytes != NULL) {
         memcpy(rxBytes, &misoBytes[1], numBytes);
     }
-
-    status = misoBytes[0];
 
     return (status);
 }
@@ -68,7 +67,7 @@ uint8_t nRF24L01::read_register(uint8_t reg, uint8_t bytes[],
 
 uint8_t nRF24L01::read_register(uint8_t reg) {
     uint8_t result;
-    uint8_t status = read_register(reg, &result, 1);
+    read_register(reg, &result, 1);
 
     return (result);
 }
@@ -83,10 +82,8 @@ uint8_t nRF24L01::write_register(uint8_t reg, uint8_t bytes[],
     return (status);
 }
 
-uint8_t nRF24L01::write_register(uint8_t reg, uint8_t value) {
-    uint8_t status = write_register(reg, &value, 1);
-
-    return (status);
+void nRF24L01::write_register(uint8_t reg, uint8_t value) {
+    write_register(reg, &value, 1);
 }
 
 uint8_t nRF24L01::write_payload(const uint8_t *buf, uint8_t len) {
@@ -122,7 +119,7 @@ uint8_t nRF24L01::flush_tx(void) {
     return (status);
 }
 
-uint8_t nRF24L01::get_status(void) {
+uint8_t nRF24L01::getStatus(void) {
     uint8_t command = RF24_Command_NOP;
     uint8_t status  = transmit(_spi, command, NULL, NULL, 0);
 
@@ -152,7 +149,7 @@ uint8_t nRF24L01::getPayloadSize(void) {
     return (payload_size);
 }
 
-void nRF24L01::begin(void) {
+void nRF24L01::init(void) {
     _ce.clear();
 
     /*
@@ -251,13 +248,15 @@ void nRF24L01::stopListening(void) {
 }
 
 void nRF24L01::powerDown(void) {
-    write_register(RF24_MM_CONFIG,
-                   read_register(RF24_MM_CONFIG) & ~_BV(RF24_Config_PWR_UP));
+    uint8_t config = read_register(RF24_MM_CONFIG);
+    clearBit_r(config, RF24_Config_PWR_UP);
+    write_register(RF24_MM_CONFIG, config);
 }
 
 void nRF24L01::powerUp(void) {
-    write_register(RF24_MM_CONFIG,
-                   read_register(RF24_MM_CONFIG) | _BV(RF24_Config_PWR_UP));
+    uint8_t config = read_register(RF24_MM_CONFIG);
+    setBit_r(config, RF24_Config_PWR_UP);
+    write_register(RF24_MM_CONFIG, config);
 }
 
 /******************************************************************/
@@ -285,7 +284,7 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
         // status = read_register(RF24_MM_OBSERVE_TX, &observe_tx, 1);
-        status = get_status();
+        status = getStatus();
     } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
              (getMillis() - sent_at < timeout));
 
@@ -349,7 +348,7 @@ bool nRF24L01::available(void) {
 }
 
 bool nRF24L01::available(uint8_t *pipe_num) {
-    uint8_t status = get_status();
+    uint8_t status = getStatus();
 
     // Too noisy, enable if you really want lots o data!!
     //IF_SERIAL_DEBUG(print_status(status));
@@ -385,10 +384,8 @@ bool nRF24L01::read(uint8_t *buf, uint8_t len) {
 }
 
 void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
-    // Read the status & reset the status in one easy call
-    // Or is that such a good idea?
-    uint8_t status =
-        write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+    uint8_t status = getStatus();
+    write_register(RF24_MM_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
 
     // Report to the user what happened
     tx_ok    = status & _BV(TX_DS);
