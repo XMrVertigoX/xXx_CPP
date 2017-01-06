@@ -15,7 +15,8 @@
 #ifndef NRF24L01_HPP_
 #define NRF24L01_HPP_
 
-#include <xXx/components/wireless/RF24/nRF24L01_config.h>
+#include <stdint.h>
+
 #include <xXx/components/wireless/RF24/nRF24L01_constants.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
@@ -55,7 +56,7 @@ using namespace xXx;
 class nRF24L01 {
   private:
     /* 2Mbs data rate in use? */
-    bool wide_band;
+    //    bool wide_band;
     /* False for RF24L01 and true for RF24L01P */
     bool p_variant;
     /**< Fixed size of payloads */
@@ -93,7 +94,7 @@ class nRF24L01 {
    * @param len How many bytes of data to transfer
    * @return Current value of status register
    */
-    uint8_t read_register(RF24_MemoryMap reg, uint8_t *buf, uint8_t len);
+    uint8_t read_register(nRF24L01_MemoryMap_t reg, uint8_t *buf, uint8_t len);
 
     /**
    * Read single byte from a register
@@ -101,7 +102,7 @@ class nRF24L01 {
    * @param reg Which register. Use constants from nRF24L01.h
    * @return Current value of register @p reg
    */
-    uint8_t read_register(RF24_MemoryMap reg);
+    uint8_t read_register(nRF24L01_MemoryMap_t reg);
 
     /**
    * Write a chunk of data to a register
@@ -111,7 +112,8 @@ class nRF24L01 {
    * @param len How many bytes of data to transfer
    * @return Current value of status register
    */
-    uint8_t write_register(RF24_MemoryMap reg, uint8_t const *buf, uint8_t len);
+    uint8_t write_register(nRF24L01_MemoryMap_t reg, uint8_t const *buf,
+                           uint8_t len);
 
     /**
    * Write a single byte to a register
@@ -119,7 +121,7 @@ class nRF24L01 {
    * @param reg Which register. Use constants from nRF24L01.h
    * @param value The new value to write
    */
-    void write_register(RF24_MemoryMap reg, uint8_t value);
+    void write_register(nRF24L01_MemoryMap_t reg, uint8_t value);
 
     /**
    * Write the transmit payload
@@ -451,9 +453,8 @@ class nRF24L01 {
    * @warning setting RF24_250KBPS will fail for non-plus units
    *
    * @param speed RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
-   * @return true if the change was successful
    */
-    bool setDataRate(RF24_DataRate_t speed);
+    void setDataRate(RF24_DataRate_t speed);
 
     /**
    * Fetches the transmission data rate
