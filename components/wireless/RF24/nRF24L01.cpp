@@ -17,7 +17,7 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
-static const uint8_t dummy = 0xFF;
+#define CAST(x) static_cast<uint8_t>(x)
 
 static const uint8_t child_pipe[] = {RF24_MM_RX_ADDR_P0, RF24_MM_RX_ADDR_P1,
                                      RF24_MM_RX_ADDR_P2, RF24_MM_RX_ADDR_P3,
@@ -145,8 +145,7 @@ void nRF24L01::setChannel(uint8_t channel) {
 }
 
 void nRF24L01::setPayloadSize(uint8_t size) {
-    const uint8_t max_payload_size = 32;
-    payload_size                   = min(size, max_payload_size);
+    payload_size = min(size, max_payload_size);
 }
 
 uint8_t nRF24L01::getPayloadSize(void) {
