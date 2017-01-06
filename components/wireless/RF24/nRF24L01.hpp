@@ -115,9 +115,8 @@ class nRF24L01 {
    *
    * @param reg Which register. Use constants from nRF24L01.h
    * @param value The new value to write
-   * @return Current value of status register
    */
-    uint8_t write_register(uint8_t reg, uint8_t value);
+    void write_register(uint8_t reg, uint8_t value);
 
     /**
    * Write the transmit payload
@@ -160,7 +159,7 @@ class nRF24L01 {
    *
    * @return Current value of status register
    */
-    uint8_t get_status(void);
+    uint8_t getStatus(void);
 
     /**
    * Print the name and value of a 40-bit address register to stdout
@@ -208,7 +207,7 @@ class nRF24L01 {
    *
    * Call this in setup(), before calling any other methods.
    */
-    void begin(void);
+    void init(void);
 
     /**
    * Start listening on the pipes opened for reading.
