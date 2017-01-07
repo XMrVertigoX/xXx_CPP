@@ -201,7 +201,7 @@ void nRF24L01::startListening(void) {
     _ce.set();
 
     // wait for the radio to come up (130us actually only needed)
-    delayUs(130);
+    delayUs(rxSettling);
 }
 
 void nRF24L01::stopListening(void) {
@@ -221,6 +221,8 @@ void nRF24L01::setPowerState(bool enable) {
 
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
 
+    assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
+
     /*
 	 * Must allow the radio time to settle else configuration bits will not
 	 * necessarily stick. This is actually only required following power up but
@@ -235,8 +237,6 @@ void nRF24L01::setPowerState(bool enable) {
 	 * different timing.
 	 */
     delayMs(5);
-
-    assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 }
 
 /******************************************************************/
@@ -307,16 +307,12 @@ void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
 
     assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 
-    // XXX: See data sheet
-    delayUs(130);
+    delayUs(txSettling);
 
-    // Send the payload
     write_payload(buf, len);
 
-    // Allons!
     _ce.set();
 
-    // XXX: See data sheet
     delayUs(10);
 
     _ce.clear();

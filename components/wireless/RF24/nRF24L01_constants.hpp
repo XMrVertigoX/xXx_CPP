@@ -3,6 +3,8 @@
 
 static const uint8_t maxPayloadSize   = 32;
 static const uint8_t maxAddressLength = 5;
+static const uint8_t txSettling       = 130;
+static const uint8_t rxSettling       = 130;
 
 // TODO: Search in data sheet
 // #define RF24_Command_ACTIVATE  0x50
