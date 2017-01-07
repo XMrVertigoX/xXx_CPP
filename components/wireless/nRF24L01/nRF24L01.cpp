@@ -1,14 +1,17 @@
 #include <assert.h>
 #include <string.h>
 
-#include <xXx/components/wireless/RF24/nRF24L01.hpp>
-#include <xXx/components/wireless/RF24/nRF24L01_constants.hpp>
-#include <xXx/components/wireless/RF24/nRF24L01_utilities.h>
+#include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_constants.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_utilities.h>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
 #include <nRF24L01_config.h>
+
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 
 static const uint8_t dummy = 0xFF;
 

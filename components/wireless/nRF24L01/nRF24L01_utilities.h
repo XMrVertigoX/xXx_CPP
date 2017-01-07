@@ -1,7 +1,7 @@
 #ifndef NRF24L01_UTILITIES_H_
 #define NRF24L01_UTILITIES_H_
 
-#include <xXx/components/wireless/RF24/nRF24L01_constants.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_constants.hpp>
 
 static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
     return (byte & mask);
