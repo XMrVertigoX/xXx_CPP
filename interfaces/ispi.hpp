@@ -1,6 +1,8 @@
 #ifndef ISPI_HPP_
 #define ISPI_HPP_
 
+#include <stddef.h>
+
 namespace xXx {
 
 typedef void (*ISpi_Callback_t)(uint8_t misoBytes[], size_t misoNumBytes,
