@@ -176,11 +176,9 @@ void nRF24L01::init(void) {
      * or maximum packet sizes must never be used. See documentation for a more
      * complete explanation.
      */
-    setRetries(0b0100, 0b1111);
+    // setRetries(0b0100, 0b1111);
 
-    setCRCLength(RF24_CRC_16);
-
-    resetIRQ();
+    // resetIRQ();
 
     // flush_rx();
     // flush_tx();
@@ -391,12 +389,20 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
 }
 
 void nRF24L01::openWritingPipe(uint64_t address) {
-    write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0,
-                   reinterpret_cast<uint8_t *>(&address), maxAddressLength);
-    write_register(nRF24L01_MemoryMap_t::TX_ADDR,
-                   reinterpret_cast<uint8_t *>(&address), maxAddressLength);
-    write_register(nRF24L01_MemoryMap_t::RX_PW_P0,
-                   min(payload_size, maxPayloadSize));
+    uint8_t *rx_addr_p0 = reinterpret_cast<uint8_t *>(&address);
+    uint8_t *tx_addr    = reinterpret_cast<uint8_t *>(&address);
+    uint8_t rx_pw_p0    = 32; // min(payload_size, maxPayloadSize)
+
+    read_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, rx_addr_p0, 5);
+    read_register(nRF24L01_MemoryMap_t::TX_ADDR, tx_addr, 5);
+
+    // XXX: Use default address for the moment
+    // write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, foo, 5);
+    // write_register(nRF24L01_MemoryMap_t::TX_ADDR, foo, 5);
+
+    write_register(nRF24L01_MemoryMap_t::RX_PW_P0, 32);
+
+    assert(rx_pw_p0 == read_register(nRF24L01_MemoryMap_t::RX_PW_P0));
 }
 
 // XXX
