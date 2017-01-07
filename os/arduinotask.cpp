@@ -7,7 +7,8 @@
 
 namespace xXx {
 
-ArduinoTask::ArduinoTask(uint16_t stackSize, uint8_t taskPriority) {
+ArduinoTask::ArduinoTask(uint16_t stackSize, uint8_t taskPriority)
+    : _handle(NULL) {
     xTaskCreate(taskFunction, NULL, stackSize, this, taskPriority, &_handle);
 }
 

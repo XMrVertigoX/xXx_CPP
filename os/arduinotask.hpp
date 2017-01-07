@@ -22,7 +22,7 @@ class ArduinoTask {
     void resume();
 
   private:
-    TaskHandle_t _handle = NULL;
+    TaskHandle_t _handle;
 
   private:
     static void taskFunction(void *task);
