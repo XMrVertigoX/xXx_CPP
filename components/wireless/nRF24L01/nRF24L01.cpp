@@ -10,8 +10,12 @@
 
 #include <nRF24L01_config.h>
 
+// XXX
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+// XXX
 #define max(a, b) (((a) > (b)) ? (a) : (b))
+// XXX
+#define _BV(x) (1 << (x))
 
 static const uint8_t dummy = 0xFF;
 
@@ -405,20 +409,20 @@ void nRF24L01::openReadingPipe(uint8_t child, uint64_t address) {
     if (child <= 6) {
         // For pipes 2-5, only write the LSB
         if (child < 2)
-            write_register(pgm_read_byte(&child_pipe[child]),
+            write_register(child_pipe[child],
                            reinterpret_cast<uint8_t *>(&address), 5);
         else
-            write_register(pgm_read_byte(&child_pipe[child]),
+            write_register(child_pipe[child],
                            reinterpret_cast<uint8_t *>(&address), 1);
 
-        write_register(pgm_read_byte(&child_payload_size[child]), payload_size);
+        write_register(child_payload_size[child], payload_size);
 
         // Note it would be more efficient to set all of the bits for all open
         // pipes at once.  However, I thought it would make the calling code
         // more simple to do it this way.
         uint8_t en_rxaddr = read_register(nRF24L01_MemoryMap_t::EN_RXADDR);
 
-        setBit_r(en_rxaddr, pgm_read_byte(&child_pipe_enable[child]));
+        setBit_r(en_rxaddr, child_pipe_enable[child]);
         write_register(nRF24L01_MemoryMap_t::EN_RXADDR, en_rxaddr);
     }
 }
