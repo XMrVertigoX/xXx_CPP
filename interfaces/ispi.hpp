@@ -2,6 +2,7 @@
 #define ISPI_HPP_
 
 #include <stddef.h>
+#include <stdint.h>
 
 namespace xXx {
 
