@@ -176,7 +176,7 @@ void nRF24L01::init(void) {
      * or maximum packet sizes must never be used. See documentation for a more
      * complete explanation.
      */
-    setRetries(0b1111, 0b1111);
+    setRetries(0b0100, 0b1111);
 
     setCRCLength(RF24_CRC_16);
 
