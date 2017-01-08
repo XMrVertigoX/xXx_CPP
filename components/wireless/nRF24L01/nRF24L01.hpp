@@ -31,6 +31,8 @@ class nRF24L01 {
     uint8_t transmit(uint8_t command, uint8_t const txBytes[],
                      uint8_t rxBytes[], size_t numBytes);
     void clearIRQs();
+    void clearSingleBit(nRF24L01_MemoryMap_t address, uint8_t bit);
+    void setSingleBit(nRF24L01_MemoryMap_t address, uint8_t bit);
 
   protected:
     /**

@@ -10,17 +10,17 @@ static const uint8_t rxSettling       = 130;
 // #define RF24_Command_ACTIVATE  0x50
 
 enum class nRF24L01_Command_t : uint8_t {
-    R_REGISTER          = 0x00,
-    W_REGISTER          = 0x20,
-    R_RX_PAYLOAD        = 0x61,
-    W_TX_PAYLOAD        = 0xA0,
-    FLUSH_TX            = 0xE1,
-    FLUSH_RX            = 0xE2,
-    REUSE_TX_PL         = 0xE3,
-    R_RX_PL_WID         = 0x60,
-    W_ACK_PAYLOAD       = 0xA8,
-    W_TX_PAYLOAD_NO_ACK = 0xB0,
-    NOP                 = 0xFF,
+    R_REGISTER         = 0x00,
+    W_REGISTER         = 0x20,
+    R_RX_PAYLOAD       = 0x61,
+    W_TX_PAYLOAD       = 0xA0,
+    FLUSH_TX           = 0xE1,
+    FLUSH_RX           = 0xE2,
+    REUSE_TX_PL        = 0xE3,
+    R_RX_PL_WID        = 0x60,
+    W_ACK_PAYLOAD      = 0xA8,
+    W_TX_PAYLOAD_NOACK = 0xB0,
+    NOP                = 0xFF,
 };
 
 enum class nRF24L01_MemoryMap_t : uint8_t {

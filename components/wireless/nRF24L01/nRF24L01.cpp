@@ -156,7 +156,7 @@ uint8_t nRF24L01::getPayloadSize(void) {
 }
 
 void nRF24L01::clearIRQs() {
-    uint8_t status = read_register(nRF24L01_MemoryMap_t::STATUS);
+    uint8_t status = 0x00; // read_register(nRF24L01_MemoryMap_t::STATUS);
     setBit_r(status, RX_DR);
     setBit_r(status, TX_DS);
     setBit_r(status, MAX_RT);
@@ -166,6 +166,7 @@ void nRF24L01::clearIRQs() {
 void nRF24L01::init(void) {
     _ce.clear();
 
+    clearIRQs();
     setPowerState(true);
 
     /*
@@ -178,9 +179,12 @@ void nRF24L01::init(void) {
      */
     // setRetries(0b0100, 0b1111);
 
-    clearIRQs();
+    auto foo = [](void *user) {
+        nRF24L01 *self = static_cast<nRF24L01 *>(user);
+        self->clearIRQs();
+    };
 
-    _irq.enableInterrupt([](void *user) { LOG("YAY!"); }, NULL);
+    _irq.enableInterrupt(foo, this);
 
     // flush_rx();
     // flush_tx();
@@ -305,18 +309,31 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     return (result);
 }
 
-void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
+void nRF24L01::setSingleBit(nRF24L01_MemoryMap_t address, uint8_t bit) {
+    uint8_t reg = read_register(address);
+    setBit_r(reg, bit);
+    write_register(address, reg);
+
+    assert(reg == read_register(address));
+}
+
+void nRF24L01::clearSingleBit(nRF24L01_MemoryMap_t address, uint8_t bit) {
+    uint8_t reg = read_register(address);
+    clearBit_r(reg, bit);
+    write_register(address, reg);
+
+    assert(reg == read_register(address));
+}
+
+void nRF24L01::startWrite(const uint8_t *bytes, uint8_t numBytes) {
+    write_payload(bytes, numBytes);
+    clearSingleBit(nRF24L01_MemoryMap_t::CONFIG, RF24_Config_PRIM_RX);
+
     _ce.set();
+    delayUs(10);
+    _ce.clear();
 
-    delayUs(txSettling);
-
-    uint8_t config = read_register(nRF24L01_MemoryMap_t::CONFIG);
-    clearBit_r(config, RF24_Config_PRIM_RX);
-    write_register(nRF24L01_MemoryMap_t::CONFIG, config);
-
-    assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
-
-    write_payload(buf, len);
+    // delayUs(txSettling);
 
     // XXX: Never clear CE for the moment
     // _ce.clear();
@@ -360,7 +377,7 @@ bool nRF24L01::available(uint8_t *pipe_num) {
         }
     }
 
-    return (result);
+    // return (result);
 }
 
 bool nRF24L01::read(uint8_t *buf, uint8_t len) {
