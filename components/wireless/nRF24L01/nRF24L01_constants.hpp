@@ -52,65 +52,6 @@ enum class nRF24L01_RegisterMap_t : uint8_t {
     FEATURE     = 0x1D
 };
 
-enum class nRF24L01_Mnemonic_t : uint8_t {
-    CONFIG_PRIM_RX       = 0,
-    CONFIG_PWR_UP        = 1,
-    CONFIG_CRCO          = 2,
-    CONFIG_EN_CRC        = 3,
-    CONFIG_MASK_MAX_RT   = 4,
-    CONFIG_MASK_TX_DS    = 5,
-    CONFIG_MASK_RX_DR    = 6,
-    EN_AA_ENAA_P0        = 0,
-    EN_AA_ENAA_P1        = 1,
-    EN_AA_ENAA_P2        = 2,
-    EN_AA_ENAA_P3        = 3,
-    EN_AA_ENAA_P4        = 4,
-    EN_AA_ENAA_P5        = 5,
-    EN_RXADDR_ERX_P0     = 0,
-    EN_RXADDR_ERX_P1     = 1,
-    EN_RXADDR_ERX_P2     = 2,
-    EN_RXADDR_ERX_P3     = 3,
-    EN_RXADDR_ERX_P4     = 4,
-    EN_RXADDR_ERX_P5     = 5,
-    SETUP_AW_AW          = 0,
-    SETUP_RETR_ARC       = 0,
-    SETUP_RETR_ARD       = 4,
-    RF_CH                = 0, // XXX: No prefix
-    RF_SETUP_RF_PWR      = 1,
-    RF_SETUP_RF_DR_HIGH  = 3,
-    RF_SETUP_PLL_LOCK    = 4,
-    RF_SETUP_RF_DR_LOW   = 5,
-    RF_SETUP_CONT_WAVE   = 7,
-    STATUS_TX_FULL       = 0,
-    STATUS_RX_P_NO       = 1,
-    STATUS_MAX_RT        = 4,
-    STATUS_TX_DS         = 5,
-    STATUS_RX_DR         = 6,
-    OBSERVE_TX_ARC_CNT   = 0,
-    OBSERVE_TX_PLOS_CNT  = 4,
-    RPD                  = 0, // XXX: No prefix
-    RX_PW_P0             = 0, // XXX: No prefix
-    RX_PW_P1             = 1, // XXX: No prefix
-    RX_PW_P2             = 2, // XXX: No prefix
-    RX_PW_P3             = 3, // XXX: No prefix
-    RX_PW_P4             = 4, // XXX: No prefix
-    RX_PW_P5             = 5, // XXX: No prefix
-    FIFO_STATUS_RX_EMPTY = 0,
-    FIFO_STATUS_RX_FULL  = 1,
-    FIFO_STATUS_TX_EMPTY = 4,
-    FIFO_STATUS_TX_FULL  = 5,
-    FIFO_STATUS_TX_REUSE = 6,
-    DYNPD_DPL_P0         = 0,
-    DYNPD_DPL_P1         = 1,
-    DYNPD_DPL_P2         = 2,
-    DYNPD_DPL_P3         = 3,
-    DYNPD_DPL_P4         = 4,
-    DYNPD_DPL_P5         = 5,
-    FEATURE_EN_DYN_ACK   = 0,
-    FEATURE_EN_ACK_PAY   = 1,
-    FEATURE_EN_DPL       = 2
-};
-
 enum class nRF24L01_DataRate_t : uint8_t {
     SPEED_1MBPS,
     SPEED_2MBPS,
@@ -192,7 +133,7 @@ enum RF24_SETUP_RETR_t {
 #define EN_DYN_ACK    (0)
 
 /* Non-P omissions */
-#define LNA_HCURR     (0)
+// #define LNA_HCURR     (0)
 
 /* P model bit Mnemonics */
 #define RF_DR_LOW     (5)
@@ -201,5 +142,94 @@ enum RF24_SETUP_RETR_t {
 #define RF_PWR_HIGH   (2)
 
 // clang-format on
+
+enum class nRF24L01_CONFIG_t : uint8_t {
+    PRIM_RX     = 0,
+    PWR_UP      = 1,
+    CRCO        = 2,
+    EN_CRC      = 3,
+    MASK_MAX_RT = 4,
+    MASK_TX_DS  = 5,
+    MASK_RX_DR  = 6
+};
+
+enum class nRF24L01_EN_AA_t : uint8_t {
+    ENAA_P0 = 0,
+    ENAA_P1 = 1,
+    ENAA_P2 = 2,
+    ENAA_P3 = 3,
+    ENAA_P4 = 4,
+    ENAA_P5 = 5
+};
+
+enum class nRF24L01_EN_RXADDR_t : uint8_t {
+    ERX_P0 = 0,
+    ERX_P1 = 1,
+    ERX_P2 = 2,
+    ERX_P3 = 3,
+    ERX_P4 = 4,
+    ERX_P5 = 5
+};
+
+// enum class nRF24L01_SETUP_AW_t : uint8_t { AW = 0 };
+//
+// enum class nRF24L01_SETUP_RETR_t : uint8_t { ARC = 0, ARD = 4 };
+//
+// enum class nRF24L01_RF_CH_t : uint8_t { RF_CH = 0 };
+//
+// enum class nRF24L01_RF_SETUP_t : uint8_t {
+//     RF_PWR     = 1,
+//     RF_DR_HIGH = 3,
+//     PLL_LOCK   = 4,
+//     RF_DR_LOW  = 5,
+//     CONT_WAVE  = 7
+// };
+//
+// enum class nRF24L01_STATUS_t : uint8_t {
+//     TX_FULL = 0,
+//     RX_P_NO = 1,
+//     MAX_RT  = 4,
+//     TX_DS   = 5,
+//     RX_DR   = 6
+// };
+//
+// enum class nRF24L01_OBSERVE_TX__t : uint8_t { ARC_CNT = 0, PLOS_CNT = 4 };
+//
+// enum class nRF24L01_RPD_t : uint8_t { RPD = 0 };
+//
+// enum class nRF24L01_RX_PW_P0_t : uint8_t { RX_PW_P0 = 0 };
+//
+// enum class nRF24L01_RX_PW_P1_t : uint8_t { RX_PW_P1 = 0 };
+//
+// enum class nRF24L01_RX_PW_P2_t : uint8_t { RX_PW_P2 = 0 };
+//
+// enum class nRF24L01_RX_PW_P3_t : uint8_t { RX_PW_P3 = 0 };
+//
+// enum class nRF24L01_RX_PW_P4_t : uint8_t { RX_PW_P4 = 0 };
+//
+// enum class nRF24L01_RX_PW_P5_t : uint8_t { RX_PW_P5 = 0 };
+//
+// enum class nRF24L01_FIFO_STATUS_t : uint8_t {
+//     RX_EMPTY = 0,
+//     RX_FULL  = 1,
+//     TX_EMPTY = 4,
+//     TX_FULL  = 5,
+//     TX_REUSE = 6
+// };
+//
+// enum class nRF24L01_DYNPD_t : uint8_t {
+//     DPL_P0 = 0,
+//     DPL_P1 = 1,
+//     DPL_P2 = 2,
+//     DPL_P3 = 3,
+//     DPL_P4 = 4,
+//     DPL_P5 = 5
+// };
+//
+// enum class nRF24L01_FEATURE_t : uint8_t {
+//     EN_DYN_ACK = 0,
+//     EN_ACK_PAY = 1,
+//     EN_DPL     = 2
+// };
 
 #endif // NRF24L01_CONSTANTS_HPP_

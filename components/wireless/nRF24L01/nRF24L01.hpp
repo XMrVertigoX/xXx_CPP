@@ -248,7 +248,7 @@ class nRF24L01 {
    * and only one other radio is listening to it.  Coordinate these pipe
    * addresses amongst nodes on the network.
    */
-    void openWritingPipe(uint64_t address);
+    void setTxAddress(uint64_t address);
 
     /**
    * Open a pipe for reading
@@ -274,7 +274,7 @@ class nRF24L01 {
    * @param number Which pipe# to open, 0-5.
    * @param address The 40-bit address of the pipe to open.
    */
-    void openReadingPipe(uint8_t number, uint64_t address);
+    void setRxAddress(uint8_t number, uint64_t address);
 
     /**@}*/
     /**

@@ -20,11 +20,6 @@
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-// XXX
-#if !defined(_BV)
-#define _BV(x) (1 << (x))
-#endif
-
 static const uint8_t dummy = 0xFF;
 
 uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
@@ -150,16 +145,17 @@ uint8_t nRF24L01::getPayloadSize(void) {
 
 void nRF24L01::clearIRQs() {
     uint8_t status = 0x00; // read_register(nRF24L01_MemoryMap_t::STATUS);
+
     setBit_r(status, RX_DR);
     setBit_r(status, TX_DS);
     setBit_r(status, MAX_RT);
+
     write_register(nRF24L01_RegisterMap_t::STATUS, status);
 }
 
 void nRF24L01::init(void) {
     _ce.clear();
 
-    clearIRQs();
     setPowerState(true);
 
     /*
@@ -175,23 +171,22 @@ void nRF24L01::init(void) {
     auto foo = [](void *user) {
         nRF24L01 *self = static_cast<nRF24L01 *>(user);
         self->clearIRQs();
-        LOG("FOO");
     };
 
     _irq.enableInterrupt(foo, this);
 
-    flush_rx();
-    flush_tx();
+    // flush_rx();
+    // flush_tx();
 }
 
 void nRF24L01::startListening(void) {
-    setPowerState(true);
     setSingleBit(nRF24L01_RegisterMap_t::CONFIG, RF24_Config_PRIM_RX);
     _ce.set();
 }
 
 void nRF24L01::stopListening(void) {
     _ce.clear();
+
     flush_tx();
     flush_rx();
 }
@@ -251,7 +246,7 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     do {
         // status = read_register(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
         status = getStatus();
-    } while (!(status & (_BV(TX_DS) | _BV(MAX_RT))) &&
+    } while (!(status & ((1 << TX_DS) | (1 << MAX_RT))) &&
              (getMillis() - sent_at < timeout));
 
     // The part above is what you could recreate with your own interrupt handler,
@@ -301,13 +296,12 @@ void nRF24L01::clearSingleBit(nRF24L01_RegisterMap_t address, uint8_t bit) {
 
 void nRF24L01::startWrite(const uint8_t *bytes, uint8_t numBytes) {
     write_payload(bytes, numBytes);
-    clearSingleBit(nRF24L01_RegisterMap_t::CONFIG, RF24_Config_PRIM_RX);
+    clearSingleBit(nRF24L01_RegisterMap_t::CONFIG,
+                   static_cast<uint8_t>(nRF24L01_CONFIG_t::PRIM_RX));
 
     _ce.set();
     delayUs(10);
     _ce.clear();
-
-    // delayUs(txSettling);
 }
 
 uint8_t nRF24L01::getDynamicPayloadSize(void) {
@@ -329,7 +323,7 @@ bool nRF24L01::available(uint8_t *pipe_num) {
     // Too noisy, enable if you really want lots o data!!
     //IF_SERIAL_DEBUG(print_status(status));
 
-    bool result = (status & _BV(RX_DR));
+    bool result = (status & (1 << RX_DR));
 
     if (result) {
         // If the caller wants the pipe number, include that
@@ -340,11 +334,11 @@ bool nRF24L01::available(uint8_t *pipe_num) {
         // ??? Should this REALLY be cleared now?  Or wait until we
         // actually READ the payload?
 
-        write_register(nRF24L01_RegisterMap_t::STATUS, _BV(RX_DR));
+        write_register(nRF24L01_RegisterMap_t::STATUS, (1 << RX_DR));
 
         // Handle ack payload receipt
-        if (status & _BV(TX_DS)) {
-            write_register(nRF24L01_RegisterMap_t::STATUS, _BV(TX_DS));
+        if (status & (1 << TX_DS)) {
+            write_register(nRF24L01_RegisterMap_t::STATUS, (1 << TX_DS));
         }
     }
 
@@ -367,31 +361,30 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
 
     // Clear flags
     write_register(nRF24L01_RegisterMap_t::STATUS,
-                   _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
+                   (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
 
-    tx_ok    = status & _BV(TX_DS);
-    tx_fail  = status & _BV(MAX_RT);
-    rx_ready = status & _BV(RX_DR);
+    tx_ok    = status & (1 << TX_DS);
+    tx_fail  = status & (1 << MAX_RT);
+    rx_ready = status & (1 << RX_DR);
 }
 
-void nRF24L01::openWritingPipe(uint64_t address) {
-    uint8_t *rx_addr_p0 = reinterpret_cast<uint8_t *>(&address);
-    uint8_t *tx_addr    = reinterpret_cast<uint8_t *>(&address);
-    uint8_t rx_pw_p0    = 32; // min(payload_size, maxPayloadSize)
+void nRF24L01::setTxAddress(uint64_t address) {
+    uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
-    // XXX: Use default addresses for the moment
-    // write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, foo, 5);
-    // write_register(nRF24L01_MemoryMap_t::TX_ADDR, foo, 5);
-
-    write_register(nRF24L01_RegisterMap_t::RX_PW_P0, 32);
-
-    assert(rx_pw_p0 == read_register(nRF24L01_RegisterMap_t::RX_PW_P0));
+    write_register(nRF24L01_RegisterMap_t::TX_ADDR, tx_addr, 5);
 }
 
-// XXX
-void nRF24L01::openReadingPipe(uint8_t child, uint64_t address) {
-    write_register(nRF24L01_RegisterMap_t::RX_PW_P0, 32);
-    write_register(nRF24L01_RegisterMap_t::EN_RXADDR, RF24_ERX_P0);
+void nRF24L01::setRxAddress(uint8_t child, uint64_t address) {
+    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
+
+    switch (child) {
+        case 0: {
+            write_register(nRF24L01_RegisterMap_t::RX_ADDR_P0, rx_addr, 5);
+            write_register(nRF24L01_RegisterMap_t::RX_PW_P0, 32);
+            write_register(nRF24L01_RegisterMap_t::EN_RXADDR,
+                           static_cast<uint8_t>(nRF24L01_EN_RXADDR_t::ERX_P0));
+        } break;
+    }
 }
 
 // TODO: Find in data sheet
@@ -499,9 +492,9 @@ void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
     }
 
     if (enable) {
-        en_aa |= _BV(pipe);
+        en_aa |= (1 << pipe);
     } else {
-        en_aa &= ~_BV(pipe);
+        en_aa &= ~(1 << pipe);
     }
 
     write_register(nRF24L01_RegisterMap_t::EN_AA, en_aa);
