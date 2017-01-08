@@ -155,7 +155,7 @@ uint8_t nRF24L01::getPayloadSize(void) {
     return (payload_size);
 }
 
-void nRF24L01::resetIRQ() {
+void nRF24L01::clearIRQs() {
     uint8_t status = read_register(nRF24L01_MemoryMap_t::STATUS);
     setBit_r(status, RX_DR);
     setBit_r(status, TX_DS);
@@ -178,7 +178,9 @@ void nRF24L01::init(void) {
      */
     // setRetries(0b0100, 0b1111);
 
-    // resetIRQ();
+    clearIRQs();
+
+    _irq.enableInterrupt([](void *user) { LOG("YAY!"); }, NULL);
 
     // flush_rx();
     // flush_tx();
@@ -192,7 +194,7 @@ void nRF24L01::startListening(void) {
 
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
 
-    resetIRQ();
+    clearIRQs();
 
     // Restore the pipe0 adddress, if exists
     if (pipe0_reading_address)
@@ -304,24 +306,20 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
 }
 
 void nRF24L01::startWrite(const uint8_t *buf, uint8_t len) {
+    _ce.set();
+
+    delayUs(txSettling);
+
     uint8_t config = read_register(nRF24L01_MemoryMap_t::CONFIG);
-
-    setBit_r(config, RF24_Config_PWR_UP);
-    setBit_r(config, RF24_Config_PRIM_RX);
-
+    clearBit_r(config, RF24_Config_PRIM_RX);
     write_register(nRF24L01_MemoryMap_t::CONFIG, config);
 
     assert(config == read_register(nRF24L01_MemoryMap_t::CONFIG));
 
-    delayUs(txSettling);
-
     write_payload(buf, len);
 
-    _ce.set();
-
-    delayUs(10);
-
-    _ce.clear();
+    // XXX: Never clear CE for the moment
+    // _ce.clear();
 }
 
 uint8_t nRF24L01::getDynamicPayloadSize(void) {
@@ -393,10 +391,7 @@ void nRF24L01::openWritingPipe(uint64_t address) {
     uint8_t *tx_addr    = reinterpret_cast<uint8_t *>(&address);
     uint8_t rx_pw_p0    = 32; // min(payload_size, maxPayloadSize)
 
-    read_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, rx_addr_p0, 5);
-    read_register(nRF24L01_MemoryMap_t::TX_ADDR, tx_addr, 5);
-
-    // XXX: Use default address for the moment
+    // XXX: Use default addresses for the moment
     // write_register(nRF24L01_MemoryMap_t::RX_ADDR_P0, foo, 5);
     // write_register(nRF24L01_MemoryMap_t::TX_ADDR, foo, 5);
 

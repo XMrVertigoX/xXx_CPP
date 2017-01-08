@@ -30,7 +30,7 @@ class nRF24L01 {
 
     uint8_t transmit(uint8_t command, uint8_t const txBytes[],
                      uint8_t rxBytes[], size_t numBytes);
-    void resetIRQ();
+    void clearIRQs();
 
   protected:
     /**
