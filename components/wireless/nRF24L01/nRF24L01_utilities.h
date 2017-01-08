@@ -51,7 +51,7 @@ static inline uint8_t __castCMD(nRF24L01_Command_t command) {
     return (static_cast<uint8_t>(command));
 }
 
-static inline uint8_t __castMEM(nRF24L01_MemoryMap_t command) {
+static inline uint8_t __castMEM(nRF24L01_RegisterMap_t command) {
     return (static_cast<uint8_t>(command));
 }
 
