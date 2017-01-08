@@ -11,11 +11,19 @@
 #include <nRF24L01_config.h>
 
 // XXX
+#if !defined(min)
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 // XXX
+#if !defined(max)
 #define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 // XXX
+#if !defined(_BV)
 #define _BV(x) (1 << (x))
+#endif
 
 static const uint8_t dummy = 0xFF;
 
