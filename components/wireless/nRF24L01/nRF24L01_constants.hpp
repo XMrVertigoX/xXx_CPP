@@ -23,7 +23,7 @@ enum class nRF24L01_Command_t : uint8_t {
     NOP                = 0xFF,
 };
 
-enum class nRF24L01_MemoryMap_t : uint8_t {
+enum class nRF24L01_RegisterMap_t : uint8_t {
     CONFIG      = 0x00,
     EN_AA       = 0x01,
     EN_RXADDR   = 0x02,
@@ -33,8 +33,7 @@ enum class nRF24L01_MemoryMap_t : uint8_t {
     RF_SETUP    = 0x06,
     STATUS      = 0x07,
     OBSERVE_TX  = 0x08,
-    CD          = 0x09, // XXX: Only on non "P" variant. See RPD.
-    RPD         = 0x09, // XXX: Only on "P" variant. See CD.
+    RPD         = 0x09,
     RX_ADDR_P0  = 0x0A,
     RX_ADDR_P1  = 0x0B,
     RX_ADDR_P2  = 0x0C,
@@ -51,6 +50,65 @@ enum class nRF24L01_MemoryMap_t : uint8_t {
     FIFO_STATUS = 0x17,
     DYNPD       = 0x1C,
     FEATURE     = 0x1D
+};
+
+enum class nRF24L01_Mnemonic_t : uint8_t {
+    CONFIG_PRIM_RX       = 0,
+    CONFIG_PWR_UP        = 1,
+    CONFIG_CRCO          = 2,
+    CONFIG_EN_CRC        = 3,
+    CONFIG_MASK_MAX_RT   = 4,
+    CONFIG_MASK_TX_DS    = 5,
+    CONFIG_MASK_RX_DR    = 6,
+    EN_AA_ENAA_P0        = 0,
+    EN_AA_ENAA_P1        = 1,
+    EN_AA_ENAA_P2        = 2,
+    EN_AA_ENAA_P3        = 3,
+    EN_AA_ENAA_P4        = 4,
+    EN_AA_ENAA_P5        = 5,
+    EN_RXADDR_ERX_P0     = 0,
+    EN_RXADDR_ERX_P1     = 1,
+    EN_RXADDR_ERX_P2     = 2,
+    EN_RXADDR_ERX_P3     = 3,
+    EN_RXADDR_ERX_P4     = 4,
+    EN_RXADDR_ERX_P5     = 5,
+    SETUP_AW_AW          = 0,
+    SETUP_RETR_ARC       = 0,
+    SETUP_RETR_ARD       = 4,
+    RF_CH                = 0, // XXX: No prefix
+    RF_SETUP_RF_PWR      = 1,
+    RF_SETUP_RF_DR_HIGH  = 3,
+    RF_SETUP_PLL_LOCK    = 4,
+    RF_SETUP_RF_DR_LOW   = 5,
+    RF_SETUP_CONT_WAVE   = 7,
+    STATUS_TX_FULL       = 0,
+    STATUS_RX_P_NO       = 1,
+    STATUS_MAX_RT        = 4,
+    STATUS_TX_DS         = 5,
+    STATUS_RX_DR         = 6,
+    OBSERVE_TX_ARC_CNT   = 0,
+    OBSERVE_TX_PLOS_CNT  = 4,
+    RPD                  = 0, // XXX: No prefix
+    RX_PW_P0             = 0, // XXX: No prefix
+    RX_PW_P1             = 1, // XXX: No prefix
+    RX_PW_P2             = 2, // XXX: No prefix
+    RX_PW_P3             = 3, // XXX: No prefix
+    RX_PW_P4             = 4, // XXX: No prefix
+    RX_PW_P5             = 5, // XXX: No prefix
+    FIFO_STATUS_RX_EMPTY = 0,
+    FIFO_STATUS_RX_FULL  = 1,
+    FIFO_STATUS_TX_EMPTY = 4,
+    FIFO_STATUS_TX_FULL  = 5,
+    FIFO_STATUS_TX_REUSE = 6,
+    DYNPD_DPL_P0         = 0,
+    DYNPD_DPL_P1         = 1,
+    DYNPD_DPL_P2         = 2,
+    DYNPD_DPL_P3         = 3,
+    DYNPD_DPL_P4         = 4,
+    DYNPD_DPL_P5         = 5,
+    FEATURE_EN_DYN_ACK   = 0,
+    FEATURE_EN_ACK_PAY   = 1,
+    FEATURE_EN_DPL       = 2
 };
 
 enum class nRF24L01_DataRate_t : uint8_t {
