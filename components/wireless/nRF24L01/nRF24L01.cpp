@@ -10,6 +10,8 @@
 
 #include <nRF24L01_config.h>
 
+#define STATIC_CAST(x) static_cast<uint8_t>(x)
+
 // XXX
 #if !defined(min)
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -22,7 +24,90 @@
 
 static const uint8_t dummy = 0xFF;
 
-uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
+nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
+    : _spi(spi), _ce(ce), _irq(irq), /*wide_band(true),*/ p_variant(true),
+      payload_size(32), ack_payload_available(false),
+      dynamic_payloads_enabled(false), pipe0_reading_address(0),
+      ack_payload_length(0) {}
+
+uint8_t nRF24L01::cmd_R_REGISTER(nRF24L01_Register_t address, uint8_t bytes[],
+                                 uint8_t numBytes) {
+    uint8_t command = bitwiseOR(R_REGISTER, address);
+    uint8_t status  = transmit(command, NULL, bytes, numBytes);
+
+    return (status);
+}
+
+uint8_t nRF24L01::cmd_W_REGISTER(nRF24L01_Register_t address, uint8_t bytes[],
+                                 uint8_t numBytes) {
+    uint8_t command = bitwiseOR(W_REGISTER, address);
+    uint8_t status  = transmit(command, bytes, NULL, numBytes);
+
+    return (status);
+}
+
+// XXX
+uint8_t nRF24L01::cmd_W_TX_PAYLOAD(uint8_t *buf, uint8_t len) {
+    uint8_t data_len = min(len, payload_size);
+
+    uint8_t tempBuffer[payload_size] = {};
+    memcpy(tempBuffer, buf, data_len);
+
+    uint8_t command = W_TX_PAYLOAD;
+    uint8_t status  = transmit(command, tempBuffer, NULL, payload_size);
+
+    return (status);
+}
+
+uint8_t nRF24L01::cmd_R_RX_PAYLOAD(uint8_t *buf, uint8_t len) {
+    uint8_t command = R_RX_PAYLOAD;
+    uint8_t status  = transmit(command, NULL, buf, min(len, payload_size));
+
+    return (status);
+}
+
+uint8_t nRF24L01::cmd_FLUSH_TX() {
+    uint8_t command = FLUSH_TX;
+    uint8_t status  = transmit(command, NULL, NULL, 0);
+
+    return (status);
+}
+
+uint8_t nRF24L01::cmd_FLUSH_RX() {
+    uint8_t command = FLUSH_RX;
+    uint8_t status  = transmit(command, NULL, NULL, 0);
+
+    return (status);
+}
+
+// TODO
+uint8_t cmd_REUSE_TX_PL(void) {
+    return (0);
+}
+
+// TODO
+uint8_t cmd_R_RX_PL_WID(void) {
+    return (0);
+}
+
+// TODO
+uint8_t cmd_W_ACK_PAYLOAD(void) {
+    return (0);
+}
+
+// TODO
+uint8_t cmd_W_TX_PAYLOAD_NOACK(void) {
+    return (0);
+}
+
+uint8_t nRF24L01::cmd_NOP() {
+    uint8_t command = NOP;
+    uint8_t status  = transmit(command, NULL, NULL, 0);
+
+    return (status);
+}
+
+uint8_t nRF24L01::transmit(uint8_t command, uint8_t txBytes[],
                            uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
     size_t dataNumBytes = numBytes + 1;
@@ -48,83 +133,20 @@ uint8_t nRF24L01::transmit(uint8_t command, uint8_t const txBytes[],
     return (status);
 }
 
-uint8_t nRF24L01::read_register(nRF24L01_RegisterMap_t address, uint8_t bytes[],
-                                uint8_t numBytes) {
-    uint8_t command = bitwiseOR(__castCMD(nRF24L01_Command_t::R_REGISTER),
-                                __castMEM(address));
-    uint8_t status = transmit(command, NULL, bytes, numBytes);
-
-    return (status);
-}
-
-uint8_t nRF24L01::read_register(nRF24L01_RegisterMap_t address) {
+uint8_t nRF24L01::readShortRegister(nRF24L01_Register_t address) {
     uint8_t result;
 
-    read_register(address, &result, 1);
+    cmd_R_REGISTER(address, &result, 1);
 
     return (result);
 }
 
-uint8_t nRF24L01::write_register(nRF24L01_RegisterMap_t address,
-                                 uint8_t const bytes[], uint8_t numBytes) {
-    uint8_t command = bitwiseOR(__castCMD(nRF24L01_Command_t::W_REGISTER),
-                                __castMEM(address));
-    uint8_t status = transmit(command, bytes, NULL, numBytes);
+uint8_t nRF24L01::writeShortRegister(nRF24L01_Register_t address,
+                                     uint8_t value) {
+    uint8_t status = cmd_W_REGISTER(address, &value, 1);
 
     return (status);
 }
-
-void nRF24L01::write_register(nRF24L01_RegisterMap_t address, uint8_t value) {
-    write_register(address, &value, 1);
-}
-
-// XXX
-uint8_t nRF24L01::write_payload(const uint8_t *buf, uint8_t len) {
-    uint8_t data_len = min(len, payload_size);
-
-    uint8_t tempBuffer[payload_size] = {};
-    memcpy(tempBuffer, buf, data_len);
-
-    uint8_t command = __castCMD(nRF24L01_Command_t::W_TX_PAYLOAD);
-    uint8_t status  = transmit(command, tempBuffer, NULL, payload_size);
-
-    return (status);
-}
-
-// XXX
-uint8_t nRF24L01::read_payload(uint8_t *buf, uint8_t len) {
-    uint8_t command = __castCMD(nRF24L01_Command_t::R_RX_PAYLOAD);
-    uint8_t status  = transmit(command, NULL, buf, min(len, payload_size));
-
-    return (status);
-}
-
-uint8_t nRF24L01::flush_rx(void) {
-    uint8_t command = __castCMD(nRF24L01_Command_t::FLUSH_RX);
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-uint8_t nRF24L01::flush_tx(void) {
-    uint8_t command = __castCMD(nRF24L01_Command_t::FLUSH_TX);
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-uint8_t nRF24L01::getStatus(void) {
-    uint8_t command = __castCMD(nRF24L01_Command_t::NOP);
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
-    : _spi(spi), _ce(ce), _irq(irq), /*wide_band(true),*/ p_variant(true),
-      payload_size(32), ack_payload_available(false),
-      dynamic_payloads_enabled(false), pipe0_reading_address(0),
-      ack_payload_length(0) {}
 
 void nRF24L01::setChannel(uint8_t channel) {
     /*
@@ -132,28 +154,28 @@ void nRF24L01::setChannel(uint8_t channel) {
      * done in setChannel() to require certain channel spacing.
      */
     const uint8_t max_channel = 127;
-    write_register(nRF24L01_RegisterMap_t::RF_CH, min(channel, max_channel));
+    writeShortRegister(RF_CH, min(channel, max_channel));
 }
 
 void nRF24L01::setPayloadSize(uint8_t size) {
     payload_size = min(size, maxPayloadSize);
 }
 
-uint8_t nRF24L01::getPayloadSize(void) {
+uint8_t nRF24L01::getPayloadSize() {
     return (payload_size);
 }
 
 void nRF24L01::clearIRQs() {
-    uint8_t status = 0x00; // read_register(nRF24L01_MemoryMap_t::STATUS);
+    uint8_t status = 0x00;
 
     setBit_r(status, RX_DR);
     setBit_r(status, TX_DS);
     setBit_r(status, MAX_RT);
 
-    write_register(nRF24L01_RegisterMap_t::STATUS, status);
+    writeShortRegister(STATUS, status);
 }
 
-void nRF24L01::init(void) {
+void nRF24L01::init() {
     _ce.clear();
 
     setPowerState(true);
@@ -175,34 +197,34 @@ void nRF24L01::init(void) {
 
     _irq.enableInterrupt(foo, this);
 
-    // flush_rx();
-    // flush_tx();
+    // cmd_FLUSH_RX();
+    // cmd_FLUSH_TX();
 }
 
-void nRF24L01::startListening(void) {
-    setSingleBit(nRF24L01_RegisterMap_t::CONFIG, RF24_Config_PRIM_RX);
+void nRF24L01::startListening() {
+    setSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
     _ce.set();
 }
 
-void nRF24L01::stopListening(void) {
+void nRF24L01::stopListening() {
     _ce.clear();
 
-    flush_tx();
-    flush_rx();
+    cmd_FLUSH_TX();
+    cmd_FLUSH_RX();
 }
 
 void nRF24L01::setPowerState(bool enable) {
-    uint8_t config = read_register(nRF24L01_RegisterMap_t::CONFIG);
+    uint8_t config = readShortRegister(CONFIG);
 
     if (enable) {
-        setBit_r(config, RF24_Config_PWR_UP);
+        setBit_r(config, STATIC_CAST(CONFIG_t::PWR_UP));
     } else {
-        clearBit_r(config, RF24_Config_PWR_UP);
+        clearBit_r(config, STATIC_CAST(CONFIG_t::PWR_UP));
     }
 
-    write_register(nRF24L01_RegisterMap_t::CONFIG, config);
+    writeShortRegister(CONFIG, config);
 
-    assert(config == read_register(nRF24L01_RegisterMap_t::CONFIG));
+    assert(config == readShortRegister(CONFIG));
 
     /*
 	 * Must allow the radio time to settle else configuration bits will not
@@ -222,7 +244,7 @@ void nRF24L01::setPowerState(bool enable) {
 
 /******************************************************************/
 
-bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
+bool nRF24L01::write(uint8_t *buf, uint8_t len) {
     bool result = false;
 
     // Begin the write
@@ -244,8 +266,8 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     uint32_t sent_at       = getMillis();
     const uint32_t timeout = 500; //ms to wait for timeout
     do {
-        // status = read_register(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
-        status = getStatus();
+        // status = readShortRegister(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
+        status = cmd_NOP();
     } while (!(status & ((1 << TX_DS) | (1 << MAX_RT))) &&
              (getMillis() - sent_at < timeout));
 
@@ -271,54 +293,53 @@ bool nRF24L01::write(const uint8_t *buf, uint8_t len) {
     // Yay, we are done.
 
     // Flush buffers (Is this a relic of past experimentation, and not needed anymore??)
-    flush_tx();
+    cmd_FLUSH_TX();
 
     // setPowerState(false);
 
     return (result);
 }
 
-void nRF24L01::setSingleBit(nRF24L01_RegisterMap_t address, uint8_t bit) {
-    uint8_t reg = read_register(address);
+void nRF24L01::setSingleBit(nRF24L01_Register_t address, uint8_t bit) {
+    uint8_t reg = readShortRegister(address);
     setBit_r(reg, bit);
-    write_register(address, reg);
+    writeShortRegister(address, reg);
 
-    assert(reg == read_register(address));
+    assert(reg == readShortRegister(address));
 }
 
-void nRF24L01::clearSingleBit(nRF24L01_RegisterMap_t address, uint8_t bit) {
-    uint8_t reg = read_register(address);
+void nRF24L01::clearSingleBit(nRF24L01_Register_t address, uint8_t bit) {
+    uint8_t reg = readShortRegister(address);
     clearBit_r(reg, bit);
-    write_register(address, reg);
+    writeShortRegister(address, reg);
 
-    assert(reg == read_register(address));
+    assert(reg == readShortRegister(address));
 }
 
-void nRF24L01::startWrite(const uint8_t *bytes, uint8_t numBytes) {
-    write_payload(bytes, numBytes);
-    clearSingleBit(nRF24L01_RegisterMap_t::CONFIG,
-                   static_cast<uint8_t>(nRF24L01_CONFIG_t::PRIM_RX));
+void nRF24L01::startWrite(uint8_t *bytes, uint8_t numBytes) {
+    cmd_W_TX_PAYLOAD(bytes, numBytes);
+    clearSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
 
     _ce.set();
     delayUs(10);
     _ce.clear();
 }
 
-uint8_t nRF24L01::getDynamicPayloadSize(void) {
+uint8_t nRF24L01::getDynamicPayloadSize() {
     uint8_t result;
 
-    transmit(__castCMD(nRF24L01_Command_t::R_RX_PL_WID), NULL, &result, 1);
+    transmit(R_RX_PL_WID, NULL, &result, 1);
 
     return (result);
 }
 
-bool nRF24L01::available(void) {
+bool nRF24L01::available() {
     return (available(NULL));
 }
 
 // XXX
 bool nRF24L01::available(uint8_t *pipe_num) {
-    uint8_t status = getStatus();
+    uint8_t status = cmd_NOP();
 
     // Too noisy, enable if you really want lots o data!!
     //IF_SERIAL_DEBUG(print_status(status));
@@ -334,11 +355,11 @@ bool nRF24L01::available(uint8_t *pipe_num) {
         // ??? Should this REALLY be cleared now?  Or wait until we
         // actually READ the payload?
 
-        write_register(nRF24L01_RegisterMap_t::STATUS, (1 << RX_DR));
+        writeShortRegister(STATUS, (1 << RX_DR));
 
         // Handle ack payload receipt
         if (status & (1 << TX_DS)) {
-            write_register(nRF24L01_RegisterMap_t::STATUS, (1 << TX_DS));
+            writeShortRegister(STATUS, (1 << TX_DS));
         }
     }
 
@@ -346,10 +367,10 @@ bool nRF24L01::available(uint8_t *pipe_num) {
 }
 
 bool nRF24L01::read(uint8_t *buf, uint8_t len) {
-    uint8_t fifo_status = read_register(nRF24L01_RegisterMap_t::FIFO_STATUS);
+    uint8_t fifo_status = readShortRegister(FIFO_STATUS);
 
     // Fetch the payload
-    read_payload(buf, len);
+    cmd_R_RX_PAYLOAD(buf, len);
 
     // Was this the last of the data available?
     return (readBit(fifo_status, RX_EMPTY));
@@ -357,11 +378,10 @@ bool nRF24L01::read(uint8_t *buf, uint8_t len) {
 
 // XXX
 void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
-    uint8_t status = getStatus();
+    uint8_t status = cmd_NOP();
 
     // Clear flags
-    write_register(nRF24L01_RegisterMap_t::STATUS,
-                   (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+    writeShortRegister(STATUS, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
 
     tx_ok    = status & (1 << TX_DS);
     tx_fail  = status & (1 << MAX_RT);
@@ -371,24 +391,24 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
 void nRF24L01::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
-    write_register(nRF24L01_RegisterMap_t::TX_ADDR, tx_addr, 5);
+    cmd_W_REGISTER(TX_ADDR, tx_addr, 5);
 }
 
 void nRF24L01::setRxAddress(uint8_t child, uint64_t address) {
     uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
 
+    // TODO
     switch (child) {
         case 0: {
-            write_register(nRF24L01_RegisterMap_t::RX_ADDR_P0, rx_addr, 5);
-            write_register(nRF24L01_RegisterMap_t::RX_PW_P0, 32);
-            write_register(nRF24L01_RegisterMap_t::EN_RXADDR,
-                           static_cast<uint8_t>(nRF24L01_EN_RXADDR_t::ERX_P0));
+            cmd_W_REGISTER(RX_ADDR_P0, rx_addr, 5);
+            writeShortRegister(RX_PW_P0, 32);
+            writeShortRegister(EN_RXADDR, STATIC_CAST(EN_RXADDR_t::ERX_P0));
         } break;
     }
 }
 
 // TODO: Find in data sheet
-void nRF24L01::toggle_features(void) {
+void nRF24L01::toggle_features() {
     // uint8_t command = RF24_Command_ACTIVATE;
     // uint8_t foo     = 0x73;
     // uint8_t result;
@@ -396,78 +416,77 @@ void nRF24L01::toggle_features(void) {
 }
 
 // XXX
-void nRF24L01::enableDynamicPayloads(void) {
+void nRF24L01::enableDynamicPayloads() {
     // Enable dynamic payload throughout the system
-    uint8_t feature = read_register(nRF24L01_RegisterMap_t::FEATURE);
+    uint8_t feature = readShortRegister(FEATURE);
     setBit_r(feature, EN_DPL);
-    write_register(nRF24L01_RegisterMap_t::FEATURE, feature);
+    writeShortRegister(FEATURE, feature);
 
     // If it didn't work, the features are not enabled
-    if (!read_register(nRF24L01_RegisterMap_t::FEATURE)) {
+    if (!readShortRegister(FEATURE)) {
         // So enable them and try again
         toggle_features();
-        read_register(nRF24L01_RegisterMap_t::FEATURE);
+        readShortRegister(FEATURE);
         setBit_r(feature, EN_DPL);
-        write_register(nRF24L01_RegisterMap_t::FEATURE, feature);
+        writeShortRegister(FEATURE, feature);
     }
 
     // Enable dynamic payload on all pipes
     //
     // Not sure the use case of only having dynamic payload on certain
     // pipes, so the library does not support it.
-    uint8_t dynpd = read_register(nRF24L01_RegisterMap_t::DYNPD);
+    uint8_t dynpd = readShortRegister(DYNPD);
     setBit_r(dynpd, DPL_P0);
     setBit_r(dynpd, DPL_P1);
     setBit_r(dynpd, DPL_P2);
     setBit_r(dynpd, DPL_P3);
     setBit_r(dynpd, DPL_P4);
     setBit_r(dynpd, DPL_P5);
-    write_register(nRF24L01_RegisterMap_t::DYNPD, dynpd);
+    writeShortRegister(DYNPD, dynpd);
 
     dynamic_payloads_enabled = true;
 }
 
 // XXX
-void nRF24L01::enableAckPayload(void) {
+void nRF24L01::enableAckPayload() {
     //
     // enable ack payload and dynamic payload features
     //
-    uint8_t feature = read_register(nRF24L01_RegisterMap_t::FEATURE);
+    uint8_t feature = readShortRegister(FEATURE);
     setBit_r(feature, EN_ACK_PAY);
     setBit_r(feature, EN_DPL);
-    write_register(nRF24L01_RegisterMap_t::FEATURE, feature);
+    writeShortRegister(FEATURE, feature);
 
     // If it didn't work, the features are not enabled
-    if (!read_register(nRF24L01_RegisterMap_t::FEATURE)) {
+    if (!readShortRegister(FEATURE)) {
         // So enable them and try again
         toggle_features();
-        read_register(nRF24L01_RegisterMap_t::FEATURE);
+        readShortRegister(FEATURE);
         setBit_r(feature, EN_ACK_PAY);
         setBit_r(feature, EN_DPL);
-        write_register(nRF24L01_RegisterMap_t::FEATURE, feature);
+        writeShortRegister(FEATURE, feature);
     }
 
-    LOG("FEATURE=%i\r\n", read_register(nRF24L01_RegisterMap_t::FEATURE));
+    LOG("FEATURE=%i\r\n", readShortRegister(FEATURE));
 
     //
     // Enable dynamic payload on pipes 0 & 1
     //
-    uint8_t dynpd = read_register(nRF24L01_RegisterMap_t::DYNPD);
+    uint8_t dynpd = readShortRegister(DYNPD);
     setBit_r(dynpd, DPL_P0);
     setBit_r(dynpd, DPL_P1);
-    write_register(nRF24L01_RegisterMap_t::DYNPD, dynpd);
+    writeShortRegister(DYNPD, dynpd);
 }
 
 // XXX
-void nRF24L01::writeAckPayload(uint8_t pipe, const uint8_t *buf, uint8_t len) {
+void nRF24L01::writeAckPayload(uint8_t pipe, uint8_t *buf, uint8_t len) {
     uint8_t data_len = min(len, maxPayloadSize);
-    uint8_t command =
-        __castCMD(nRF24L01_Command_t::W_ACK_PAYLOAD) | (pipe & 0b111);
-    uint8_t status = transmit(command, buf, NULL, data_len);
+    uint8_t command  = W_ACK_PAYLOAD | (pipe & 0b111);
+    uint8_t status   = transmit(command, buf, NULL, data_len);
 }
 
 // XXX
-bool nRF24L01::isAckPayloadAvailable(void) {
+bool nRF24L01::isAckPayloadAvailable() {
     bool result           = ack_payload_available;
     ack_payload_available = false;
     return (result);
@@ -476,16 +495,16 @@ bool nRF24L01::isAckPayloadAvailable(void) {
 // TODO: Split into two functions: enable and disable.
 void nRF24L01::setAutoAck(bool enable) {
     if (enable)
-        write_register(nRF24L01_RegisterMap_t::EN_AA, 0b111111);
+        writeShortRegister(EN_AA, 0b111111);
     else
-        write_register(nRF24L01_RegisterMap_t::EN_AA, 0);
+        writeShortRegister(EN_AA, 0);
 }
 
 /*
  * TODO: Use enum for pipes, split into two functions
  */
 void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
-    uint8_t en_aa = read_register(nRF24L01_RegisterMap_t::EN_AA);
+    uint8_t en_aa = readShortRegister(EN_AA);
 
     if (pipe >= 6) {
         return;
@@ -497,28 +516,20 @@ void nRF24L01::setAutoAck(uint8_t pipe, bool enable) {
         en_aa &= ~(1 << pipe);
     }
 
-    write_register(nRF24L01_RegisterMap_t::EN_AA, en_aa);
+    writeShortRegister(EN_AA, en_aa);
 
-    assert(en_aa == read_register(nRF24L01_RegisterMap_t::EN_AA));
+    assert(en_aa == readShortRegister(EN_AA));
 }
 
 // XXX
-bool nRF24L01::testCarrier(void) {
-    // uint8_t rpd = read_register(nRF24L01_RegisterMap_t::CD);
-
-    // return ((bool)rpd);
-    return (false);
-}
-
-// XXX
-bool nRF24L01::testRPD(void) {
-    uint8_t rpd = read_register(nRF24L01_RegisterMap_t::RPD);
+bool nRF24L01::testRPD() {
+    uint8_t rpd = readShortRegister(RPD);
 
     return ((bool)rpd);
 }
 
 void nRF24L01::setPowerLevel(RF24_PowerLevel_t level) {
-    uint8_t rf_setup = read_register(nRF24L01_RegisterMap_t::RF_SETUP);
+    uint8_t rf_setup = readShortRegister(RF_SETUP);
 
     switch (level) {
         case RF24_PA_18dBm: {
@@ -539,13 +550,13 @@ void nRF24L01::setPowerLevel(RF24_PowerLevel_t level) {
         } break;
     }
 
-    write_register(nRF24L01_RegisterMap_t::RF_SETUP, rf_setup);
+    writeShortRegister(RF_SETUP, rf_setup);
 
-    assert(rf_setup == read_register(nRF24L01_RegisterMap_t::RF_SETUP));
+    assert(rf_setup == readShortRegister(RF_SETUP));
 }
 
-RF24_PowerLevel_t nRF24L01::getPowerLevel(void) {
-    uint8_t rfSetup = read_register(nRF24L01_RegisterMap_t::RF_SETUP);
+RF24_PowerLevel_t nRF24L01::getPowerLevel() {
+    uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     bitwiseAND_r(rfSetup, RF_PWR_MASK);
     shiftRight_r(rfSetup, 1);
@@ -554,7 +565,7 @@ RF24_PowerLevel_t nRF24L01::getPowerLevel(void) {
 }
 
 void nRF24L01::setDataRate(nRF24L01_DataRate_t dataRate) {
-    uint8_t rfSetup = read_register(nRF24L01_RegisterMap_t::RF_SETUP);
+    uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     switch (dataRate) {
         case (nRF24L01_DataRate_t::SPEED_1MBPS): {
@@ -571,13 +582,13 @@ void nRF24L01::setDataRate(nRF24L01_DataRate_t dataRate) {
         } break;
     }
 
-    write_register(nRF24L01_RegisterMap_t::RF_SETUP, rfSetup);
+    writeShortRegister(RF_SETUP, rfSetup);
 
     assert(dataRate == getDataRate());
 }
 
-nRF24L01_DataRate_t nRF24L01::getDataRate(void) {
-    uint8_t rfSetup = read_register(nRF24L01_RegisterMap_t::RF_SETUP);
+nRF24L01_DataRate_t nRF24L01::getDataRate() {
+    uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
         return (nRF24L01_DataRate_t::SPEED_250KBPS);
@@ -593,40 +604,40 @@ nRF24L01_DataRate_t nRF24L01::getDataRate(void) {
 /*
  * TODO: This function also enables CRC!
  */
-void nRF24L01::setCRCLength(RF24_CRC_t crc) {
-    uint8_t config = read_register(nRF24L01_RegisterMap_t::CONFIG);
+void nRF24L01::setCRCConfig(RF24_CRC_t crc) {
+    uint8_t config = readShortRegister(CONFIG);
 
     switch (crc) {
         case RF24_CRC_DISABLED: {
-            clearBit_r(config, RF24_Config_EN_CRC);
+            clearBit_r(config, STATIC_CAST(CONFIG_t::EN_CRC));
         } break;
         case RF24_CRC_8: {
-            setBit_r(config, RF24_Config_EN_CRC);
-            clearBit_r(config, RF24_Config_CRCO);
+            setBit_r(config, STATIC_CAST(CONFIG_t::EN_CRC));
+            clearBit_r(config, STATIC_CAST(CONFIG_t::CRCO));
         } break;
         case RF24_CRC_16: {
-            setBit_r(config, RF24_Config_EN_CRC);
-            setBit_r(config, RF24_Config_CRCO);
+            setBit_r(config, STATIC_CAST(CONFIG_t::EN_CRC));
+            setBit_r(config, STATIC_CAST(CONFIG_t::CRCO));
         } break;
         default: break;
     }
 
-    write_register(nRF24L01_RegisterMap_t::CONFIG, config);
+    writeShortRegister(CONFIG, config);
 
-    assert(config == read_register(nRF24L01_RegisterMap_t::CONFIG));
+    assert(config == readShortRegister(CONFIG));
 }
 
 /*
  * TODO: This function also checks whether CRC is enabled or not.
  */
-RF24_CRC_t nRF24L01::getCRCLength(void) {
-    uint8_t config = read_register(nRF24L01_RegisterMap_t::CONFIG);
+RF24_CRC_t nRF24L01::getCRCConfig() {
+    uint8_t config = readShortRegister(CONFIG);
 
-    if (!readBit(config, RF24_Config_EN_CRC)) {
+    if (!readBit(config, STATIC_CAST(CONFIG_t::EN_CRC))) {
         return (RF24_CRC_DISABLED);
     }
 
-    if (readBit(config, RF24_Config_CRCO)) {
+    if (readBit(config, STATIC_CAST(CONFIG_t::CRCO))) {
         return (RF24_CRC_16);
     } else {
         return (RF24_CRC_8);
@@ -637,14 +648,14 @@ void nRF24L01::setRetries(uint8_t delay, uint8_t count) {
     uint8_t setup_retr;
 
     bitwiseAND_r(delay, 0xf);
-    shiftLeft_r(delay, RF24_SETUP_RETR_ARD);
+    shiftLeft_r(delay, STATIC_CAST(SETUP_RETR_t::ARD));
 
     bitwiseAND_r(count, 0xf);
-    shiftLeft_r(count, RF24_SETUP_RETR_ARC);
+    shiftLeft_r(count, STATIC_CAST(SETUP_RETR_t::ARC));
 
     setup_retr = bitwiseOR(delay, count);
 
-    write_register(nRF24L01_RegisterMap_t::SETUP_RETR, setup_retr);
+    writeShortRegister(SETUP_RETR, setup_retr);
 
-    assert(setup_retr == read_register(nRF24L01_RegisterMap_t::SETUP_RETR));
+    assert(setup_retr == readShortRegister(SETUP_RETR));
 }

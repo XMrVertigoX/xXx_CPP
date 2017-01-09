@@ -47,12 +47,4 @@ static inline void shiftRight_r(uint8_t &byte, uint8_t amount) {
     byte >>= amount;
 }
 
-static inline uint8_t __castCMD(nRF24L01_Command_t command) {
-    return (static_cast<uint8_t>(command));
-}
-
-static inline uint8_t __castMEM(nRF24L01_RegisterMap_t command) {
-    return (static_cast<uint8_t>(command));
-}
-
 #endif /* NRF24L01_UTILITIES_H_ */
