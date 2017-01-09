@@ -1,10 +1,14 @@
-#ifndef NRF24L01_CONSTANTS_HPP_
-#define NRF24L01_CONSTANTS_HPP_
+#ifndef NRF24L01_DEFINITIONS_HPP_
+#define NRF24L01_DEFINITIONS_HPP_
 
 #include <stdint.h>
 
+// clang-format off
+
 #define STATIC_CAST(x) static_cast<uint8_t>(x)
-#define LAMBDA []
+#define LAMBDA         []
+
+// clang-format on
 
 // XXX
 #if !defined(min)
@@ -91,25 +95,55 @@ enum class EN_RXADDR_t : uint8_t {
     ERX_P5
 };
 
-enum class SETUP_AW_t : uint8_t {
-    AW,
-};
+enum class SETUP_AW_t : uint8_t { AW };
 
 enum class SETUP_RETR_t : uint8_t { ARC = 0, ARD = 4 };
 
 enum class RF_CH_t : uint8_t { RF_CH };
 
-// TODO
-enum class RF_SETUP_t : uint8_t {};
+enum class RF_SETUP_t : uint8_t {
+    RF_PWR     = 1,
+    RF_DR_HIGH = 3,
+    PLL_LOCK   = 4,
+    RF_DR_LOW  = 5,
+    CONT_WAVE  = 7
+};
 
-// TODO
-enum class STATUS_t : uint8_t {};
+enum class STATUS_t : uint8_t {
+    TX_FULL = 0,
+    RX_P_NO = 1,
+    MAX_RT  = 4,
+    TX_DS   = 5,
+    RX_DR   = 6
+};
 
-// TODO
-enum class OBSERVE_TX_t : uint8_t {};
+enum class OBSERVE_TX_t : uint8_t { ARC_CNT = 0, PLOS_CNT = 4 };
 
-// TODO
-enum class RPD_t : uint8_t {};
+enum class RPD_t : uint8_t { RPD };
+
+enum class RX_PW_P0_t : uint8_t { RX_PW_P0 };
+
+enum class RX_PW_P1_t : uint8_t { RX_PW_P1 };
+
+enum class RX_PW_P2_t : uint8_t { RX_PW_P2 };
+
+enum class RX_PW_P3_t : uint8_t { RX_PW_P3 };
+
+enum class RX_PW_P4_t : uint8_t { RX_PW_P4 };
+
+enum class RX_PW_P5_t : uint8_t { RX_PW_P5 };
+
+enum class FIFO_STATUS : uint8_t {
+    RX_EMPTY = 0,
+    RX_FULL  = 1,
+    TX_EMPTY = 4,
+    TX_FULL  = 5,
+    TX_REUSE = 6
+};
+
+enum class DYNPD : uint8_t { DPL_P0, DPL_P1, DPL_P2, DPL_P3, DPL_P4, DPL_P5 };
+
+enum class FEATURE : uint8_t { EN_DYN_ACK, EN_ACK_PAY, EN_DPL };
 
 // clang-format off
 
@@ -119,7 +153,7 @@ enum class RPD_t : uint8_t {};
 #define RF_PWR_MASK   (6)
 #define RX_DR         (6)
 #define TX_DS         (5)
-#define MAX_RT        (4)
+// #define MAX_RT        (4)
 #define RX_P_NO       (1)
 #define TX_FULL       (0)
 #define PLOS_CNT      (4)
@@ -147,4 +181,4 @@ enum class RPD_t : uint8_t {};
 
 // clang-format on
 
-#endif // NRF24L01_CONSTANTS_HPP_
+#endif // NRF24L01_DEFINITIONS_HPP_

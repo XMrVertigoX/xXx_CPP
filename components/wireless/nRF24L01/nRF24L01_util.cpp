@@ -5,6 +5,7 @@
 #include <xXx/components/wireless/nRF24L01/bitops.hpp>
 #include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
 #include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
+#include <xXx/utils/logging.hpp>
 
 uint8_t nRF24L01::transmit(uint8_t command, uint8_t txBytes[],
                            uint8_t rxBytes[], size_t numBytes) {
@@ -48,6 +49,7 @@ uint8_t nRF24L01::writeShortRegister(Register_t address, uint8_t value) {
 
 void nRF24L01::clearSingleBit(Register_t address, uint8_t bit) {
     uint8_t reg = readShortRegister(address);
+
     clearBit_r(reg, bit);
     writeShortRegister(address, reg);
 
@@ -56,6 +58,7 @@ void nRF24L01::clearSingleBit(Register_t address, uint8_t bit) {
 
 void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
     uint8_t reg = readShortRegister(address);
+
     setBit_r(reg, bit);
     writeShortRegister(address, reg);
 
@@ -67,7 +70,14 @@ void nRF24L01::clearIRQs() {
 
     setBit_r(status, RX_DR);
     setBit_r(status, TX_DS);
-    setBit_r(status, MAX_RT);
+    setBit_r(status, STATIC_CAST(STATUS_t::MAX_RT));
 
-    writeShortRegister(STATUS, status);
+    status = writeShortRegister(STATUS, status);
+
+    if (status & STATIC_CAST(STATUS_t::MAX_RT)) {
+        cmd_FLUSH_TX();
+        cmd_FLUSH_RX();
+    }
+
+    LOG("%x", status);
 }

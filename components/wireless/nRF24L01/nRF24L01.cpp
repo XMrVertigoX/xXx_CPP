@@ -41,7 +41,8 @@ uint8_t nRF24L01::getPayloadSize() {
 void nRF24L01::init() {
     _ce.clear();
 
-    setPowerState(true);
+    clearIRQs();
+    // setPowerState(true);
 
     /*
      * Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make
@@ -99,7 +100,7 @@ void nRF24L01::setPowerState(bool enable) {
 	 * WARNING: Delay is based on P-variant whereby non-P *may* require
 	 * different timing.
 	 */
-    delayMs(5);
+    // delayMs(5);
 }
 
 /******************************************************************/
@@ -128,8 +129,9 @@ bool nRF24L01::write(uint8_t *bytes, size_t numBytes) {
     do {
         // status = readShortRegister(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
         status = cmd_NOP();
-    } while (!(status & ((1 << TX_DS) | (1 << MAX_RT))) &&
-             (getMillis() - sent_at < timeout));
+    } while (
+        !(status & ((1 << TX_DS) | (1 << STATIC_CAST(STATUS_t::MAX_RT)))) &&
+        (getMillis() - sent_at < timeout));
 
     // The part above is what you could recreate with your own interrupt handler,
     // and then call this when you got an interrupt
@@ -225,10 +227,11 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
     uint8_t status = cmd_NOP();
 
     // Clear flags
-    writeShortRegister(STATUS, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+    writeShortRegister(STATUS, (1 << RX_DR) | (1 << TX_DS) |
+                                   (1 << STATIC_CAST(STATUS_t::MAX_RT)));
 
     tx_ok    = status & (1 << TX_DS);
-    tx_fail  = status & (1 << MAX_RT);
+    tx_fail  = status & (1 << STATIC_CAST(STATUS_t::MAX_RT));
     rx_ready = status & (1 << RX_DR);
 }
 
