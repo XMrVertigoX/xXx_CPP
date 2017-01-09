@@ -1,20 +1,15 @@
 #include <assert.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
-#include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
 #include <nRF24L01_config.h>
 
+#include "nRF24L01.hpp"
+#include "nRF24L01_definitions.hpp"
 #include "util.hpp"
-
-// XXX
-#if !defined(min)
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
 nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
     : _spi(spi), _ce(ce), _irq(irq), payload_size(32),
@@ -67,15 +62,12 @@ void nRF24L01::init() {
      */
     // setRetries(0b0100, 0b1111);
 
-    auto foo = [](void *user) {
+    auto irqFunction = LAMBDA(void *user) {
         nRF24L01 *self = static_cast<nRF24L01 *>(user);
         self->clearIRQs();
     };
 
-    _irq.enableInterrupt(foo, this);
-
-    // cmd_FLUSH_RX();
-    // cmd_FLUSH_TX();
+    _irq.enableInterrupt(irqFunction, this);
 }
 
 void nRF24L01::startListening() {
@@ -175,22 +167,6 @@ bool nRF24L01::write(uint8_t *bytes, size_t numBytes) {
     // setPowerState(false);
 
     return (result);
-}
-
-void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
-    uint8_t reg = readShortRegister(address);
-    setBit_r(reg, bit);
-    writeShortRegister(address, reg);
-
-    assert(reg == readShortRegister(address));
-}
-
-void nRF24L01::clearSingleBit(Register_t address, uint8_t bit) {
-    uint8_t reg = readShortRegister(address);
-    clearBit_r(reg, bit);
-    writeShortRegister(address, reg);
-
-    assert(reg == readShortRegister(address));
 }
 
 void nRF24L01::startWrite(uint8_t *bytes, size_t numBytes) {

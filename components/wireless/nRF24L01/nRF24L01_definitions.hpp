@@ -2,6 +2,12 @@
 #define NRF24L01_CONSTANTS_HPP_
 
 #define STATIC_CAST(x) static_cast<uint8_t>(x)
+#define LAMBDA []
+
+// XXX
+#if !defined(min)
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
 
 static const uint8_t maxPayloadSize   = 32;
 static const uint8_t maxAddressLength = 5;
@@ -83,16 +89,13 @@ enum class EN_RXADDR_t : uint8_t {
     ERX_P5
 };
 
-// TODO
-enum class SETUP_AW_t : uint8_t {};
-
-enum class SETUP_RETR_t : uint8_t {
-    ARC = 0,
-    ARD = 4,
+enum class SETUP_AW_t : uint8_t {
+    AW,
 };
 
-// TODO
-enum class RF_CH_t : uint8_t {};
+enum class SETUP_RETR_t : uint8_t { ARC = 0, ARD = 4 };
+
+enum class RF_CH_t : uint8_t { RF_CH };
 
 // TODO
 enum class RF_SETUP_t : uint8_t {};

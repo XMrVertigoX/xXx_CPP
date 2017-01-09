@@ -1,7 +1,9 @@
+#include <assert.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
-#include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
+#include "nRF24L01.hpp"
+#include "nRF24L01_definitions.hpp"
+#include "util.hpp"
 
 uint8_t nRF24L01::transmit(uint8_t command, uint8_t txBytes[],
                            uint8_t rxBytes[], size_t numBytes) {
@@ -41,4 +43,20 @@ uint8_t nRF24L01::writeShortRegister(Register_t address, uint8_t value) {
     uint8_t status = cmd_W_REGISTER(address, &value, 1);
 
     return (status);
+}
+
+void nRF24L01::clearSingleBit(Register_t address, uint8_t bit) {
+    uint8_t reg = readShortRegister(address);
+    clearBit_r(reg, bit);
+    writeShortRegister(address, reg);
+
+    assert(reg == readShortRegister(address));
+}
+
+void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
+    uint8_t reg = readShortRegister(address);
+    setBit_r(reg, bit);
+    writeShortRegister(address, reg);
+
+    assert(reg == readShortRegister(address));
 }

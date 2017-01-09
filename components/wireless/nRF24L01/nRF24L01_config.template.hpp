@@ -1,5 +1,5 @@
-#ifndef NRF24L01_CONFIG_HPP_TEMPLATE_
-#define NRF24L01_CONFIG_HPP_TEMPLATE_
+#ifndef NRF24L01_CONFIG_TEMPLATE_HPP_
+#define NRF24L01_CONFIG_TEMPLATE_HPP_
 
 static inline void delayMs(uint32_t ms) {}
 
@@ -9,4 +9,4 @@ static inline uint32_t getMillis() {
     return (0);
 }
 
-#endif // NRF24L01_CONFIG_HPP_TEMPLATE_
+#endif // NRF24L01_CONFIG_TEMPLATE_HPP_
