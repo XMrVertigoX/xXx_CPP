@@ -2,150 +2,27 @@
 #include <string.h>
 
 #include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
-#include <xXx/components/wireless/nRF24L01/nRF24L01_constants.hpp>
-#include <xXx/components/wireless/nRF24L01/nRF24L01_utilities.h>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/logging.hpp>
 
 #include <nRF24L01_config.h>
 
-#define STATIC_CAST(x) static_cast<uint8_t>(x)
+#include "util.hpp"
 
 // XXX
 #if !defined(min)
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
-// XXX
-#if !defined(max)
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-
-static const uint8_t dummy = 0xFF;
-
 nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
-    : _spi(spi), _ce(ce), _irq(irq), /*wide_band(true),*/ p_variant(true),
-      payload_size(32), ack_payload_available(false),
-      dynamic_payloads_enabled(false), pipe0_reading_address(0),
-      ack_payload_length(0) {}
+    : _spi(spi), _ce(ce), _irq(irq), payload_size(32),
+      ack_payload_available(false), dynamic_payloads_enabled(false),
+      pipe0_reading_address(0), ack_payload_length(0) {}
 
-uint8_t nRF24L01::cmd_R_REGISTER(nRF24L01_Register_t address, uint8_t bytes[],
-                                 uint8_t numBytes) {
-    uint8_t command = bitwiseOR(R_REGISTER, address);
-    uint8_t status  = transmit(command, NULL, bytes, numBytes);
-
-    return (status);
-}
-
-uint8_t nRF24L01::cmd_W_REGISTER(nRF24L01_Register_t address, uint8_t bytes[],
-                                 uint8_t numBytes) {
-    uint8_t command = bitwiseOR(W_REGISTER, address);
-    uint8_t status  = transmit(command, bytes, NULL, numBytes);
-
-    return (status);
-}
-
-// XXX
-uint8_t nRF24L01::cmd_W_TX_PAYLOAD(uint8_t *buf, uint8_t len) {
-    uint8_t data_len = min(len, payload_size);
-
-    uint8_t tempBuffer[payload_size] = {};
-    memcpy(tempBuffer, buf, data_len);
-
-    uint8_t command = W_TX_PAYLOAD;
-    uint8_t status  = transmit(command, tempBuffer, NULL, payload_size);
-
-    return (status);
-}
-
-uint8_t nRF24L01::cmd_R_RX_PAYLOAD(uint8_t *buf, uint8_t len) {
-    uint8_t command = R_RX_PAYLOAD;
-    uint8_t status  = transmit(command, NULL, buf, min(len, payload_size));
-
-    return (status);
-}
-
-uint8_t nRF24L01::cmd_FLUSH_TX() {
-    uint8_t command = FLUSH_TX;
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-uint8_t nRF24L01::cmd_FLUSH_RX() {
-    uint8_t command = FLUSH_RX;
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-// TODO
-uint8_t cmd_REUSE_TX_PL(void) {
-    return (0);
-}
-
-// TODO
-uint8_t cmd_R_RX_PL_WID(void) {
-    return (0);
-}
-
-// TODO
-uint8_t cmd_W_ACK_PAYLOAD(void) {
-    return (0);
-}
-
-// TODO
-uint8_t cmd_W_TX_PAYLOAD_NOACK(void) {
-    return (0);
-}
-
-uint8_t nRF24L01::cmd_NOP() {
-    uint8_t command = NOP;
-    uint8_t status  = transmit(command, NULL, NULL, 0);
-
-    return (status);
-}
-
-uint8_t nRF24L01::transmit(uint8_t command, uint8_t txBytes[],
-                           uint8_t rxBytes[], size_t numBytes) {
-    uint8_t status;
-    size_t dataNumBytes = numBytes + 1;
-    uint8_t mosiBytes[dataNumBytes];
-    uint8_t misoBytes[dataNumBytes];
-
-    mosiBytes[0] = command;
-
-    if (txBytes != NULL) {
-        memcpy(&mosiBytes[1], txBytes, numBytes);
-    } else {
-        memset(&mosiBytes[1], dummy, numBytes);
-    }
-
-    _spi.transmit(mosiBytes, misoBytes, dataNumBytes);
-
-    status = misoBytes[0];
-
-    if (rxBytes != NULL) {
-        memcpy(rxBytes, &misoBytes[1], numBytes);
-    }
-
-    return (status);
-}
-
-uint8_t nRF24L01::readShortRegister(nRF24L01_Register_t address) {
-    uint8_t result;
-
-    cmd_R_REGISTER(address, &result, 1);
-
-    return (result);
-}
-
-uint8_t nRF24L01::writeShortRegister(nRF24L01_Register_t address,
-                                     uint8_t value) {
-    uint8_t status = cmd_W_REGISTER(address, &value, 1);
-
-    return (status);
+nRF24L01::~nRF24L01() {
+    // TODO: Shutdown device
 }
 
 void nRF24L01::setChannel(uint8_t channel) {
@@ -244,11 +121,11 @@ void nRF24L01::setPowerState(bool enable) {
 
 /******************************************************************/
 
-bool nRF24L01::write(uint8_t *buf, uint8_t len) {
+bool nRF24L01::write(uint8_t *bytes, size_t numBytes) {
     bool result = false;
 
     // Begin the write
-    startWrite(buf, len);
+    startWrite(bytes, numBytes);
 
     // ------------
     // At this point we could return from a non-blocking write, and then call
@@ -292,7 +169,7 @@ bool nRF24L01::write(uint8_t *buf, uint8_t len) {
 
     // Yay, we are done.
 
-    // Flush buffers (Is this a relic of past experimentation, and not needed anymore??)
+    // Flush bytesfers (Is this a relic of past experimentation, and not needed anymore??)
     cmd_FLUSH_TX();
 
     // setPowerState(false);
@@ -300,7 +177,7 @@ bool nRF24L01::write(uint8_t *buf, uint8_t len) {
     return (result);
 }
 
-void nRF24L01::setSingleBit(nRF24L01_Register_t address, uint8_t bit) {
+void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
     uint8_t reg = readShortRegister(address);
     setBit_r(reg, bit);
     writeShortRegister(address, reg);
@@ -308,7 +185,7 @@ void nRF24L01::setSingleBit(nRF24L01_Register_t address, uint8_t bit) {
     assert(reg == readShortRegister(address));
 }
 
-void nRF24L01::clearSingleBit(nRF24L01_Register_t address, uint8_t bit) {
+void nRF24L01::clearSingleBit(Register_t address, uint8_t bit) {
     uint8_t reg = readShortRegister(address);
     clearBit_r(reg, bit);
     writeShortRegister(address, reg);
@@ -316,7 +193,7 @@ void nRF24L01::clearSingleBit(nRF24L01_Register_t address, uint8_t bit) {
     assert(reg == readShortRegister(address));
 }
 
-void nRF24L01::startWrite(uint8_t *bytes, uint8_t numBytes) {
+void nRF24L01::startWrite(uint8_t *bytes, size_t numBytes) {
     cmd_W_TX_PAYLOAD(bytes, numBytes);
     clearSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
 
@@ -328,7 +205,7 @@ void nRF24L01::startWrite(uint8_t *bytes, uint8_t numBytes) {
 uint8_t nRF24L01::getDynamicPayloadSize() {
     uint8_t result;
 
-    transmit(R_RX_PL_WID, NULL, &result, 1);
+    cmd_R_RX_PL_WID(&result, 1);
 
     return (result);
 }
@@ -366,11 +243,11 @@ bool nRF24L01::available(uint8_t *pipe_num) {
     return (result);
 }
 
-bool nRF24L01::read(uint8_t *buf, uint8_t len) {
+bool nRF24L01::read(uint8_t *bytes, size_t numBytes) {
     uint8_t fifo_status = readShortRegister(FIFO_STATUS);
 
     // Fetch the payload
-    cmd_R_RX_PAYLOAD(buf, len);
+    cmd_R_RX_PAYLOAD(bytes, numBytes);
 
     // Was this the last of the data available?
     return (readBit(fifo_status, RX_EMPTY));
@@ -479,10 +356,9 @@ void nRF24L01::enableAckPayload() {
 }
 
 // XXX
-void nRF24L01::writeAckPayload(uint8_t pipe, uint8_t *buf, uint8_t len) {
-    uint8_t data_len = min(len, maxPayloadSize);
-    uint8_t command  = W_ACK_PAYLOAD | (pipe & 0b111);
-    uint8_t status   = transmit(command, buf, NULL, data_len);
+void nRF24L01::writeAckPayload(uint8_t pipe, uint8_t *bytes, size_t numBytes) {
+    uint8_t data_len = min(numBytes, maxPayloadSize);
+    uint8_t status   = cmd_W_ACK_PAYLOAD(pipe, bytes, numBytes);
 }
 
 // XXX
@@ -528,7 +404,7 @@ bool nRF24L01::testRPD() {
     return ((bool)rpd);
 }
 
-void nRF24L01::setPowerLevel(RF24_PowerLevel_t level) {
+void nRF24L01::setPowerLevel(PowerLevel_t level) {
     uint8_t rf_setup = readShortRegister(RF_SETUP);
 
     switch (level) {
@@ -555,28 +431,28 @@ void nRF24L01::setPowerLevel(RF24_PowerLevel_t level) {
     assert(rf_setup == readShortRegister(RF_SETUP));
 }
 
-RF24_PowerLevel_t nRF24L01::getPowerLevel() {
+PowerLevel_t nRF24L01::getPowerLevel() {
     uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     bitwiseAND_r(rfSetup, RF_PWR_MASK);
     shiftRight_r(rfSetup, 1);
 
-    return ((RF24_PowerLevel_t)rfSetup);
+    return ((PowerLevel_t)rfSetup);
 }
 
-void nRF24L01::setDataRate(nRF24L01_DataRate_t dataRate) {
+void nRF24L01::setDataRate(DataRate_t dataRate) {
     uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     switch (dataRate) {
-        case (nRF24L01_DataRate_t::SPEED_1MBPS): {
+        case (DataRate_t::SPEED_1MBPS): {
             clearBit_r(rfSetup, RF_DR_LOW);
             clearBit_r(rfSetup, RF_DR_HIGH);
         } break;
-        case nRF24L01_DataRate_t::SPEED_2MBPS: {
+        case DataRate_t::SPEED_2MBPS: {
             clearBit_r(rfSetup, RF_DR_LOW);
             setBit_r(rfSetup, RF_DR_HIGH);
         } break;
-        case nRF24L01_DataRate_t::SPEED_250KBPS: {
+        case DataRate_t::SPEED_250KBPS: {
             setBit_r(rfSetup, RF_DR_LOW);
             clearBit_r(rfSetup, RF_DR_HIGH);
         } break;
@@ -587,24 +463,24 @@ void nRF24L01::setDataRate(nRF24L01_DataRate_t dataRate) {
     assert(dataRate == getDataRate());
 }
 
-nRF24L01_DataRate_t nRF24L01::getDataRate() {
+DataRate_t nRF24L01::getDataRate() {
     uint8_t rfSetup = readShortRegister(RF_SETUP);
 
     if (readBit(rfSetup, RF_DR_LOW)) {
-        return (nRF24L01_DataRate_t::SPEED_250KBPS);
+        return (DataRate_t::SPEED_250KBPS);
     }
 
     if (readBit(rfSetup, RF_DR_HIGH)) {
-        return (nRF24L01_DataRate_t::SPEED_2MBPS);
+        return (DataRate_t::SPEED_2MBPS);
     }
 
-    return (nRF24L01_DataRate_t::SPEED_1MBPS);
+    return (DataRate_t::SPEED_1MBPS);
 }
 
 /*
  * TODO: This function also enables CRC!
  */
-void nRF24L01::setCRCConfig(RF24_CRC_t crc) {
+void nRF24L01::setCRCConfig(CRC_t crc) {
     uint8_t config = readShortRegister(CONFIG);
 
     switch (crc) {
@@ -630,7 +506,7 @@ void nRF24L01::setCRCConfig(RF24_CRC_t crc) {
 /*
  * TODO: This function also checks whether CRC is enabled or not.
  */
-RF24_CRC_t nRF24L01::getCRCConfig() {
+CRC_t nRF24L01::getCRCConfig() {
     uint8_t config = readShortRegister(CONFIG);
 
     if (!readBit(config, STATIC_CAST(CONFIG_t::EN_CRC))) {

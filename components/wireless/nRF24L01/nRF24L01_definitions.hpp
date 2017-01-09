@@ -1,15 +1,18 @@
 #ifndef NRF24L01_CONSTANTS_HPP_
 #define NRF24L01_CONSTANTS_HPP_
 
+#define STATIC_CAST(x) static_cast<uint8_t>(x)
+
 static const uint8_t maxPayloadSize   = 32;
 static const uint8_t maxAddressLength = 5;
 static const uint8_t txSettling       = 130;
 static const uint8_t rxSettling       = 130;
+static const uint8_t dummy            = 0xFF;
 
 // TODO: Search in data sheet
 // #define RF24_Command_ACTIVATE  0x50
 
-enum nRF24L01_Command_t : uint8_t {
+enum class Command_t : uint8_t {
     R_REGISTER         = 0x00,
     W_REGISTER         = 0x20,
     R_RX_PAYLOAD       = 0x61,
@@ -23,7 +26,7 @@ enum nRF24L01_Command_t : uint8_t {
     NOP                = 0xFF,
 };
 
-enum nRF24L01_Register_t : uint8_t {
+enum Register_t : uint8_t {
     CONFIG      = 0x00,
     EN_AA       = 0x01,
     EN_RXADDR   = 0x02,
