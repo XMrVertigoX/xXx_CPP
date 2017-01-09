@@ -64,6 +64,7 @@ class nRF24L01 {
     void toggle_features(void);
     void init(void);
     void startListening(void);
+    uint8_t getStatus();
     void stopListening(void);
     bool write(uint8_t *bytes, size_t numBytes);
     bool available(void);

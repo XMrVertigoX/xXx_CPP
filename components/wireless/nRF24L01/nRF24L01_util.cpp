@@ -68,8 +68,8 @@ void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
 void nRF24L01::clearIRQs() {
     uint8_t status = 0x00;
 
-    setBit_r(status, RX_DR);
-    setBit_r(status, TX_DS);
+    setBit_r(status, STATIC_CAST(STATUS_t::RX_DR));
+    setBit_r(status, STATIC_CAST(STATUS_t::TX_DS));
     setBit_r(status, STATIC_CAST(STATUS_t::MAX_RT));
 
     status = writeShortRegister(STATUS, status);
@@ -77,7 +77,7 @@ void nRF24L01::clearIRQs() {
     if (status & STATIC_CAST(STATUS_t::MAX_RT)) {
         cmd_FLUSH_TX();
         cmd_FLUSH_RX();
-    }
 
-    LOG("%x", status);
+        LOG("%s, %p: %x", __PRETTY_FUNCTION__, this, status);
+    }
 }

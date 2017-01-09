@@ -69,9 +69,6 @@ void nRF24L01::startListening() {
 
 void nRF24L01::stopListening() {
     _ce.clear();
-
-    cmd_FLUSH_TX();
-    cmd_FLUSH_RX();
 }
 
 void nRF24L01::setPowerState(bool enable) {
@@ -129,9 +126,9 @@ bool nRF24L01::write(uint8_t *bytes, size_t numBytes) {
     do {
         // status = readShortRegister(RF24_MemoryMap::OBSERVE_TX, &observe_tx, 1);
         status = cmd_NOP();
-    } while (
-        !(status & ((1 << TX_DS) | (1 << STATIC_CAST(STATUS_t::MAX_RT)))) &&
-        (getMillis() - sent_at < timeout));
+    } while (!(status & ((1 << STATIC_CAST(STATUS_t::TX_DS)) |
+                         (1 << STATIC_CAST(STATUS_t::MAX_RT)))) &&
+             (getMillis() - sent_at < timeout));
 
     // The part above is what you could recreate with your own interrupt handler,
     // and then call this when you got an interrupt
@@ -167,7 +164,7 @@ void nRF24L01::startWrite(uint8_t *bytes, size_t numBytes) {
     clearSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
 
     _ce.set();
-    delayUs(10);
+    delayUs(15);
     _ce.clear();
 }
 
@@ -190,7 +187,7 @@ bool nRF24L01::available(uint8_t *pipe_num) {
     // Too noisy, enable if you really want lots o data!!
     //IF_SERIAL_DEBUG(print_status(status));
 
-    bool result = (status & (1 << RX_DR));
+    bool result = (status & (1 << STATIC_CAST(STATUS_t::RX_DR)));
 
     if (result) {
         // If the caller wants the pipe number, include that
@@ -201,11 +198,11 @@ bool nRF24L01::available(uint8_t *pipe_num) {
         // ??? Should this REALLY be cleared now?  Or wait until we
         // actually READ the payload?
 
-        writeShortRegister(STATUS, (1 << RX_DR));
+        writeShortRegister(STATUS, (1 << STATIC_CAST(STATUS_t::RX_DR)));
 
         // Handle ack payload receipt
-        if (status & (1 << TX_DS)) {
-            writeShortRegister(STATUS, (1 << TX_DS));
+        if (status & (1 << STATIC_CAST(STATUS_t::TX_DS))) {
+            writeShortRegister(STATUS, (1 << STATIC_CAST(STATUS_t::TX_DS)));
         }
     }
 
@@ -227,18 +224,23 @@ void nRF24L01::whatHappened(bool &tx_ok, bool &tx_fail, bool &rx_ready) {
     uint8_t status = cmd_NOP();
 
     // Clear flags
-    writeShortRegister(STATUS, (1 << RX_DR) | (1 << TX_DS) |
+    writeShortRegister(STATUS, (1 << STATIC_CAST(STATUS_t::RX_DR)) |
+                                   (1 << STATIC_CAST(STATUS_t::TX_DS)) |
                                    (1 << STATIC_CAST(STATUS_t::MAX_RT)));
 
-    tx_ok    = status & (1 << TX_DS);
+    tx_ok    = status & (1 << STATIC_CAST(STATUS_t::TX_DS));
     tx_fail  = status & (1 << STATIC_CAST(STATUS_t::MAX_RT));
-    rx_ready = status & (1 << RX_DR);
+    rx_ready = status & (1 << STATIC_CAST(STATUS_t::RX_DR));
 }
 
 void nRF24L01::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(TX_ADDR, tx_addr, 5);
+}
+
+uint8_t nRF24L01::getStatus() {
+    return (cmd_NOP());
 }
 
 void nRF24L01::setRxAddress(uint8_t child, uint64_t address) {
@@ -249,7 +251,12 @@ void nRF24L01::setRxAddress(uint8_t child, uint64_t address) {
         case 0: {
             cmd_W_REGISTER(RX_ADDR_P0, rx_addr, 5);
             writeShortRegister(RX_PW_P0, 32);
-            writeShortRegister(EN_RXADDR, STATIC_CAST(EN_RXADDR_t::ERX_P0));
+            setSingleBit(EN_RXADDR, STATIC_CAST(EN_RXADDR_t::ERX_P0));
+        } break;
+        case 1: {
+            cmd_W_REGISTER(RX_ADDR_P1, rx_addr, 5);
+            writeShortRegister(RX_PW_P1, 32);
+            setSingleBit(EN_RXADDR, STATIC_CAST(EN_RXADDR_t::ERX_P1));
         } break;
     }
 }
