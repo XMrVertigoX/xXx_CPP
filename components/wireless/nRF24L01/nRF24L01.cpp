@@ -37,16 +37,6 @@ uint8_t nRF24L01::getPayloadSize() {
     return (payload_size);
 }
 
-void nRF24L01::clearIRQs() {
-    uint8_t status = 0x00;
-
-    setBit_r(status, RX_DR);
-    setBit_r(status, TX_DS);
-    setBit_r(status, MAX_RT);
-
-    writeShortRegister(STATUS, status);
-}
-
 void nRF24L01::init() {
     _ce.clear();
 

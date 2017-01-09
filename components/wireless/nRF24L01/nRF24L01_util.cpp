@@ -60,3 +60,13 @@ void nRF24L01::setSingleBit(Register_t address, uint8_t bit) {
 
     assert(reg == readShortRegister(address));
 }
+
+void nRF24L01::clearIRQs() {
+    uint8_t status = 0x00;
+
+    setBit_r(status, RX_DR);
+    setBit_r(status, TX_DS);
+    setBit_r(status, MAX_RT);
+
+    writeShortRegister(STATUS, status);
+}
