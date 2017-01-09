@@ -1,9 +1,10 @@
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "nRF24L01.hpp"
-#include "nRF24L01_definitions.hpp"
-#include "util.hpp"
+#include <xXx/components/wireless/nRF24L01/bitops.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
 
 uint8_t nRF24L01::transmit(uint8_t command, uint8_t txBytes[],
                            uint8_t rxBytes[], size_t numBytes) {

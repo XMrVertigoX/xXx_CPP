@@ -1,6 +1,8 @@
 #ifndef NRF24L01_CONSTANTS_HPP_
 #define NRF24L01_CONSTANTS_HPP_
 
+#include <stdint.h>
+
 #define STATIC_CAST(x) static_cast<uint8_t>(x)
 #define LAMBDA []
 

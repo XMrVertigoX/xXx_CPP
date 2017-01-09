@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <string.h>
-#include <xXx/utils/logging.hpp>
 
-#include "nRF24L01.hpp"
-#include "nRF24L01_definitions.hpp"
-#include "util.hpp"
+#include <xXx/utils/logging.hpp>
+#include <xXx/components/wireless/nRF24L01/bitops.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01.hpp>
+#include <xXx/components/wireless/nRF24L01/nRF24L01_definitions.hpp>
 
 uint8_t nRF24L01::cmd_R_REGISTER(Register_t address, uint8_t bytes[],
                                  size_t numBytes) {

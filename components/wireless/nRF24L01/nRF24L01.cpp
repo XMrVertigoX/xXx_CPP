@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <xXx/interfaces/igpio.hpp>
@@ -9,7 +10,7 @@
 
 #include "nRF24L01.hpp"
 #include "nRF24L01_definitions.hpp"
-#include "util.hpp"
+#include <xXx/components/wireless/nRF24L01/bitops.hpp>
 
 nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
     : _spi(spi), _ce(ce), _irq(irq), payload_size(32),

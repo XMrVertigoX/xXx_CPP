@@ -1,5 +1,7 @@
-#ifndef UTIL_HPP_
-#define UTIL_HPP_
+#ifndef BITOPS_HPP_
+#define BITOPS_HPP_
+
+#include <stdint.h>
 
 static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
     return (byte & mask);
@@ -45,4 +47,4 @@ static inline void shiftRight_r(uint8_t &byte, uint8_t amount) {
     byte >>= amount;
 }
 
-#endif /* UTIL_HPP_ */
+#endif /* BITOPS_HPP_ */
