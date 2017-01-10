@@ -1,5 +1,5 @@
-#ifndef BITOPS_HPP_
-#define BITOPS_HPP_
+#ifndef BITOPERATIONS_HPP_
+#define BITOPERATIONS_HPP_
 
 #include <stdint.h>
 
@@ -47,4 +47,4 @@ static inline void shiftRight_r(uint8_t &byte, uint8_t amount) {
     byte >>= amount;
 }
 
-#endif /* BITOPS_HPP_ */
+#endif /* BITOPERATIONS_HPP_ */

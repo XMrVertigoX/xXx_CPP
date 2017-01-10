@@ -1,11 +1,11 @@
-#ifndef NRF24L01_DEFINITIONS_HPP_
-#define NRF24L01_DEFINITIONS_HPP_
+#ifndef NRF24L01P_DEFINITIONS_HPP_
+#define NRF24L01P_DEFINITIONS_HPP_
 
 #include <stdint.h>
 
 // clang-format off
 
-#define STATIC_CAST(x) static_cast<uint8_t>(x)
+#define __CAST(x) static_cast<uint8_t>(x)
 #define LAMBDA         []
 
 // clang-format on
@@ -38,7 +38,7 @@ enum class Command_t : uint8_t {
     NOP                = 0xFF,
 };
 
-enum Register_t : uint8_t {
+enum class Register_t : uint8_t {
     CONFIG      = 0x00,
     EN_AA       = 0x01,
     EN_RXADDR   = 0x02,
@@ -145,40 +145,4 @@ enum class DYNPD : uint8_t { DPL_P0, DPL_P1, DPL_P2, DPL_P3, DPL_P4, DPL_P5 };
 
 enum class FEATURE : uint8_t { EN_DYN_ACK, EN_ACK_PAY, EN_DPL };
 
-// clang-format off
-
-/* Bit Mnemonics */
-#define PLL_LOCK      (4)
-#define RF_DR         (3)
-#define RF_PWR_MASK   (6)
-// #define RX_DR         (6)
-// #define TX_DS         (5)
-// #define MAX_RT        (4)
-#define RX_P_NO       (1)
-#define TX_FULL       (0)
-#define PLOS_CNT      (4)
-#define ARC_CNT       (0)
-#define TX_REUSE      (6)
-#define FIFO_FULL     (5)
-#define TX_EMPTY      (4)
-#define RX_FULL       (1)
-#define RX_EMPTY      (0)
-#define DPL_P5        (5)
-#define DPL_P4        (4)
-#define DPL_P3        (3)
-#define DPL_P2        (2)
-#define DPL_P1        (1)
-#define DPL_P0        (0)
-#define EN_DPL        (2)
-#define EN_ACK_PAY    (1)
-#define EN_DYN_ACK    (0)
-
-/* P model bit Mnemonics */
-#define RF_DR_LOW     (5)
-#define RF_DR_HIGH    (3)
-#define RF_PWR_LOW    (1)
-#define RF_PWR_HIGH   (2)
-
-// clang-format on
-
-#endif // NRF24L01_DEFINITIONS_HPP_
+#endif // NRF24L01P_DEFINITIONS_HPP_

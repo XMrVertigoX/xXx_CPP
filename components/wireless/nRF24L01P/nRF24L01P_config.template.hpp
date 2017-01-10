@@ -1,5 +1,5 @@
-#ifndef NRF24L01_CONFIG_TEMPLATE_HPP_
-#define NRF24L01_CONFIG_TEMPLATE_HPP_
+#ifndef NRF24L01P_CONFIG_TEMPLATE_HPP_
+#define NRF24L01P_CONFIG_TEMPLATE_HPP_
 
 #include <stdint.h>
 
@@ -11,4 +11,4 @@ static inline uint32_t getMillis() {
     return (0);
 }
 
-#endif // NRF24L01_CONFIG_TEMPLATE_HPP_
+#endif // NRF24L01P_CONFIG_TEMPLATE_HPP_
