@@ -26,7 +26,6 @@ uint8_t nRF24L01::cmd_W_REGISTER(Register_t address, uint8_t bytes[],
     return (status);
 }
 
-// XXX
 uint8_t nRF24L01::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     uint8_t command, status;
 
@@ -36,7 +35,6 @@ uint8_t nRF24L01::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     return (status);
 }
 
-// TODO
 uint8_t nRF24L01::cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     uint8_t command, status;
 

@@ -17,9 +17,7 @@ nRF24L01::nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq)
       ack_payload_available(false), dynamic_payloads_enabled(false),
       pipe0_reading_address(0), ack_payload_length(0) {}
 
-nRF24L01::~nRF24L01() {
-    // TODO: Shutdown device
-}
+nRF24L01::~nRF24L01() {}
 
 void nRF24L01::setChannel(uint8_t channel) {
     /*
@@ -42,7 +40,8 @@ void nRF24L01::init() {
     _ce.clear();
 
     clearIRQs();
-    // setPowerState(true);
+    cmd_FLUSH_TX();
+    cmd_FLUSH_RX();
 
     /*
      * Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make
@@ -53,21 +52,67 @@ void nRF24L01::init() {
      * complete explanation.
      */
     // setRetries(0b0100, 0b1111);
+}
 
+void nRF24L01::enterRxMode() {
     auto irqFunction = LAMBDA(void *user) {
         nRF24L01 *self = static_cast<nRF24L01 *>(user);
-        self->clearIRQs();
+        uint8_t status = self->cmd_NOP();
+
+        if (readBit(status, STATIC_CAST(STATUS_t::RX_DR))) {
+            uint8_t rx[32];
+            self->cmd_R_RX_PAYLOAD(rx, sizeof(rx));
+            LOG("%s", rx, sizeof(rx));
+        }
+
+        self->writeShortRegister(STATUS, status);
     };
 
-    _irq.enableInterrupt(irqFunction, this);
-}
-
-void nRF24L01::startListening() {
     setSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
+
+    _irq.enableInterrupt(irqFunction, this);
     _ce.set();
+
+    delayUs(130);
 }
 
-void nRF24L01::stopListening() {
+void nRF24L01::leaveRxMode() {
+    _irq.disableInterrupt();
+    _ce.clear();
+}
+
+void nRF24L01::enterTxMode() {
+    auto irqFunction = LAMBDA(void *user) {
+        nRF24L01 *self = static_cast<nRF24L01 *>(user);
+        uint8_t status = self->cmd_NOP();
+
+        if (readBit(status, STATIC_CAST(STATUS_t::MAX_RT))) {
+            self->leaveTxMode();
+            self->cmd_FLUSH_TX();
+
+            LOG("%p: MAX_RT", self);
+        }
+
+        if (readBit(status, STATIC_CAST(STATUS_t::TX_DS))) {
+            self->leaveTxMode();
+            self->cmd_FLUSH_TX();
+
+            LOG("%p: TX_DS", self);
+        }
+
+        self->writeShortRegister(STATUS, status);
+    };
+
+    clearSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
+
+    _irq.enableInterrupt(irqFunction, this);
+    _ce.set();
+
+    delayUs(130);
+}
+
+void nRF24L01::leaveTxMode() {
+    _irq.disableInterrupt();
     _ce.clear();
 }
 
@@ -97,7 +142,7 @@ void nRF24L01::setPowerState(bool enable) {
 	 * WARNING: Delay is based on P-variant whereby non-P *may* require
 	 * different timing.
 	 */
-    // delayMs(5);
+    delayMs(5);
 }
 
 /******************************************************************/
@@ -161,11 +206,8 @@ bool nRF24L01::write(uint8_t *bytes, size_t numBytes) {
 
 void nRF24L01::startWrite(uint8_t *bytes, size_t numBytes) {
     cmd_W_TX_PAYLOAD(bytes, numBytes);
-    clearSingleBit(CONFIG, STATIC_CAST(CONFIG_t::PRIM_RX));
 
-    _ce.set();
-    delayUs(15);
-    _ce.clear();
+    enterTxMode();
 }
 
 uint8_t nRF24L01::getDynamicPayloadSize() {

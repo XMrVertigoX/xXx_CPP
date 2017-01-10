@@ -38,18 +38,17 @@ class nRF24L01 {
     uint8_t cmd_W_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
     uint8_t cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes);
     uint8_t cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes);
-    uint8_t cmd_FLUSH_TX(void);
-    uint8_t cmd_FLUSH_RX(void);
-    uint8_t cmd_REUSE_TX_PL(void);
+    uint8_t cmd_FLUSH_TX();
+    uint8_t cmd_FLUSH_RX();
+    uint8_t cmd_REUSE_TX_PL();
     uint8_t cmd_R_RX_PL_WID(uint8_t bytes[], size_t numBytes);
     uint8_t cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes);
-    uint8_t cmd_W_TX_PAYLOAD_NOACK(void);
-    uint8_t cmd_NOP(void);
+    uint8_t cmd_W_TX_PAYLOAD_NOACK();
+    uint8_t cmd_NOP();
 
     /* nRF24L01_util.cpp */
     uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
                      size_t numBytes);
-
     uint8_t readShortRegister(Register_t reg);
     uint8_t writeShortRegister(Register_t reg, uint8_t value);
     void clearIRQs();
@@ -60,12 +59,15 @@ class nRF24L01 {
     nRF24L01(ISpi &spi, IGpio &ce, IGpio &irq);
     ~nRF24L01();
 
+    void init();
+    void enterRxMode();
+    void leaveRxMode();
+    void enterTxMode();
+    void leaveTxMode();
+
     void print_address_register(char *name, uint8_t reg, uint8_t qty = 1);
     void toggle_features(void);
-    void init(void);
-    void startListening(void);
     uint8_t getStatus();
-    void stopListening(void);
     bool write(uint8_t *bytes, size_t numBytes);
     bool available(void);
     bool read(uint8_t *bytes, size_t numBytes);
