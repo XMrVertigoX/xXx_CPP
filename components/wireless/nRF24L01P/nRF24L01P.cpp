@@ -184,7 +184,6 @@ void nRF24L01P::setTxAddress(uint64_t address) {
 
 void nRF24L01P::powerUp() {
     setSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PWR_UP));
-    delayMs(5); // TODO: Find explanation in data sheet
 }
 
 void nRF24L01P::powerDown() {
