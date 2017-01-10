@@ -9,17 +9,19 @@
 using namespace xXx;
 
 enum class Register_t : uint8_t;
-
-enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
-
-enum CRC_t : uint8_t { CRC_DISABLED, CRC_1BYTE, CRC_2BYTES };
-
-enum PowerLevel_t : uint8_t {
+enum class DataRate_t : uint8_t {
+    DataRate_1MBPS,
+    DataRate_2MBPS,
+    DataRate_250KBPS
+};
+enum class CRC_t : uint8_t { DISABLED, CRC8, CRC16 };
+enum class PowerLevel_t : uint8_t {
     PowerLevel_18dBm,
     PowerLevel_12dBm,
     PowerLevel_6dBm,
     PowerLevel_0dBm
 };
+enum class RxPipe_t : uint8_t { Pipe0, Pipe1, Pipe2, Pipe3, Pipe4, Pipe5 };
 
 class nRF24L01P {
   private:
@@ -90,7 +92,7 @@ class nRF24L01P {
     void setPowerState(bool enable);
     // TODO: Split into two functions and implement getter
     void setRetries(uint8_t delay, uint8_t count);
-    // uint8_t getChannel();
+    uint8_t getChannel();
     void setChannel(uint8_t channel);
 };
 

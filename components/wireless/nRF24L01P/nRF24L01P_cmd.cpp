@@ -10,8 +10,7 @@ uint8_t nRF24L01P::cmd_R_REGISTER(Register_t address, uint8_t bytes[],
                                   size_t numBytes) {
     uint8_t command, status;
 
-    command =
-        bitwiseOR(__CAST(Command_t::R_REGISTER), __CAST(address));
+    command = bitwiseOR(TYPE(Command_t::R_REGISTER), TYPE(address));
     status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
@@ -21,8 +20,7 @@ uint8_t nRF24L01P::cmd_W_REGISTER(Register_t address, uint8_t bytes[],
                                   size_t numBytes) {
     uint8_t command, status;
 
-    command =
-        bitwiseOR(__CAST(Command_t::W_REGISTER), __CAST(address));
+    command = bitwiseOR(TYPE(Command_t::W_REGISTER), TYPE(address));
     status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
@@ -31,7 +29,7 @@ uint8_t nRF24L01P::cmd_W_REGISTER(Register_t address, uint8_t bytes[],
 uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     uint8_t command, status;
 
-    command = __CAST(Command_t::W_TX_PAYLOAD);
+    command = TYPE(Command_t::W_TX_PAYLOAD);
     status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
@@ -40,7 +38,7 @@ uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
 uint8_t nRF24L01P::cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     uint8_t command, status;
 
-    command = __CAST(Command_t::R_RX_PAYLOAD);
+    command = TYPE(Command_t::R_RX_PAYLOAD);
     status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
@@ -49,7 +47,7 @@ uint8_t nRF24L01P::cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
 uint8_t nRF24L01P::cmd_FLUSH_TX() {
     uint8_t command, status;
 
-    command = __CAST(Command_t::FLUSH_TX);
+    command = TYPE(Command_t::FLUSH_TX);
     status  = transmit(command, NULL, NULL, 0);
 
     return (status);
@@ -58,7 +56,7 @@ uint8_t nRF24L01P::cmd_FLUSH_TX() {
 uint8_t nRF24L01P::cmd_FLUSH_RX() {
     uint8_t command, status;
 
-    command = __CAST(Command_t::FLUSH_RX);
+    command = TYPE(Command_t::FLUSH_RX);
     status  = transmit(command, NULL, NULL, 0);
 
     return (status);
@@ -68,7 +66,7 @@ uint8_t nRF24L01P::cmd_FLUSH_RX() {
 uint8_t nRF24L01P::cmd_REUSE_TX_PL() {
     uint8_t command, status;
 
-    command = __CAST(Command_t::REUSE_TX_PL);
+    command = TYPE(Command_t::REUSE_TX_PL);
 
     return (status);
 }
@@ -77,7 +75,7 @@ uint8_t nRF24L01P::cmd_REUSE_TX_PL() {
 uint8_t nRF24L01P::cmd_R_RX_PL_WID(uint8_t bytes[], size_t numBytes) {
     uint8_t command, status;
 
-    command = __CAST(Command_t::R_RX_PL_WID);
+    command = TYPE(Command_t::R_RX_PL_WID);
     status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
@@ -89,7 +87,7 @@ uint8_t nRF24L01P::cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[],
     uint8_t command, status;
 
     bitwiseAND_r(pipe, 0b111);
-    command = bitwiseOR(__CAST(Command_t::W_ACK_PAYLOAD), pipe);
+    command = bitwiseOR(TYPE(Command_t::W_ACK_PAYLOAD), pipe);
     status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
@@ -99,7 +97,7 @@ uint8_t nRF24L01P::cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[],
 uint8_t nRF24L01P::cmd_W_TX_PAYLOAD_NOACK() {
     uint8_t command, status;
 
-    command = __CAST(Command_t::W_TX_PAYLOAD_NOACK);
+    command = TYPE(Command_t::W_TX_PAYLOAD_NOACK);
 
     return (status);
 }
@@ -107,7 +105,7 @@ uint8_t nRF24L01P::cmd_W_TX_PAYLOAD_NOACK() {
 uint8_t nRF24L01P::cmd_NOP() {
     uint8_t command, status;
 
-    command = __CAST(Command_t::NOP);
+    command = TYPE(Command_t::NOP);
     status  = transmit(command, NULL, NULL, 0);
 
     return (status);

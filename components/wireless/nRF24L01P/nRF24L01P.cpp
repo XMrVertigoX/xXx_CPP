@@ -18,13 +18,13 @@ nRF24L01P::nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq)
 
 nRF24L01P::~nRF24L01P() {}
 
+uint8_t nRF24L01P::getChannel() {
+    return (readShortRegister(Register_t::RF_CH));
+}
+
 void nRF24L01P::setChannel(uint8_t channel) {
-    /*
-     * TODO: This method could take advantage of the 'wide_band' calculation
-     * done in setChannel() to require certain channel spacing.
-     */
-    const uint8_t max_channel = 127;
-    writeShortRegister(Register_t::RF_CH, min(channel, max_channel));
+    bitwiseAND_r(channel, 0x7F); // TODO: Use macro for mask
+    writeShortRegister(Register_t::RF_CH, channel);
 }
 
 void nRF24L01P::init() {
@@ -42,7 +42,7 @@ void nRF24L01P::enterRxMode() {
         nRF24L01P *self = static_cast<nRF24L01P *>(user);
         uint8_t status  = self->cmd_NOP();
 
-        if (readBit(status, __CAST(STATUS_t::RX_DR))) {
+        if (readBit(status, TYPE(STATUS_t::RX_DR))) {
             uint8_t rx[32];
             self->cmd_R_RX_PAYLOAD(rx, sizeof(rx));
             LOG("%s", rx, sizeof(rx));
@@ -51,7 +51,7 @@ void nRF24L01P::enterRxMode() {
         self->writeShortRegister(Register_t::STATUS, status);
     };
 
-    setSingleBit(Register_t::CONFIG, __CAST(CONFIG_t::PRIM_RX));
+    setSingleBit(Register_t::CONFIG, TYPE(CONFIG_t::PRIM_RX));
 
     _irq.enableInterrupt(irqFunction, this);
     _ce.set();
@@ -69,14 +69,14 @@ void nRF24L01P::enterTxMode() {
         nRF24L01P *self = static_cast<nRF24L01P *>(user);
         uint8_t status  = self->cmd_NOP();
 
-        if (readBit(status, __CAST(STATUS_t::MAX_RT))) {
+        if (readBit(status, TYPE(STATUS_t::MAX_RT))) {
             self->leaveTxMode();
             self->cmd_FLUSH_TX();
 
             LOG("%p: MAX_RT", self);
         }
 
-        if (readBit(status, __CAST(STATUS_t::TX_DS))) {
+        if (readBit(status, TYPE(STATUS_t::TX_DS))) {
             self->leaveTxMode();
             self->cmd_FLUSH_TX();
 
@@ -86,7 +86,7 @@ void nRF24L01P::enterTxMode() {
         self->writeShortRegister(Register_t::STATUS, status);
     };
 
-    clearSingleBit(Register_t::CONFIG, __CAST(CONFIG_t::PRIM_RX));
+    clearSingleBit(Register_t::CONFIG, TYPE(CONFIG_t::PRIM_RX));
 
     _irq.enableInterrupt(irqFunction, this);
     _ce.set();
@@ -103,9 +103,9 @@ void nRF24L01P::setPowerState(bool enable) {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
     if (enable) {
-        setBit_r(config, __CAST(CONFIG_t::PWR_UP));
+        setBit_r(config, TYPE(CONFIG_t::PWR_UP));
     } else {
-        clearBit_r(config, __CAST(CONFIG_t::PWR_UP));
+        clearBit_r(config, TYPE(CONFIG_t::PWR_UP));
     }
 
     writeShortRegister(Register_t::CONFIG, config);
@@ -148,12 +148,12 @@ void nRF24L01P::setRxAddress(uint8_t child, uint64_t address) {
         case 0: {
             cmd_W_REGISTER(Register_t::RX_ADDR_P0, rx_addr, 5);
             writeShortRegister(Register_t::RX_PW_P0, 32);
-            setSingleBit(Register_t::EN_RXADDR, __CAST(EN_RXADDR_t::ERX_P0));
+            setSingleBit(Register_t::EN_RXADDR, TYPE(EN_RXADDR_t::ERX_P0));
         } break;
         case 1: {
             cmd_W_REGISTER(Register_t::RX_ADDR_P1, rx_addr, 5);
             writeShortRegister(Register_t::RX_PW_P1, 32);
-            setSingleBit(Register_t::EN_RXADDR, __CAST(EN_RXADDR_t::ERX_P1));
+            setSingleBit(Register_t::EN_RXADDR, TYPE(EN_RXADDR_t::ERX_P1));
         } break;
     }
 }
@@ -162,21 +162,21 @@ void nRF24L01P::setPowerLevel(PowerLevel_t level) {
     uint8_t rf_setup = readShortRegister(Register_t::RF_SETUP);
 
     switch (level) {
-        case PowerLevel_18dBm: {
-            clearBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+        case PowerLevel_t::PowerLevel_18dBm: {
+            clearBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            clearBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
-        case PowerLevel_12dBm: {
-            setBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+        case PowerLevel_t::PowerLevel_12dBm: {
+            setBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            clearBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
-        case PowerLevel_6dBm: {
-            clearBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+        case PowerLevel_t::PowerLevel_6dBm: {
+            clearBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            setBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
-        case PowerLevel_0dBm: {
-            setBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rf_setup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+        case PowerLevel_t::PowerLevel_0dBm: {
+            setBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            setBit_r(rf_setup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
     }
 
@@ -186,12 +186,24 @@ void nRF24L01P::setPowerLevel(PowerLevel_t level) {
 }
 
 PowerLevel_t nRF24L01P::getPowerLevel() {
-    uint8_t rfSetup = readShortRegister(Register_t::RF_SETUP);
+    uint8_t rf_Setup = readShortRegister(Register_t::RF_SETUP);
 
-    bitwiseAND_r(rfSetup, 0x06); // TODO: Use macro
-    shiftRight_r(rfSetup, 1);    // TODO: Use macro
+    bitwiseAND_r(rf_Setup, 0b00000110); // TODO: Use macro for mask
+    shiftRight_r(rf_Setup, 1);          // TODO: Use macro for shift
 
-    return ((PowerLevel_t)rfSetup);
+    switch (rf_Setup) {
+        case TYPE(PowerLevel_t::PowerLevel_18dBm): {
+            return (PowerLevel_t::PowerLevel_18dBm);
+        } break;
+        case TYPE(PowerLevel_t::PowerLevel_12dBm): {
+            return (PowerLevel_t::PowerLevel_12dBm);
+        } break;
+        case TYPE(PowerLevel_t::PowerLevel_6dBm): {
+            return (PowerLevel_t::PowerLevel_6dBm);
+        } break;
+    }
+
+    return (PowerLevel_t::PowerLevel_0dBm);
 }
 
 void nRF24L01P::setDataRate(DataRate_t dataRate) {
@@ -199,16 +211,16 @@ void nRF24L01P::setDataRate(DataRate_t dataRate) {
 
     switch (dataRate) {
         case (DataRate_t::DataRate_1MBPS): {
-            clearBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+            clearBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            clearBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
         case DataRate_t::DataRate_2MBPS: {
-            clearBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+            clearBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            setBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
         case DataRate_t::DataRate_250KBPS: {
-            setBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rfSetup, __CAST(RF_SETUP_t::RF_DR_HIGH));
+            setBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_LOW));
+            clearBit_r(rfSetup, TYPE(RF_SETUP_t::RF_DR_HIGH));
         } break;
     }
 
@@ -220,11 +232,11 @@ void nRF24L01P::setDataRate(DataRate_t dataRate) {
 DataRate_t nRF24L01P::getDataRate() {
     uint8_t rfSetup = readShortRegister(Register_t::RF_SETUP);
 
-    if (readBit(rfSetup, __CAST(RF_SETUP_t::RF_DR_LOW))) {
+    if (readBit(rfSetup, TYPE(RF_SETUP_t::RF_DR_LOW))) {
         return (DataRate_t::DataRate_250KBPS);
     }
 
-    if (readBit(rfSetup, __CAST(RF_SETUP_t::RF_DR_HIGH))) {
+    if (readBit(rfSetup, TYPE(RF_SETUP_t::RF_DR_HIGH))) {
         return (DataRate_t::DataRate_2MBPS);
     }
 
@@ -235,16 +247,16 @@ void nRF24L01P::setCRCConfig(CRC_t crc) {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
     switch (crc) {
-        case CRC_DISABLED: {
-            clearBit_r(config, __CAST(CONFIG_t::EN_CRC));
+        case CRC_t::DISABLED: {
+            clearBit_r(config, TYPE(CONFIG_t::EN_CRC));
         } break;
-        case CRC_1BYTE: {
-            setBit_r(config, __CAST(CONFIG_t::EN_CRC));
-            clearBit_r(config, __CAST(CONFIG_t::CRCO));
+        case CRC_t::CRC8: {
+            setBit_r(config, TYPE(CONFIG_t::EN_CRC));
+            clearBit_r(config, TYPE(CONFIG_t::CRCO));
         } break;
-        case CRC_2BYTES: {
-            setBit_r(config, __CAST(CONFIG_t::EN_CRC));
-            setBit_r(config, __CAST(CONFIG_t::CRCO));
+        case CRC_t::CRC16: {
+            setBit_r(config, TYPE(CONFIG_t::EN_CRC));
+            setBit_r(config, TYPE(CONFIG_t::CRCO));
         } break;
         default: break;
     }
@@ -257,14 +269,14 @@ void nRF24L01P::setCRCConfig(CRC_t crc) {
 CRC_t nRF24L01P::getCRCConfig() {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
-    if (!readBit(config, __CAST(CONFIG_t::EN_CRC))) {
-        return (CRC_DISABLED);
+    if (!readBit(config, TYPE(CONFIG_t::EN_CRC))) {
+        return (CRC_t::DISABLED);
     }
 
-    if (readBit(config, __CAST(CONFIG_t::CRCO))) {
-        return (CRC_2BYTES);
+    if (readBit(config, TYPE(CONFIG_t::CRCO))) {
+        return (CRC_t::CRC16);
     } else {
-        return (CRC_1BYTE);
+        return (CRC_t::CRC8);
     }
 }
 
@@ -272,10 +284,10 @@ void nRF24L01P::setRetries(uint8_t delay, uint8_t count) {
     uint8_t setup_retr;
 
     bitwiseAND_r(delay, 0xf);
-    shiftLeft_r(delay, __CAST(SETUP_RETR_t::ARD));
+    shiftLeft_r(delay, TYPE(SETUP_RETR_t::ARD));
 
     bitwiseAND_r(count, 0xf);
-    shiftLeft_r(count, __CAST(SETUP_RETR_t::ARC));
+    shiftLeft_r(count, TYPE(SETUP_RETR_t::ARC));
 
     setup_retr = bitwiseOR(delay, count);
 

@@ -5,15 +5,10 @@
 
 // clang-format off
 
-#define __CAST(x) static_cast<uint8_t>(x)
-#define LAMBDA         []
+#define TYPE(x) static_cast<uint8_t>(x)
+#define LAMBDA  []
 
 // clang-format on
-
-// XXX
-#if !defined(min)
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
 static const uint8_t maxPayloadSize   = 32;
 static const uint8_t maxAddressLength = 5;
