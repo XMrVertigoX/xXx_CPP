@@ -41,25 +41,23 @@ uint8_t nRF24L01P::readShortRegister(Register_t address) {
     return (result);
 }
 
-uint8_t nRF24L01P::writeShortRegister(Register_t address, uint8_t value) {
-    uint8_t status = cmd_W_REGISTER(address, &value, 1);
+uint8_t nRF24L01P::writeShortRegister(Register_t address, uint8_t regValue) {
+    uint8_t status = cmd_W_REGISTER(address, &regValue, 1);
 
     return (status);
 }
 
-void nRF24L01P::clearSingleBit(Register_t address, uint8_t bit) {
+void nRF24L01P::clearSingleBit(Register_t address, uint8_t bitIndex) {
     uint8_t reg = readShortRegister(address);
-
-    clearBit_r(reg, bit);
+    clearBit_r(reg, bitIndex);
     writeShortRegister(address, reg);
 
     assert(reg == readShortRegister(address));
 }
 
-void nRF24L01P::setSingleBit(Register_t address, uint8_t bit) {
+void nRF24L01P::setSingleBit(Register_t address, uint8_t bitIndex) {
     uint8_t reg = readShortRegister(address);
-
-    setBit_r(reg, bit);
+    setBit_r(reg, bitIndex);
     writeShortRegister(address, reg);
 
     assert(reg == readShortRegister(address));

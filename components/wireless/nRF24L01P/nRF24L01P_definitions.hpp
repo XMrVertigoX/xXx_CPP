@@ -3,21 +3,16 @@
 
 #include <stdint.h>
 
-// clang-format off
+#define VALUE(x) static_cast<uint8_t>(x)
+#define LAMBDA []
 
-#define TYPE(x) static_cast<uint8_t>(x)
-#define LAMBDA  []
-
-// clang-format on
-
-static const uint8_t maxPayloadSize   = 32;
-static const uint8_t maxAddressLength = 5;
-static const uint8_t txSettling       = 130;
-static const uint8_t rxSettling       = 130;
-static const uint8_t dummy            = 0xFF;
-
-// TODO: Search in data sheet
-// #define RF24_Command_ACTIVATE  0x50
+static const uint8_t maxPayloadSize    = 32;
+static const uint8_t txSettling        = 130;
+static const uint8_t rxSettling        = 130;
+static const uint8_t dummy             = 0xFF;
+static const uint64_t longAddressMask  = 0xFFFFFFFFFF;
+static const uint64_t shortAddressMask = 0xFF;
+static const uint8_t channelMask       = 0x7F;
 
 enum class Command_t : uint8_t {
     R_REGISTER         = 0x00,
