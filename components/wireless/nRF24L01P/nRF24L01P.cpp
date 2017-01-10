@@ -32,7 +32,7 @@ void nRF24L01P::enterRxMode() {
             LOG("%d: %s", pipe, rxBytes);
         }
 
-        self->writeShortRegister(Register_t::STATUS, status);
+        self->cmd_W_REGISTER(Register_t::STATUS, &status, sizeof(status));
     };
 
     setSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PRIM_RX));
@@ -67,7 +67,7 @@ void nRF24L01P::enterTxMode() {
             LOG("%p: TX_DS", self);
         }
 
-        self->writeShortRegister(Register_t::STATUS, status);
+        self->cmd_W_REGISTER(Register_t::STATUS, &status, sizeof(status));
     };
 
     clearSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PRIM_RX));
