@@ -11,6 +11,11 @@ static inline void bitwiseAND_r(uint8_t &byte, uint8_t mask) {
     byte &= mask;
 }
 
+// TODO: Implements others as 64bit variants
+static inline void bitwiseAND_r(uint64_t &byte, uint64_t mask) {
+    byte &= mask;
+}
+
 static inline uint8_t bitwiseOR(uint8_t byte, uint8_t mask) {
     return (byte | mask);
 }
@@ -39,8 +44,16 @@ static inline void setBit_r(uint8_t &byte, uint8_t bit) {
     byte |= (1 << bit);
 }
 
+static inline uint8_t shiftLeft(uint8_t &byte, uint8_t amount) {
+    return (byte << amount);
+}
+
 static inline void shiftLeft_r(uint8_t &byte, uint8_t amount) {
     byte <<= amount;
+}
+
+static inline uint8_t shiftRight(uint8_t &byte, uint8_t amount) {
+    return (byte >> amount);
 }
 
 static inline void shiftRight_r(uint8_t &byte, uint8_t amount) {
