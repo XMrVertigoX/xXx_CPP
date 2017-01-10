@@ -61,25 +61,21 @@ class nRF24L01P {
 
     void init();
 
-    // Basic usage
-    void startWrite(uint8_t *bytes, size_t numBytes);
     void configureRxPipe(uint8_t pipe, uint64_t address = 0);
     void configureTxPipe(uint64_t address = 0);
     void startListening();
     void stopListening();
     void powerUp();
     void powerDown();
+    void startWrite(uint8_t *bytes, size_t numBytes);
 
-    uint64_t getRxAddress(uint8_t pipe);
-    void setRxAddress(uint8_t pipe, uint64_t address);
-    uint64_t getTxAddress();
-    void setTxAddress(uint64_t address);
-
-    void setCrcConfig(Crc_t crc);
     void setChannel(uint8_t channel);
+    void setCrcConfig(Crc_t crc);
     void setDataRate(DataRate_t dataRate);
     void setOutputPower(OutputPower_t level);
     void setRetries(uint8_t delay, uint8_t count);
+    void setRxAddress(uint8_t pipe, uint64_t address);
+    void setTxAddress(uint64_t address);
 };
 
 #endif // NRF24L01P_HPP_

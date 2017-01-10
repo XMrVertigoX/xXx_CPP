@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdint.h>
-#include <string.h>
 
 #include <xXx/components/wireless/nRF24L01P/nRF24L01P.hpp>
 #include <xXx/components/wireless/nRF24L01P/nRF24L01P_definitions.hpp>
@@ -152,34 +151,6 @@ void nRF24L01P::startWrite(uint8_t *bytes, size_t numBytes) {
     enterTxMode();
 }
 
-// TODO: We need some queue construct here
-uint64_t nRF24L01P::getRxAddress(uint8_t pipe) {
-    uint8_t rx_addr[sizeof(uint64_t)] = {};
-
-    switch (pipe) {
-        case 0: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P0, rx_addr, 5);
-        } break;
-        case 1: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P1, rx_addr, 5);
-        } break;
-        case 2: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P2, rx_addr, 1);
-        } break;
-        case 3: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P3, rx_addr, 1);
-        } break;
-        case 4: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P4, rx_addr, 1);
-        } break;
-        case 5: {
-            cmd_R_REGISTER(Register_t::RX_ADDR_P5, rx_addr, 1);
-        } break;
-    }
-
-    return (*rx_addr);
-}
-
 void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
     uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
 
@@ -205,14 +176,6 @@ void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
     }
 }
 
-uint64_t nRF24L01P::getTxAddress() {
-    uint8_t tx_addr[sizeof(uint64_t)] = {};
-
-    cmd_R_REGISTER(Register_t::TX_ADDR, tx_addr, 5);
-
-    return (*tx_addr);
-}
-
 void nRF24L01P::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
@@ -221,21 +184,7 @@ void nRF24L01P::setTxAddress(uint64_t address) {
 
 void nRF24L01P::powerUp() {
     setSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PWR_UP));
-
-    /*
-    * Must allow the radio time to settle else configuration bits will not
-    * necessarily stick. This is actually only required following power up but
-    * some settling time also appears to be required after resets too. For
-    * full coverage, we'll always assume the worst. Enabling 16b CRC is by far
-    * the most obvious case if the wrong timing is used - or skipped. Enabling
-    * 16b CRC is by far the most obvious case if the wrong timing is used - or
-    * skipped. Technically we require 4.5ms + 14us as a worst case. We'll just
-    * call it 5ms for good measure.
-    *
-    * WARNING: Delay is based on P-variant whereby non-P *may* require
-    * different timing.
-    */
-    delayMs(5);
+    delayMs(5); // TODO: Find explanation in data sheet
 }
 
 void nRF24L01P::powerDown() {
@@ -243,11 +192,12 @@ void nRF24L01P::powerDown() {
 }
 
 void nRF24L01P::setChannel(uint8_t channel) {
-    assert(channel <= channelMask);
+    assert(channel <= maxChannel);
 
-    // Do nothing if channel index is too high!
-    if (channel <= channelMask) {
+    if (channel <= maxChannel) {
         writeShortRegister(Register_t::RF_CH, channel);
+    } else {
+        LOG("Channel index invalid: %d", channel);
     }
 }
 
@@ -284,8 +234,6 @@ void nRF24L01P::setCrcConfig(Crc_t crc) {
     }
 
     writeShortRegister(Register_t::CONFIG, config);
-
-    assert(crc == getCrcConfig());
 }
 
 DataRate_t nRF24L01P::getDataRate() {
@@ -321,8 +269,6 @@ void nRF24L01P::setDataRate(DataRate_t dataRate) {
     }
 
     writeShortRegister(Register_t::RF_SETUP, rfSetup);
-
-    assert(dataRate == getDataRate());
 }
 
 void nRF24L01P::setOutputPower(OutputPower_t level) {
@@ -348,8 +294,6 @@ void nRF24L01P::setOutputPower(OutputPower_t level) {
     }
 
     writeShortRegister(Register_t::RF_SETUP, rf_setup);
-
-    assert(rf_setup == readShortRegister(Register_t::RF_SETUP));
 }
 
 void nRF24L01P::setRetries(uint8_t delay, uint8_t count) {
@@ -364,6 +308,4 @@ void nRF24L01P::setRetries(uint8_t delay, uint8_t count) {
     setup_retr = bitwiseOR(delay, count);
 
     writeShortRegister(Register_t::SETUP_RETR, setup_retr);
-
-    assert(setup_retr == readShortRegister(Register_t::SETUP_RETR));
 }

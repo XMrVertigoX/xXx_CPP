@@ -44,6 +44,8 @@ uint8_t nRF24L01P::readShortRegister(Register_t address) {
 uint8_t nRF24L01P::writeShortRegister(Register_t address, uint8_t regValue) {
     uint8_t status = cmd_W_REGISTER(address, &regValue, 1);
 
+    assert(regValue == readShortRegister(address));
+
     return (status);
 }
 

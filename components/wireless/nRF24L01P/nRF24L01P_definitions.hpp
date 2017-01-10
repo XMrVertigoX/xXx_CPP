@@ -12,7 +12,7 @@ static const uint8_t rxSettling        = 130;
 static const uint8_t dummy             = 0xFF;
 static const uint64_t longAddressMask  = 0xFFFFFFFFFF;
 static const uint64_t shortAddressMask = 0xFF;
-static const uint8_t channelMask       = 0x7F;
+static const uint8_t maxChannel        = 0x7F;
 
 enum class Command_t : uint8_t {
     R_REGISTER         = 0x00,
