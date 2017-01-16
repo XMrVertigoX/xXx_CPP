@@ -11,89 +11,163 @@
 #include <nRF24L01_config.h>
 
 nRF24L01P::nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq)
-    : _spi(spi), _ce(ce), _irq(irq) {}
+    : _spi(spi), _ce(ce), _irq(irq), _rxQueue0{Queue<uint8_t>(256)},
+      _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL} {}
 
 nRF24L01P::~nRF24L01P() {}
 
 void nRF24L01P::enterRxMode() {
-    auto irqFunction = LAMBDA(void *user) {
+    auto interruptFunction = LAMBDA(void *user) {
         nRF24L01P *self = static_cast<nRF24L01P *>(user);
-        uint8_t status  = self->cmd_NOP();
-        uint8_t pipe    = status;
 
-        if (readBit(status, VALUE(STATUS_t::RX_DR))) {
-            uint8_t rxBytes[32];
+        uint8_t fifo_status;
+        uint8_t status;
+        uint8_t pipe;
+        uint8_t rxBytes[maxPayloadSize];
+
+        do {
+            status = self->cmd_NOP();
+            pipe   = status;
+
+            bitwiseAND_r(pipe, 0b1110); // TODO: Use macro
+            shiftRight_r(pipe, VALUE(STATUS_t::RX_P_NO));
 
             self->cmd_R_RX_PAYLOAD(rxBytes, sizeof(rxBytes));
 
-            bitwiseAND_r(pipe, 0b1110); // TODO: Use macro for mask
-            shiftRight_r(pipe, VALUE(STATUS_t::RX_P_NO));
+            if (pipe < 0b110) {
+                for (int i = 0; i < maxPayloadSize; ++i) {
+                    self->_rxQueue0.enqueue(rxBytes[i], true);
+                }
+            }
 
-            LOG("%d: %s", pipe, rxBytes);
-        }
+            self->cmd_W_REGISTER(Register_t::STATUS, &status, sizeof(status));
 
-        self->cmd_W_REGISTER(Register_t::STATUS, &status, sizeof(status));
+            fifo_status = self->readShortRegister(Register_t::FIFO_STATUS);
+        } while (!(readBit(fifo_status, VALUE(FIFO_STATUS_t::RX_EMPTY))));
     };
 
-    setSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PRIM_RX));
+    uint8_t config = readShortRegister(Register_t::CONFIG);
 
-    _irq.enableInterrupt(irqFunction, this);
+    // Enter PRX mode
+    setBit_r(config, VALUE(CONFIG_t::PRIM_RX));
+    // Enable RX interrupt
+    clearBit_r(config, VALUE(CONFIG_t::MASK_RX_DR));
+
+    writeShortRegister(Register_t::CONFIG, config);
+
+    _irq.enableInterrupt(interruptFunction, this);
     _ce.set();
 
     delayUs(130);
 }
 
 void nRF24L01P::leaveRxMode() {
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+
+    // Disable RX interrupt
+    setBit_r(config, VALUE(CONFIG_t::MASK_RX_DR));
+
+    writeShortRegister(Register_t::CONFIG, config);
+
     _irq.disableInterrupt();
     _ce.clear();
 }
 
 void nRF24L01P::enterTxMode() {
-    auto irqFunction = LAMBDA(void *user) {
+    auto interruptFunction = LAMBDA(void *user) {
         nRF24L01P *self = static_cast<nRF24L01P *>(user);
         uint8_t status  = self->cmd_NOP();
 
         if (readBit(status, VALUE(STATUS_t::MAX_RT))) {
-            self->leaveTxMode();
-            // self->cmd_FLUSH_TX();
-
-            LOG("%p: MAX_RT", self);
         }
 
         if (readBit(status, VALUE(STATUS_t::TX_DS))) {
-            self->leaveTxMode();
-            // self->cmd_FLUSH_TX();
-
-            LOG("%p: TX_DS", self);
         }
+
+        // self->leaveTxMode();
 
         self->cmd_W_REGISTER(Register_t::STATUS, &status, sizeof(status));
     };
 
-    clearSingleBit(Register_t::CONFIG, VALUE(CONFIG_t::PRIM_RX));
+    uint8_t config = readShortRegister(Register_t::CONFIG);
 
-    _irq.enableInterrupt(irqFunction, this);
+    // Enter PTX mode
+    clearBit_r(config, VALUE(CONFIG_t::PRIM_RX));
+    // Enable TX retransmit interrupt
+    clearBit_r(config, VALUE(CONFIG_t::MASK_MAX_RT));
+    // Enable TX interrupt
+    clearBit_r(config, VALUE(CONFIG_t::MASK_TX_DS));
+
+    writeShortRegister(Register_t::CONFIG, config);
+
+    _irq.enableInterrupt(interruptFunction, this);
     _ce.set();
 
     delayUs(130);
 }
 
 void nRF24L01P::leaveTxMode() {
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+
+    // Disable TX retransmit interrupt
+    setBit_r(config, VALUE(CONFIG_t::MASK_MAX_RT));
+    // Disable TX interrupt
+    setBit_r(config, VALUE(CONFIG_t::MASK_TX_DS));
+
+    writeShortRegister(Register_t::CONFIG, config);
+
     _irq.disableInterrupt();
     _ce.clear();
 }
 
 void nRF24L01P::init() {
-    _ce.clear();
-
     // Clear IRQs
-    writeShortRegister(Register_t::STATUS, cmd_NOP());
+    uint8_t status = readShortRegister(Register_t::STATUS);
+    setBit_r(status, VALUE(STATUS_t::MAX_RT));
+    setBit_r(status, VALUE(STATUS_t::TX_DS));
+    setBit_r(status, VALUE(STATUS_t::RX_DR));
+    writeShortRegister(Register_t::STATUS, status);
+
+    // Disable IRQs
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    setBit_r(config, VALUE(CONFIG_t::MASK_MAX_RT));
+    setBit_r(config, VALUE(CONFIG_t::MASK_TX_DS));
+    setBit_r(config, VALUE(CONFIG_t::MASK_RX_DR));
+    writeShortRegister(Register_t::CONFIG, config);
+
+    uint8_t dynpd = readShortRegister(Register_t::DYNPD);
+    setBit_r(config, VALUE(DYNPD_t::DPL_P0));
+    writeShortRegister(Register_t::DYNPD, dynpd);
+
+    uint8_t feature = readShortRegister(Register_t::FEATURE);
+    setBit_r(config, VALUE(FEATURE_t::EN_DYN_ACK));
+    setBit_r(config, VALUE(FEATURE_t::EN_ACK_PAY));
+    setBit_r(config, VALUE(FEATURE_t::EN_DPL));
+    writeShortRegister(Register_t::FEATURE, feature);
+
+    setRetries(0xF, 0xF);
 
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
+
+    _irq.disableInterrupt();
+    _ce.clear();
 }
 
-// TODO
+void nRF24L01P::update() {
+    int foo = _rxQueue0.usedSlots();
+
+    if (foo) {
+        uint8_t buffer[foo];
+
+        for (int i = 0; i < foo; ++i) {
+            _rxQueue0.dequeue(buffer[i]);
+        }
+
+        LOG("%.*s", foo, buffer);
+    }
+}
+
 void nRF24L01P::configureRxPipe(uint8_t pipe, uint64_t address) {
     switch (pipe) {
         case 0: {
@@ -137,18 +211,14 @@ void nRF24L01P::configureTxPipe(uint64_t address) {
     cmd_W_REGISTER(Register_t::RX_ADDR_P0, tx_addr, 5);
 }
 
-void nRF24L01P::startListening() {
-    enterRxMode();
-}
+void nRF24L01P::send(uint8_t *bytes, size_t numBytes) {
+    uint8_t status = cmd_NOP();
 
-void nRF24L01P::stopListening() {
-    leaveRxMode();
-}
+    if (readBit(status, VALUE(STATUS_t::TX_FULL))) {
+        return;
+    }
 
-void nRF24L01P::startWrite(uint8_t *bytes, size_t numBytes) {
     cmd_W_TX_PAYLOAD(bytes, numBytes);
-
-    enterTxMode();
 }
 
 void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
@@ -229,7 +299,6 @@ void nRF24L01P::setCrcConfig(Crc_t crc) {
             setBit_r(config, VALUE(CONFIG_t::EN_CRC));
             setBit_r(config, VALUE(CONFIG_t::CRCO));
         } break;
-        default: break;
     }
 
     writeShortRegister(Register_t::CONFIG, config);
@@ -298,10 +367,10 @@ void nRF24L01P::setOutputPower(OutputPower_t level) {
 void nRF24L01P::setRetries(uint8_t delay, uint8_t count) {
     uint8_t setup_retr;
 
-    bitwiseAND_r(delay, 0xf);
+    bitwiseAND_r(delay, 0xF); // TODO: Use macro
     shiftLeft_r(delay, VALUE(SETUP_RETR_t::ARD));
 
-    bitwiseAND_r(count, 0xf);
+    bitwiseAND_r(count, 0xF); // TODO: Use macro
     shiftLeft_r(count, VALUE(SETUP_RETR_t::ARC));
 
     setup_retr = bitwiseOR(delay, count);

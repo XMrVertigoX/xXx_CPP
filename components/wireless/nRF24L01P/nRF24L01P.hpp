@@ -5,6 +5,7 @@
 
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
+#include <xXx/templates/queue.hpp>
 
 using namespace xXx;
 
@@ -28,6 +29,10 @@ class nRF24L01P {
     IGpio &_ce;
     IGpio &_irq;
 
+    Queue<uint8_t> _rxQueue0;
+
+    Queue_Handle_t<uint8_t> _rxQueue[6];
+
     uint8_t cmd_R_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
     uint8_t cmd_W_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
     uint8_t cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes);
@@ -47,11 +52,6 @@ class nRF24L01P {
     void clearSingleBit(Register_t address, uint8_t bitIndex);
     void setSingleBit(Register_t address, uint8_t bitIndex);
 
-    void enterTxMode();
-    void leaveTxMode();
-    void enterRxMode();
-    void leaveRxMode();
-
     Crc_t getCrcConfig();
     DataRate_t getDataRate();
 
@@ -60,14 +60,17 @@ class nRF24L01P {
     ~nRF24L01P();
 
     void init();
+    void update();
 
     void configureRxPipe(uint8_t pipe, uint64_t address = 0);
     void configureTxPipe(uint64_t address = 0);
-    void startListening();
-    void stopListening();
     void powerUp();
     void powerDown();
-    void startWrite(uint8_t *bytes, size_t numBytes);
+
+    void enterTxMode();
+    void leaveTxMode();
+    void enterRxMode();
+    void leaveRxMode();
 
     void setChannel(uint8_t channel);
     void setCrcConfig(Crc_t crc);
@@ -76,6 +79,8 @@ class nRF24L01P {
     void setRetries(uint8_t delay, uint8_t count);
     void setRxAddress(uint8_t pipe, uint64_t address);
     void setTxAddress(uint64_t address);
+
+    void send(uint8_t *bytes, size_t numBytes);
 };
 
 #endif // NRF24L01P_HPP_
