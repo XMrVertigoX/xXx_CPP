@@ -13,9 +13,9 @@ template <typename TYPE> class Queue {
     BaseType_t dequeue(TYPE &element, bool isr = false);
     BaseType_t enqueue(TYPE &element, bool isr = false);
 
-    UBaseType_t freeSlots(bool isr = false);
+    UBaseType_t freeSlots();
     UBaseType_t size();
-    UBaseType_t usedSlots();
+    UBaseType_t usedSlots(bool isr = false);
 
   private:
     QueueHandle_t _queue;
@@ -49,7 +49,7 @@ BaseType_t Queue<TYPE>::dequeue(TYPE &element, bool isr) {
     }
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::freeSlots(bool isr) {
+template <typename TYPE> UBaseType_t Queue<TYPE>::usedSlots(bool isr) {
     if (isr) {
         return (uxQueueMessagesWaitingFromISR(_queue));
     } else {
@@ -61,7 +61,7 @@ template <typename TYPE> UBaseType_t Queue<TYPE>::size() {
     return (_size);
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::usedSlots() {
+template <typename TYPE> UBaseType_t Queue<TYPE>::freeSlots() {
     return (uxQueueSpacesAvailable(_queue));
 }
 
