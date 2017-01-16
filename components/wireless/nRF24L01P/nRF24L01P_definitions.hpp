@@ -123,7 +123,7 @@ enum class RX_PW_P4_t : uint8_t { RX_PW_P4 };
 
 enum class RX_PW_P5_t : uint8_t { RX_PW_P5 };
 
-enum class FIFO_STATUS : uint8_t {
+enum class FIFO_STATUS_t : uint8_t {
     RX_EMPTY = 0,
     RX_FULL  = 1,
     TX_EMPTY = 4,
@@ -131,8 +131,8 @@ enum class FIFO_STATUS : uint8_t {
     TX_REUSE = 6
 };
 
-enum class DYNPD : uint8_t { DPL_P0, DPL_P1, DPL_P2, DPL_P3, DPL_P4, DPL_P5 };
+enum class DYNPD_t : uint8_t { DPL_P0, DPL_P1, DPL_P2, DPL_P3, DPL_P4, DPL_P5 };
 
-enum class FEATURE : uint8_t { EN_DYN_ACK, EN_ACK_PAY, EN_DPL };
+enum class FEATURE_t : uint8_t { EN_DYN_ACK, EN_ACK_PAY, EN_DPL };
 
 #endif // NRF24L01P_DEFINITIONS_HPP_
