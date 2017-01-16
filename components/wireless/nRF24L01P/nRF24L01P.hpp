@@ -29,8 +29,7 @@ class nRF24L01P {
     IGpio &_ce;
     IGpio &_irq;
 
-    Queue<uint8_t> _rxQueue0;
-
+    Queue_Handle_t<uint8_t> _txQueue;
     Queue_Handle_t<uint8_t> _rxQueue[6];
 
     uint8_t cmd_R_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
@@ -62,8 +61,9 @@ class nRF24L01P {
     void init();
     void update();
 
-    void configureRxPipe(uint8_t pipe, uint64_t address = 0);
-    void configureTxPipe(uint64_t address = 0);
+    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
+                         uint64_t address = 0);
+    void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
     void powerUp();
     void powerDown();
 

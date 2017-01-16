@@ -11,7 +11,7 @@
 #include <nRF24L01_config.h>
 
 nRF24L01P::nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq)
-    : _spi(spi), _ce(ce), _irq(irq), _rxQueue0{Queue<uint8_t>(256)},
+    : _spi(spi), _ce(ce), _irq(irq), _txQueue(NULL),
       _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL} {}
 
 nRF24L01P::~nRF24L01P() {}
@@ -36,7 +36,9 @@ void nRF24L01P::enterRxMode() {
 
             if (pipe < 0b110) {
                 for (int i = 0; i < maxPayloadSize; ++i) {
-                    self->_rxQueue0.enqueue(rxBytes[i], true);
+                    if (self->_rxQueue[pipe]) {
+                        self->_rxQueue[pipe]->enqueue(rxBytes[i], true);
+                    }
                 }
             }
 
@@ -154,21 +156,16 @@ void nRF24L01P::init() {
     _ce.clear();
 }
 
-void nRF24L01P::update() {
-    int foo = _rxQueue0.usedSlots();
+void nRF24L01P::update() {}
 
-    if (foo) {
-        uint8_t buffer[foo];
+void nRF24L01P::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
+                                uint64_t address) {
+    assert(pipe < 6);
 
-        for (int i = 0; i < foo; ++i) {
-            _rxQueue0.dequeue(buffer[i]);
-        }
-
-        LOG("%.*s", foo, buffer);
+    if (address) {
+        setRxAddress(pipe, address);
     }
-}
 
-void nRF24L01P::configureRxPipe(uint8_t pipe, uint64_t address) {
     switch (pipe) {
         case 0: {
             setSingleBit(Register_t::EN_RXADDR, VALUE(EN_RXADDR_t::ERX_P0));
@@ -195,9 +192,11 @@ void nRF24L01P::configureRxPipe(uint8_t pipe, uint64_t address) {
             writeShortRegister(Register_t::RX_PW_P5, maxPayloadSize);
         } break;
     }
+
+    _rxQueue[pipe] = &queue;
 }
 
-void nRF24L01P::configureTxPipe(uint64_t address) {
+void nRF24L01P::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     bitwiseAND_r(address, longAddressMask);
@@ -209,6 +208,8 @@ void nRF24L01P::configureTxPipe(uint64_t address) {
     }
 
     cmd_W_REGISTER(Register_t::RX_ADDR_P0, tx_addr, 5);
+
+    _txQueue = &queue;
 }
 
 void nRF24L01P::send(uint8_t *bytes, size_t numBytes) {
