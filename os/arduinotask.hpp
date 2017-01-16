@@ -10,6 +10,12 @@ const uint8_t defaultTaskPriority = tskIDLE_PRIORITY + 1;
 namespace xXx {
 
 class ArduinoTask {
+  private:
+    static void taskFunction(void *task);
+
+  protected:
+    TaskHandle_t _handle;
+
   public:
     ArduinoTask(uint16_t stackSize   = defaultStackSize,
                 uint8_t taskPriority = defaultTaskPriority);
@@ -20,12 +26,6 @@ class ArduinoTask {
 
     void suspend();
     void resume();
-
-  private:
-    TaskHandle_t _handle;
-
-  private:
-    static void taskFunction(void *task);
 };
 
 } /* namespace xXx */
