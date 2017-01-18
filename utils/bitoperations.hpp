@@ -7,11 +7,14 @@ static inline uint8_t bitwiseAND(uint8_t byte, uint8_t mask) {
     return (byte & mask);
 }
 
+static inline uint64_t bitwiseAND(uint64_t byte, uint64_t mask) {
+    return (byte & mask);
+}
+
 static inline void bitwiseAND_r(uint8_t &byte, uint8_t mask) {
     byte &= mask;
 }
 
-// TODO: Implements others as 64bit variants
 static inline void bitwiseAND_r(uint64_t &byte, uint64_t mask) {
     byte &= mask;
 }
