@@ -85,7 +85,9 @@ class nRF24L01P {
     void setDataRate(DataRate_t dataRate);
     void setOutputPower(OutputPower_t level);
     void setRetries(uint8_t delay, uint8_t count);
+    uint64_t getRxAddress(uint8_t pipe);
     void setRxAddress(uint8_t pipe, uint64_t address);
+    uint64_t getTxAddress();
     void setTxAddress(uint64_t address);
 
     void init();

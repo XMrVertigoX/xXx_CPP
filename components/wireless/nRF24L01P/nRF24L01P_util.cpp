@@ -167,39 +167,112 @@ void nRF24L01P::setRetries(uint8_t delay, uint8_t count) {
     writeShortRegister(Register_t::SETUP_RETR, setup_retr);
 }
 
-void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
-    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
+uint64_t nRF24L01P::getRxAddress(uint8_t pipe) {
+    if (pipe > 5) {
+        return (0);
+    }
+
+    Register_t addressRegister;
+    uint64_t addressLength;
 
     switch (pipe) {
         case 0: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P0, rx_addr,
-                           VALUE_64(RX_ADDR_P0_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P0;
+            addressLength   = VALUE_64(RX_ADDR_P0_t::LENGTH);
         } break;
         case 1: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P1, rx_addr,
-                           VALUE_64(RX_ADDR_P1_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P1;
+            addressLength   = VALUE_64(RX_ADDR_P1_t::LENGTH);
         } break;
         case 2: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P2, rx_addr,
-                           VALUE_64(RX_ADDR_P2_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P2;
+            addressLength   = VALUE_64(RX_ADDR_P2_t::LENGTH);
         } break;
         case 3: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P3, rx_addr,
-                           VALUE_64(RX_ADDR_P3_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P3;
+            addressLength   = VALUE_64(RX_ADDR_P3_t::LENGTH);
         } break;
         case 4: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P4, rx_addr,
-                           VALUE_64(RX_ADDR_P4_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P4;
+            addressLength   = VALUE_64(RX_ADDR_P4_t::LENGTH);
         } break;
         case 5: {
-            cmd_W_REGISTER(Register_t::RX_ADDR_P5, rx_addr,
-                           VALUE_64(RX_ADDR_P5_t::LENGTH));
+            addressRegister = Register_t::RX_ADDR_P5;
+            addressLength   = VALUE_64(RX_ADDR_P5_t::LENGTH);
         } break;
     }
+
+    uint64_t address = 0;
+    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
+
+    cmd_R_REGISTER(addressRegister, rx_addr, addressLength);
+
+    return (address);
+}
+
+void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
+    if (pipe > 5) {
+        return;
+    }
+
+    Register_t addressRegister;
+    uint64_t addressLength;
+    uint64_t addressMask;
+
+    switch (pipe) {
+        case 0: {
+            addressRegister = Register_t::RX_ADDR_P0;
+            addressLength   = VALUE_64(RX_ADDR_P0_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P0_t::MASK);
+        } break;
+        case 1: {
+            addressRegister = Register_t::RX_ADDR_P1;
+            addressLength   = VALUE_64(RX_ADDR_P1_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P1_t::MASK);
+        } break;
+        case 2: {
+            addressRegister = Register_t::RX_ADDR_P2;
+            addressLength   = VALUE_64(RX_ADDR_P2_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P2_t::MASK);
+        } break;
+        case 3: {
+            addressRegister = Register_t::RX_ADDR_P3;
+            addressLength   = VALUE_64(RX_ADDR_P3_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P3_t::MASK);
+        } break;
+        case 4: {
+            addressRegister = Register_t::RX_ADDR_P4;
+            addressLength   = VALUE_64(RX_ADDR_P4_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P4_t::MASK);
+        } break;
+        case 5: {
+            addressRegister = Register_t::RX_ADDR_P5;
+            addressLength   = VALUE_64(RX_ADDR_P5_t::LENGTH);
+            addressMask     = VALUE_64(RX_ADDR_P5_t::MASK);
+        } break;
+    }
+
+    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
+
+    cmd_W_REGISTER(addressRegister, rx_addr, addressLength);
+
+    assert(bitwiseAND(address, addressMask) ==
+           bitwiseAND(getRxAddress(pipe), addressMask));
+}
+
+uint64_t nRF24L01P::getTxAddress() {
+    uint64_t address = 0;
+    uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
+
+    cmd_R_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));
+
+    return (address);
 }
 
 void nRF24L01P::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));
+
+    assert(address == getTxAddress());
 }

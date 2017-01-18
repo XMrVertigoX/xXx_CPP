@@ -150,6 +150,7 @@ void nRF24L01P::init() {
 
 void nRF24L01P::update() {
     if (_MAX_RT) {
+        LOG("_MAX_RT");
     }
 
     if (_TX_DS) {
@@ -211,7 +212,7 @@ void nRF24L01P::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
                                 uint64_t address) {
     assert(pipe < 6);
 
-    if (address) {
+    if (address > 0) {
         setRxAddress(pipe, address);
     }
 
@@ -240,15 +241,12 @@ void nRF24L01P::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
 }
 
 void nRF24L01P::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
-    uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
-
-    if (address) {
-        cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, 5);
+    if (address > 0) {
+        setTxAddress(address);
     } else {
-        cmd_R_REGISTER(Register_t::TX_ADDR, tx_addr, 5);
+        address = getTxAddress();
     }
 
-    //cmd_W_REGISTER(Register_t::RX_ADDR_P0, tx_addr, 5);
     setRxAddress(0, address);
 
     _txQueue = &queue;

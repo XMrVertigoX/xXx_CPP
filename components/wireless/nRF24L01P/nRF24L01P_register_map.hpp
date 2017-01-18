@@ -153,31 +153,59 @@ enum class RPD_t : uint8_t {
     RPD_MASK    = 0b00000001
 };
 
-enum class RX_ADDR_P0_t : uint64_t { DEFAULT = 0xE7E7E7E7E7, LENGTH = 5 };
+enum class RX_ADDR_P0_t : uint64_t {
+    DEFAULT = 0x000000E7E7E7E7E7,
+    MASK    = 0x000000FFFFFFFFFF,
+    LENGTH  = 5
+};
 
-enum class RX_ADDR_P1_t : uint64_t { DEFAULT = 0xC2C2C2C2C2, LENGTH = 5 };
+enum class RX_ADDR_P1_t : uint64_t {
+    DEFAULT = 0x000000C2C2C2C2C2,
+    MASK    = 0x000000FFFFFFFFFF,
+    LENGTH = 5
+};
 
-enum class RX_ADDR_P2_t : uint64_t { DEFAULT = 0xC3, LENGTH = 1 };
+enum class RX_ADDR_P2_t : uint64_t {
+    DEFAULT = 0x00000000000000C3,
+    MASK    = 0x00000000000000FF,
+    LENGTH  = 1
+};
 
-enum class RX_ADDR_P3_t : uint64_t { DEFAULT = 0xC4, LENGTH = 1 };
+enum class RX_ADDR_P3_t : uint64_t {
+    DEFAULT = 0x00000000000000C4,
+    MASK    = 0x00000000000000FF,
+    LENGTH  = 1
+};
 
-enum class RX_ADDR_P4_t : uint64_t { DEFAULT = 0xC5, LENGTH = 1 };
+enum class RX_ADDR_P4_t : uint64_t {
+    DEFAULT = 0x00000000000000C5,
+    MASK    = 0x00000000000000FF,
+    LENGTH  = 1
+};
 
-enum class RX_ADDR_P5_t : uint64_t { DEFAULT = 0xC6, LENGTH = 1 };
+enum class RX_ADDR_P5_t : uint64_t {
+    DEFAULT = 0x00000000000000C6,
+    MASK    = 0x00000000000000FF,
+    LENGTH  = 1
+};
 
-enum class TX_ADDR_t : uint64_t { DEFAULT = 0xE7E7E7E7E7, LENGTH = 5 };
+enum class TX_ADDR_t : uint64_t {
+    DEFAULT = 0x000000E7E7E7E7E7,
+    MASK    = 0x000000FFFFFFFFFF,
+    LENGTH  = 5
+};
 
-enum class RX_PW_P0_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P0_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
-enum class RX_PW_P1_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P1_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
-enum class RX_PW_P2_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P2_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
-enum class RX_PW_P3_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P3_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
-enum class RX_PW_P4_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P4_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
-enum class RX_PW_P5_t : uint8_t { DEFAULT = 0, MASK = 0b0011111 };
+enum class RX_PW_P5_t : uint8_t { DEFAULT = 0, MASK = 0b00011111 };
 
 enum class FIFO_STATUS_t : uint8_t {
     RX_EMPTY = 0,
