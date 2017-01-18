@@ -7,15 +7,22 @@
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/templates/queue.hpp>
 
+#define VALUE_8(x) static_cast<uint8_t>(x)
+#define VALUE_64(x) static_cast<uint64_t>(x)
+#define LAMBDA []
+
 using namespace xXx;
 
 enum class Register_t : uint8_t;
+
 enum class DataRate_t : uint8_t {
     DataRate_1MBPS,
     DataRate_2MBPS,
     DataRate_250KBPS
 };
+
 enum class Crc_t : uint8_t { DISABLED, CRC8, CRC16 };
+
 enum class OutputPower_t : uint8_t {
     PowerLevel_18dBm = 0,
     PowerLevel_12dBm = 2,
@@ -29,8 +36,8 @@ class nRF24L01P {
     IGpio &_ce;
     IGpio &_irq;
 
-    Queue_Handle_t<uint8_t> _txQueue;
     Queue_Handle_t<uint8_t> _rxQueue[6];
+    Queue_Handle_t<uint8_t> _txQueue;
 
     bool _MAX_RT, _TX_DS, _RX_DR;
 
@@ -53,17 +60,12 @@ class nRF24L01P {
     uint8_t writeShortRegister(Register_t reg, uint8_t regValue);
     void clearSingleBit(Register_t address, uint8_t bitIndex);
     void setSingleBit(Register_t address, uint8_t bitIndex);
-    uint8_t getRxNumBytes();
 
-    Crc_t getCrcConfig();
-    DataRate_t getDataRate();
+    uint8_t getPayloadLength();
 
   public:
     nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq);
     ~nRF24L01P();
-
-    void init();
-    void update();
 
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
                          uint64_t address = 0);
@@ -77,12 +79,17 @@ class nRF24L01P {
     void leaveRxMode();
 
     void setChannel(uint8_t channel);
+    Crc_t getCrcConfig();
     void setCrcConfig(Crc_t crc);
+    DataRate_t getDataRate();
     void setDataRate(DataRate_t dataRate);
     void setOutputPower(OutputPower_t level);
     void setRetries(uint8_t delay, uint8_t count);
     void setRxAddress(uint8_t pipe, uint64_t address);
     void setTxAddress(uint64_t address);
+
+    void init();
+    void update();
 };
 
 #endif // NRF24L01P_HPP_
