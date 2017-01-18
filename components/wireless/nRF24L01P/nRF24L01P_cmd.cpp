@@ -6,6 +6,32 @@
 #include <xXx/utils/bitoperations.hpp>
 #include <xXx/utils/logging.hpp>
 
+uint8_t nRF24L01P::transmit(uint8_t command, uint8_t txBytes[],
+                            uint8_t rxBytes[], size_t numBytes) {
+    uint8_t status;
+    size_t transmissionNumBytes = numBytes + 1;
+    uint8_t mosiBytes[transmissionNumBytes];
+    uint8_t misoBytes[transmissionNumBytes];
+
+    mosiBytes[0] = command;
+
+    if (txBytes != NULL) {
+        memcpy(&mosiBytes[1], txBytes, numBytes);
+    } else {
+        memset(&mosiBytes[1], dummyByte, numBytes);
+    }
+
+    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
+
+    status = misoBytes[0];
+
+    if (rxBytes != NULL) {
+        memcpy(rxBytes, &misoBytes[1], numBytes);
+    }
+
+    return (status);
+}
+
 uint8_t nRF24L01P::cmd_R_REGISTER(Register_t address, uint8_t bytes[],
                                   size_t numBytes) {
     uint8_t command, status;
@@ -26,7 +52,7 @@ uint8_t nRF24L01P::cmd_W_REGISTER(Register_t address, uint8_t bytes[],
     return (status);
 }
 
-uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
+uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
     uint8_t command, status;
 
     command = VALUE(Command_t::W_TX_PAYLOAD);
@@ -35,7 +61,7 @@ uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     return (status);
 }
 
-uint8_t nRF24L01P::cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
+uint8_t nRF24L01P::cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
     uint8_t command, status;
 
     command = VALUE(Command_t::R_RX_PAYLOAD);
@@ -62,21 +88,20 @@ uint8_t nRF24L01P::cmd_FLUSH_RX() {
     return (status);
 }
 
-// TODO
 uint8_t nRF24L01P::cmd_REUSE_TX_PL() {
     uint8_t command, status;
 
     command = VALUE(Command_t::REUSE_TX_PL);
+    status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
-// TODO
-uint8_t nRF24L01P::cmd_R_RX_PL_WID(uint8_t bytes[], size_t numBytes) {
+uint8_t nRF24L01P::cmd_R_RX_PL_WID(uint8_t &payloadLength) {
     uint8_t command, status;
 
     command = VALUE(Command_t::R_RX_PL_WID);
-    status  = transmit(command, NULL, bytes, numBytes);
+    status  = transmit(command, NULL, &payloadLength, 1);
 
     return (status);
 }

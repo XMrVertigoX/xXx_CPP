@@ -32,6 +32,11 @@ class nRF24L01P {
     Queue_Handle_t<uint8_t> _txQueue;
     Queue_Handle_t<uint8_t> _rxQueue[6];
 
+    bool _MAX_RT, _TX_DS, _RX_DR;
+
+    uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
+                     size_t numBytes);
+
     uint8_t cmd_R_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
     uint8_t cmd_W_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
     uint8_t cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes);
@@ -39,17 +44,16 @@ class nRF24L01P {
     uint8_t cmd_FLUSH_TX();
     uint8_t cmd_FLUSH_RX();
     uint8_t cmd_REUSE_TX_PL();
-    uint8_t cmd_R_RX_PL_WID(uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_R_RX_PL_WID(uint8_t &payloadLength);
     uint8_t cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes);
     uint8_t cmd_W_TX_PAYLOAD_NOACK();
     uint8_t cmd_NOP();
 
-    uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
-                     size_t numBytes);
     uint8_t readShortRegister(Register_t reg);
     uint8_t writeShortRegister(Register_t reg, uint8_t regValue);
     void clearSingleBit(Register_t address, uint8_t bitIndex);
     void setSingleBit(Register_t address, uint8_t bitIndex);
+    uint8_t getRxNumBytes();
 
     Crc_t getCrcConfig();
     DataRate_t getDataRate();
@@ -79,8 +83,6 @@ class nRF24L01P {
     void setRetries(uint8_t delay, uint8_t count);
     void setRxAddress(uint8_t pipe, uint64_t address);
     void setTxAddress(uint64_t address);
-
-    void send(uint8_t *bytes, size_t numBytes);
 };
 
 #endif // NRF24L01P_HPP_

@@ -6,13 +6,11 @@
 #define VALUE(x) static_cast<uint8_t>(x)
 #define LAMBDA []
 
-static const uint8_t maxPayloadSize    = 32;
-static const uint8_t txSettling        = 130;
-static const uint8_t rxSettling        = 130;
-static const uint8_t dummy             = 0xFF;
-static const uint64_t longAddressMask  = 0xFFFFFFFFFF;
-static const uint64_t shortAddressMask = 0xFF;
-static const uint8_t maxChannel        = 0x7F;
+static const uint8_t txSettling         = 130;
+static const uint8_t rxSettling         = 130;
+static const uint8_t maxChannel         = 0x7F;
+static const uint8_t dummyByte          = 0xFF;
+static const uint8_t maxPayloadNumBytes = 32;
 
 enum class Command_t : uint8_t {
     R_REGISTER         = 0x00,
