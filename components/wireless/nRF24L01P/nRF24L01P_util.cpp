@@ -17,12 +17,8 @@ uint8_t nRF24L01P::readShortRegister(Register_t address) {
     return (result);
 }
 
-uint8_t nRF24L01P::writeShortRegister(Register_t address, uint8_t reg) {
-    uint8_t status;
-
-    status = cmd_W_REGISTER(address, &reg, 1);
-
-    return (status);
+void nRF24L01P::writeShortRegister(Register_t address, uint8_t reg) {
+    cmd_W_REGISTER(address, &reg, 1);
 }
 
 void nRF24L01P::clearSingleBit(Register_t address, uint8_t bitIndex) {
@@ -43,6 +39,10 @@ uint8_t nRF24L01P::getPayloadLength() {
     cmd_R_RX_PL_WID(rxNumBytes);
 
     return (rxNumBytes);
+}
+
+void nRF24L01P::clearInterruptFlags() {
+    writeShortRegister(Register_t::STATUS, 0x70);
 }
 
 // ----- Public getters and setters -------------------------------------------
@@ -79,15 +79,17 @@ void nRF24L01P::setCrcConfig(Crc_t crc) {
     }
 
     writeShortRegister(Register_t::CONFIG, config);
+}
 
-    assert(crc == getCrcConfig());
+uint8_t nRF24L01P::getChannel() {
+    uint8_t channel = readShortRegister(Register_t::RF_CH);
+
+    return (channel);
 }
 
 void nRF24L01P::setChannel(uint8_t channel) {
-    if (channel < VALUE_8(RF_CH_t::RF_CH_MASK)) {
+    if (channel <= VALUE_8(RF_CH_t::RF_CH_MASK)) {
         writeShortRegister(Register_t::RF_CH, channel);
-    } else {
-        LOG("Channel index invalid: %d", channel);
     }
 }
 
@@ -124,8 +126,6 @@ void nRF24L01P::setDataRate(DataRate_t dataRate) {
     }
 
     writeShortRegister(Register_t::RF_SETUP, rfSetup);
-
-    assert(dataRate == getDataRate());
 }
 
 void nRF24L01P::setOutputPower(OutputPower_t level) {
@@ -255,9 +255,6 @@ void nRF24L01P::setRxAddress(uint8_t pipe, uint64_t address) {
     uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(addressRegister, rx_addr, addressLength);
-
-    assert(bitwiseAND(address, addressMask) ==
-           bitwiseAND(getRxAddress(pipe), addressMask));
 }
 
 uint64_t nRF24L01P::getTxAddress() {
@@ -273,6 +270,4 @@ void nRF24L01P::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));
-
-    assert(address == getTxAddress());
 }
