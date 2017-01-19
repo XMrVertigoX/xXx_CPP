@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p.hpp>
 #include <xXx/utils/bitoperations.hpp>
 
 namespace xXx {

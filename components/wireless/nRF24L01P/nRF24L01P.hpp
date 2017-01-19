@@ -1,7 +1,7 @@
 #ifndef NRF24L01P_HPP_
 #define NRF24L01P_HPP_
 
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_definitions.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
 #define VALUE_8(x) static_cast<uint8_t>(x)

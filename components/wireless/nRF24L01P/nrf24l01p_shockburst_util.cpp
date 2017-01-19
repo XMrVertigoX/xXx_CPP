@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_shockburst.hpp>
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_definitions.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_shockburst.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/utils/bitoperations.hpp>
 #include <xXx/utils/logging.hpp>
 

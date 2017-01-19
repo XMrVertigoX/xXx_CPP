@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include <xXx/components/wireless/nRF24L01P/nRF24L01P.hpp>
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_shockburst.hpp>
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_definitions.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_shockburst.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/bitoperations.hpp>
