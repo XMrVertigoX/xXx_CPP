@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p.hpp>
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_shockburst.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_api.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
@@ -16,12 +16,12 @@ namespace xXx {
 static const uint8_t rxSettling = 130;
 static const uint8_t txSettling = 130;
 
-nRF24L01P_ShockBurst::nRF24L01P_ShockBurst(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P(spi), _ce(ce), _irq(irq), _txQueue(NULL),
+nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
+    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq), _txQueue(NULL),
       _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
       _operatingMode(OperatingMode_t::Shutdown) {}
 
-nRF24L01P_ShockBurst::~nRF24L01P_ShockBurst() {}
+nRF24L01P_API::~nRF24L01P_API() {}
 
 static inline uint8_t getPipeIndex(uint8_t status) {
     bitwiseAND_r(status, VALUE_8(STATUS_t::RX_P_NO_MASK));
@@ -30,39 +30,42 @@ static inline uint8_t getPipeIndex(uint8_t status) {
     return (status);
 }
 
-void nRF24L01P_ShockBurst::enterRxMode() {
+void nRF24L01P_API::enterRxMode() {
     auto interruptFunction = LAMBDA(void *user) {
-        nRF24L01P_ShockBurst *self = static_cast<nRF24L01P_ShockBurst *>(user);
+        nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
 
-        uint8_t fifo_status;
-        uint8_t pipeIndex;
-        uint8_t rxNumBytes;
-        uint8_t status;
+        uint8_t status = self->cmd_NOP();
 
-        do {
-            status = self->cmd_NOP();
+        if (!(readBit(status, VALUE_8(STATUS_t::RX_DR)))) {
+            self->clearInterruptFlags();
+            return;
+        }
 
-            // TODO: Do something if rxNumBytes > 32
-            rxNumBytes = self->getPayloadLength();
+        uint8_t fifo_status = self->readShortRegister(Register_t::FIFO_STATUS);
 
-            // TODO: Do something if pipeIndex > 5
-            pipeIndex = getPipeIndex(status);
-
+        while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY)))) {
+            uint8_t rxNumBytes = self->getPayloadLength();
             uint8_t rxBytes[rxNumBytes];
-            self->cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
 
-            for (int i = 0; i < rxNumBytes; ++i) {
-                if (!(self->_rxQueue[pipeIndex])) {
-                    break;
+            if (rxNumBytes > 32) {
+                self->cmd_FLUSH_RX();
+            } else {
+                self->cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
+            }
+
+            uint8_t pipeIndex = getPipeIndex(status);
+
+            if ((pipeIndex <= 5) && (self->_rxQueue[pipeIndex] != NULL)) {
+                // uint8_t rxBytes[rxNumBytes];
+
+                for (int i = 0; i < rxNumBytes; ++i) {
+                    self->_rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
                 }
-
-                // TODO: Check for enqueue return
-                self->_rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
             }
 
             self->clearInterruptFlags();
             fifo_status = self->readShortRegister(Register_t::FIFO_STATUS);
-        } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
+        }
     };
 
     if (_operatingMode != OperatingMode_t::Standby) {
@@ -78,7 +81,7 @@ void nRF24L01P_ShockBurst::enterRxMode() {
     delayUs(rxSettling);
 }
 
-void nRF24L01P_ShockBurst::enterShutdownMode() {
+void nRF24L01P_API::enterShutdownMode() {
     if (_operatingMode == OperatingMode_t::Rx |
         _operatingMode == OperatingMode_t::Tx) {
         enterStandbyMode();
@@ -87,16 +90,16 @@ void nRF24L01P_ShockBurst::enterShutdownMode() {
     clearSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
 }
 
-void nRF24L01P_ShockBurst::enterStandbyMode() {
+void nRF24L01P_API::enterStandbyMode() {
     _irq.disableInterrupt();
     _ce.clear();
 
     setSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
 }
 
-void nRF24L01P_ShockBurst::enterTxMode() {
+void nRF24L01P_API::enterTxMode() {
     auto interruptFunction = LAMBDA(void *user) {
-        nRF24L01P_ShockBurst *self = static_cast<nRF24L01P_ShockBurst *>(user);
+        nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
 
         uint8_t status = self->cmd_NOP();
 
@@ -122,7 +125,7 @@ void nRF24L01P_ShockBurst::enterTxMode() {
     delayUs(txSettling);
 }
 
-void nRF24L01P_ShockBurst::switchOperatingMode(OperatingMode_t operatingMode) {
+void nRF24L01P_API::switchOperatingMode(OperatingMode_t operatingMode) {
     switch (operatingMode) {
         case OperatingMode_t::Rx: {
             enterRxMode();
@@ -141,7 +144,7 @@ void nRF24L01P_ShockBurst::switchOperatingMode(OperatingMode_t operatingMode) {
     _operatingMode = operatingMode;
 }
 
-void nRF24L01P_ShockBurst::init() {
+void nRF24L01P_API::init() {
     clearInterruptFlags();
 
     // Enable Enhanced ShockBurst™
@@ -155,14 +158,14 @@ void nRF24L01P_ShockBurst::init() {
     cmd_FLUSH_RX();
 }
 
-void nRF24L01P_ShockBurst::update() {
+void nRF24L01P_API::update() {
     if (_txQueue) {
         UBaseType_t usedSlots = _txQueue->usedSlots();
 
         if (usedSlots) {
-            uint8_t status = cmd_NOP();
+            uint8_t fifo_status = readShortRegister(Register_t::FIFO_STATUS);
 
-            if (readBit(status, VALUE_8(STATUS_t::TX_FULL))) {
+            if (readBit(fifo_status, VALUE_8(FIFO_STATUS_t::TX_FULL))) {
                 return;
             }
 
@@ -177,7 +180,7 @@ void nRF24L01P_ShockBurst::update() {
     }
 }
 
-void nRF24L01P_ShockBurst::enableDataPipe(uint8_t pipe, bool enable) {
+void nRF24L01P_API::enableDataPipe(uint8_t pipe, bool enable) {
     if (pipe > 5) {
         return;
     }
@@ -191,8 +194,8 @@ void nRF24L01P_ShockBurst::enableDataPipe(uint8_t pipe, bool enable) {
     }
 }
 
-void nRF24L01P_ShockBurst::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
-                                uint64_t address) {
+void nRF24L01P_API::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
+                                    uint64_t address) {
     assert(!(pipe > 5));
 
     if (pipe > 5) {
@@ -208,7 +211,7 @@ void nRF24L01P_ShockBurst::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
     _rxQueue[pipe] = &queue;
 }
 
-void nRF24L01P_ShockBurst::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
+void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
     if (address > 0) {
         setTxAddress(address);
     } else {

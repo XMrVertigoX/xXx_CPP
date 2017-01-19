@@ -3,13 +3,12 @@
 
 #include <stdint.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/templates/queue.hpp>
-#define LAMBDA []
 
-namespace xXx {
+#define LAMBDA []
 
 enum class DataRate_t : uint8_t {
     DataRate_1MBPS,
@@ -28,7 +27,9 @@ enum class OutputPower_t : uint8_t {
 
 enum class OperatingMode_t : uint8_t { Shutdown, Standby, Rx, Tx };
 
-class nRF24L01P_ShockBurst : public nRF24L01P {
+namespace xXx {
+
+class nRF24L01P_API : public nRF24L01P_BASE {
   private:
     IGpio &_ce;
     IGpio &_irq;
@@ -61,8 +62,8 @@ class nRF24L01P_ShockBurst : public nRF24L01P {
     uint64_t getTxAddress();
 
   public:
-    nRF24L01P_ShockBurst(ISpi &spi, IGpio &ce, IGpio &irq);
-    ~nRF24L01P_ShockBurst();
+    nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq);
+    ~nRF24L01P_API();
 
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
                          uint64_t address = 0);

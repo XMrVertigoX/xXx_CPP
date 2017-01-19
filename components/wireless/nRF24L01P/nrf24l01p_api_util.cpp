@@ -2,16 +2,16 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_shockburst.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_api.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/utils/bitoperations.hpp>
 #include <xXx/utils/logging.hpp>
 
 namespace xXx {
 
-// ----- Private helper functions ---------------------------------------------
+// ----- helper functions -----------------------------------------------------
 
-uint8_t nRF24L01P_ShockBurst::readShortRegister(Register_t address) {
+uint8_t nRF24L01P_API::readShortRegister(Register_t address) {
     uint8_t result;
 
     cmd_R_REGISTER(address, &result, 1);
@@ -19,24 +19,23 @@ uint8_t nRF24L01P_ShockBurst::readShortRegister(Register_t address) {
     return (result);
 }
 
-void nRF24L01P_ShockBurst::writeShortRegister(Register_t address, uint8_t reg) {
+void nRF24L01P_API::writeShortRegister(Register_t address, uint8_t reg) {
     cmd_W_REGISTER(address, &reg, 1);
 }
 
-void nRF24L01P_ShockBurst::clearSingleBit(Register_t address,
-                                          uint8_t bitIndex) {
+void nRF24L01P_API::clearSingleBit(Register_t address, uint8_t bitIndex) {
     uint8_t reg = readShortRegister(address);
     clearBit_r(reg, bitIndex);
     writeShortRegister(address, reg);
 }
 
-void nRF24L01P_ShockBurst::setSingleBit(Register_t address, uint8_t bitIndex) {
+void nRF24L01P_API::setSingleBit(Register_t address, uint8_t bitIndex) {
     uint8_t reg = readShortRegister(address);
     setBit_r(reg, bitIndex);
     writeShortRegister(address, reg);
 }
 
-uint8_t nRF24L01P_ShockBurst::getPayloadLength() {
+uint8_t nRF24L01P_API::getPayloadLength() {
     uint8_t rxNumBytes;
 
     cmd_R_RX_PL_WID(rxNumBytes);
@@ -44,13 +43,13 @@ uint8_t nRF24L01P_ShockBurst::getPayloadLength() {
     return (rxNumBytes);
 }
 
-void nRF24L01P_ShockBurst::clearInterruptFlags() {
+void nRF24L01P_API::clearInterruptFlags() {
     writeShortRegister(Register_t::STATUS, 0x70);
 }
 
-// ----- Public getters and setters -------------------------------------------
+// ----- getters and setters --------------------------------------------------
 
-Crc_t nRF24L01P_ShockBurst::getCrcConfig() {
+Crc_t nRF24L01P_API::getCrcConfig() {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
     if (!readBit(config, VALUE_8(CONFIG_t::EN_CRC))) {
@@ -64,7 +63,7 @@ Crc_t nRF24L01P_ShockBurst::getCrcConfig() {
     }
 }
 
-void nRF24L01P_ShockBurst::setCrcConfig(Crc_t crc) {
+void nRF24L01P_API::setCrcConfig(Crc_t crc) {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
     switch (crc) {
@@ -84,19 +83,19 @@ void nRF24L01P_ShockBurst::setCrcConfig(Crc_t crc) {
     writeShortRegister(Register_t::CONFIG, config);
 }
 
-uint8_t nRF24L01P_ShockBurst::getChannel() {
+uint8_t nRF24L01P_API::getChannel() {
     uint8_t channel = readShortRegister(Register_t::RF_CH);
 
     return (channel);
 }
 
-void nRF24L01P_ShockBurst::setChannel(uint8_t channel) {
+void nRF24L01P_API::setChannel(uint8_t channel) {
     if (channel <= VALUE_8(RF_CH_t::RF_CH_MASK)) {
         writeShortRegister(Register_t::RF_CH, channel);
     }
 }
 
-DataRate_t nRF24L01P_ShockBurst::getDataRate() {
+DataRate_t nRF24L01P_API::getDataRate() {
     uint8_t rfSetup = readShortRegister(Register_t::RF_SETUP);
 
     if (readBit(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_LOW))) {
@@ -110,7 +109,7 @@ DataRate_t nRF24L01P_ShockBurst::getDataRate() {
     return (DataRate_t::DataRate_1MBPS);
 }
 
-void nRF24L01P_ShockBurst::setDataRate(DataRate_t dataRate) {
+void nRF24L01P_API::setDataRate(DataRate_t dataRate) {
     uint8_t rfSetup = readShortRegister(Register_t::RF_SETUP);
 
     switch (dataRate) {
@@ -131,7 +130,7 @@ void nRF24L01P_ShockBurst::setDataRate(DataRate_t dataRate) {
     writeShortRegister(Register_t::RF_SETUP, rfSetup);
 }
 
-void nRF24L01P_ShockBurst::setOutputPower(OutputPower_t level) {
+void nRF24L01P_API::setOutputPower(OutputPower_t level) {
     uint8_t rf_setup = readShortRegister(Register_t::RF_SETUP);
 
     switch (level) {
@@ -156,7 +155,7 @@ void nRF24L01P_ShockBurst::setOutputPower(OutputPower_t level) {
     writeShortRegister(Register_t::RF_SETUP, rf_setup);
 }
 
-void nRF24L01P_ShockBurst::setRetries(uint8_t delay, uint8_t count) {
+void nRF24L01P_API::setRetries(uint8_t delay, uint8_t count) {
     uint8_t setup_retr;
 
     bitwiseAND_r(delay, VALUE_8(SETUP_RETR_t::ARD_MASK));
@@ -170,7 +169,7 @@ void nRF24L01P_ShockBurst::setRetries(uint8_t delay, uint8_t count) {
     writeShortRegister(Register_t::SETUP_RETR, setup_retr);
 }
 
-uint64_t nRF24L01P_ShockBurst::getRxAddress(uint8_t pipe) {
+uint64_t nRF24L01P_API::getRxAddress(uint8_t pipe) {
     if (pipe > 5) {
         return (0);
     }
@@ -213,7 +212,7 @@ uint64_t nRF24L01P_ShockBurst::getRxAddress(uint8_t pipe) {
     return (address);
 }
 
-void nRF24L01P_ShockBurst::setRxAddress(uint8_t pipe, uint64_t address) {
+void nRF24L01P_API::setRxAddress(uint8_t pipe, uint64_t address) {
     if (pipe > 5) {
         return;
     }
@@ -260,7 +259,7 @@ void nRF24L01P_ShockBurst::setRxAddress(uint8_t pipe, uint64_t address) {
     cmd_W_REGISTER(addressRegister, rx_addr, addressLength);
 }
 
-uint64_t nRF24L01P_ShockBurst::getTxAddress() {
+uint64_t nRF24L01P_API::getTxAddress() {
     uint64_t address = 0;
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
@@ -269,7 +268,7 @@ uint64_t nRF24L01P_ShockBurst::getTxAddress() {
     return (address);
 }
 
-void nRF24L01P_ShockBurst::setTxAddress(uint64_t address) {
+void nRF24L01P_API::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));

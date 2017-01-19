@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define VALUE_8(x) static_cast<uint8_t>(x)
+#define VALUE_64(x) static_cast<uint64_t>(x)
+
 enum class Command_t : uint8_t {
     R_REGISTER         = 0x00,
     W_REGISTER         = 0x20,
@@ -162,7 +165,7 @@ enum class RX_ADDR_P0_t : uint64_t {
 enum class RX_ADDR_P1_t : uint64_t {
     DEFAULT = 0x000000C2C2C2C2C2,
     MASK    = 0x000000FFFFFFFFFF,
-    LENGTH = 5
+    LENGTH  = 5
 };
 
 enum class RX_ADDR_P2_t : uint64_t {
