@@ -1,221 +1,145 @@
 #include <assert.h>
-#include <stdint.h>
+#include <string.h>
 
-#include <xXx/components/wireless/nRF24L01P/nRF24L01P.hpp>
-#include <xXx/components/wireless/nRF24L01P/nRF24L01P_register_map.hpp>
-#include <xXx/components/wireless/nRF24L01P/nRF24L01P_spi.hpp>
-#include <xXx/interfaces/igpio.hpp>
-#include <xXx/interfaces/ispi.hpp>
+#include <xXx/components/wireless/nRF24L01P/nrf24l01p.hpp>
 #include <xXx/utils/bitoperations.hpp>
-#include <xXx/utils/logging.hpp>
 
-#include <nRF24L01_config.h>
+namespace xXx {
 
-static const uint8_t rxSettling = 130;
-static const uint8_t txSettling = 130;
-
-nRF24L01P::nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_SPI(spi), _ce(ce), _irq(irq), _txQueue(NULL),
-      _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
-      _operatingMode(OperatingMode_t::Shutdown) {}
+nRF24L01P::nRF24L01P(ISpi &spi) : _spi(spi) {}
 
 nRF24L01P::~nRF24L01P() {}
 
-static inline uint8_t getPipeIndex(uint8_t status) {
-    bitwiseAND_r(status, VALUE_8(STATUS_t::RX_P_NO_MASK));
-    shiftRight_r(status, VALUE_8(STATUS_t::RX_P_NO));
+static const uint8_t dummyByte = 0xFF;
+
+uint8_t nRF24L01P::transmit(uint8_t command, uint8_t txBytes[],
+                            uint8_t rxBytes[], size_t numBytes) {
+    uint8_t status;
+    size_t transmissionNumBytes = numBytes + 1;
+    uint8_t mosiBytes[transmissionNumBytes];
+    uint8_t misoBytes[transmissionNumBytes];
+
+    mosiBytes[0] = command;
+
+    if (txBytes != NULL) {
+        memcpy(&mosiBytes[1], txBytes, numBytes);
+    } else {
+        memset(&mosiBytes[1], dummyByte, numBytes);
+    }
+
+    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
+
+    status = misoBytes[0];
+
+    if (rxBytes != NULL) {
+        memcpy(rxBytes, &misoBytes[1], numBytes);
+    }
 
     return (status);
 }
 
-void nRF24L01P::enterRxMode() {
-    auto interruptFunction = LAMBDA(void *user) {
-        nRF24L01P *self = static_cast<nRF24L01P *>(user);
+uint8_t nRF24L01P::cmd_R_REGISTER(Register_t address, uint8_t bytes[],
+                                  size_t numBytes) {
+    uint8_t command, status;
 
-        uint8_t fifo_status;
-        uint8_t pipeIndex;
-        uint8_t rxNumBytes;
-        uint8_t status;
+    command = bitwiseOR(VALUE_8(Command_t::R_REGISTER), VALUE_8(address));
+    status  = transmit(command, NULL, bytes, numBytes);
 
-        do {
-            status = self->cmd_NOP();
-
-            // TODO: Do something if rxNumBytes > 32
-            rxNumBytes = self->getPayloadLength();
-
-            // TODO: Do something if pipeIndex > 5
-            pipeIndex = getPipeIndex(status);
-
-            uint8_t rxBytes[rxNumBytes];
-            self->cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
-
-            for (int i = 0; i < rxNumBytes; ++i) {
-                if (!(self->_rxQueue[pipeIndex])) {
-                    break;
-                }
-
-                // TODO: Check for enqueue return
-                self->_rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
-            }
-
-            self->clearInterruptFlags();
-            fifo_status = self->readShortRegister(Register_t::FIFO_STATUS);
-        } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
-    };
-
-    if (_operatingMode != OperatingMode_t::Standby) {
-        enterStandbyMode();
-    }
-
-    // Enter PRX mode
-    setSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PRIM_RX));
-
-    _irq.enableInterrupt(interruptFunction, this);
-    _ce.set();
-
-    delayUs(rxSettling);
+    return (status);
 }
 
-void nRF24L01P::enterShutdownMode() {
-    if (_operatingMode == OperatingMode_t::Rx |
-        _operatingMode == OperatingMode_t::Tx) {
-        enterStandbyMode();
-    }
+uint8_t nRF24L01P::cmd_W_REGISTER(Register_t address, uint8_t bytes[],
+                                      size_t numBytes) {
+    uint8_t command, status;
 
-    clearSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
+    command = bitwiseOR(VALUE_8(Command_t::W_REGISTER), VALUE_8(address));
+    status  = transmit(command, bytes, NULL, numBytes);
+
+    return (status);
 }
 
-void nRF24L01P::enterStandbyMode() {
-    _irq.disableInterrupt();
-    _ce.clear();
+uint8_t nRF24L01P::cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
+    uint8_t command, status;
 
-    setSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
+    command = VALUE_8(Command_t::W_TX_PAYLOAD);
+    status  = transmit(command, bytes, NULL, numBytes);
+
+    return (status);
 }
 
-void nRF24L01P::enterTxMode() {
-    auto interruptFunction = LAMBDA(void *user) {
-        nRF24L01P *self = static_cast<nRF24L01P *>(user);
+uint8_t nRF24L01P::cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
+    uint8_t command, status;
 
-        uint8_t status = self->cmd_NOP();
+    command = VALUE_8(Command_t::R_RX_PAYLOAD);
+    status  = transmit(command, NULL, bytes, numBytes);
 
-        if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
-            self->clearInterruptFlags();
-        }
-
-        if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
-            self->clearInterruptFlags();
-        }
-    };
-
-    if (_operatingMode != OperatingMode_t::Standby) {
-        enterStandbyMode();
-    }
-
-    // Enter PTX mode
-    clearSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PRIM_RX));
-
-    _irq.enableInterrupt(interruptFunction, this);
-    _ce.set();
-
-    delayUs(txSettling);
+    return (status);
 }
 
-void nRF24L01P::switchOperatingMode(OperatingMode_t operatingMode) {
-    switch (operatingMode) {
-        case OperatingMode_t::Rx: {
-            enterRxMode();
-        } break;
-        case OperatingMode_t::Shutdown: {
-            enterShutdownMode();
-        } break;
-        case OperatingMode_t::Standby: {
-            enterStandbyMode();
-        } break;
-        case OperatingMode_t::Tx: {
-            enterTxMode();
-        } break;
-    }
+uint8_t nRF24L01P::cmd_FLUSH_TX() {
+    uint8_t command, status;
 
-    _operatingMode = operatingMode;
+    command = VALUE_8(Command_t::FLUSH_TX);
+    status  = transmit(command, NULL, NULL, 0);
+
+    return (status);
 }
 
-void nRF24L01P::init() {
-    clearInterruptFlags();
+uint8_t nRF24L01P::cmd_FLUSH_RX() {
+    uint8_t command, status;
 
-    // Enable Enhanced ShockBurst™
-    uint8_t feature = readShortRegister(Register_t::FEATURE);
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_DYN_ACK));
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_ACK_PAY));
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_DPL));
-    writeShortRegister(Register_t::FEATURE, feature);
+    command = VALUE_8(Command_t::FLUSH_RX);
+    status  = transmit(command, NULL, NULL, 0);
 
-    cmd_FLUSH_TX();
-    cmd_FLUSH_RX();
+    return (status);
 }
 
-void nRF24L01P::update() {
-    if (_txQueue) {
-        UBaseType_t usedSlots = _txQueue->usedSlots();
+uint8_t nRF24L01P::cmd_REUSE_TX_PL() {
+    uint8_t command, status;
 
-        if (usedSlots) {
-            uint8_t status = cmd_NOP();
+    command = VALUE_8(Command_t::REUSE_TX_PL);
+    status  = transmit(command, NULL, NULL, 0);
 
-            if (readBit(status, VALUE_8(STATUS_t::TX_FULL))) {
-                return;
-            }
-
-            uint8_t buffer[usedSlots];
-
-            for (int i = 0; i < usedSlots; ++i) {
-                _txQueue->dequeue(buffer[i]);
-            }
-
-            cmd_W_TX_PAYLOAD(buffer, usedSlots);
-        }
-    }
+    return (status);
 }
 
-void nRF24L01P::enableDataPipe(uint8_t pipe, bool enable) {
-    if (pipe > 5) {
-        return;
-    }
+uint8_t nRF24L01P::cmd_R_RX_PL_WID(uint8_t &payloadLength) {
+    uint8_t command, status;
 
-    if (enable) {
-        setSingleBit(Register_t::EN_RXADDR, pipe);
-        setSingleBit(Register_t::DYNPD, pipe);
-    } else {
-        clearSingleBit(Register_t::EN_RXADDR, pipe);
-        clearSingleBit(Register_t::DYNPD, pipe);
-    }
+    command = VALUE_8(Command_t::R_RX_PL_WID);
+    status  = transmit(command, NULL, &payloadLength, 1);
+
+    return (status);
 }
 
-void nRF24L01P::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
-                                uint64_t address) {
-    assert(!(pipe > 5));
+// TODO: Not used yet
+uint8_t nRF24L01P::cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[],
+                                         size_t numBytes) {
+    uint8_t command, status;
 
-    if (pipe > 5) {
-        return;
-    }
+    bitwiseAND_r(pipe, 0b111);
+    command = bitwiseOR(VALUE_8(Command_t::W_ACK_PAYLOAD), pipe);
+    status  = transmit(command, bytes, NULL, numBytes);
 
-    if (address > 0) {
-        setRxAddress(pipe, address);
-    }
-
-    enableDataPipe(pipe, true);
-
-    _rxQueue[pipe] = &queue;
+    return (status);
 }
 
-void nRF24L01P::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
-    if (address > 0) {
-        setTxAddress(address);
-    } else {
-        address = getTxAddress();
-    }
+// TODO: Not used yet
+uint8_t nRF24L01P::cmd_W_TX_PAYLOAD_NOACK() {
+    uint8_t command, status;
 
-    setRxAddress(0, address);
+    command = VALUE_8(Command_t::W_TX_PAYLOAD_NOACK);
 
-    enableDataPipe(0, true);
-
-    _txQueue = &queue;
+    return (status);
 }
+
+uint8_t nRF24L01P::cmd_NOP() {
+    uint8_t command, status;
+
+    command = VALUE_8(Command_t::NOP);
+    status  = transmit(command, NULL, NULL, 0);
+
+    return (status);
+}
+
+} /* namespace xXx */

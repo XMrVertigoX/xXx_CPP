@@ -1,5 +1,5 @@
-#ifndef NRF24L01P_REGISTER_MAP_HPP_
-#define NRF24L01P_REGISTER_MAP_HPP_
+#ifndef NRF24L01P_DEFINITIONS_HPP_
+#define NRF24L01P_DEFINITIONS_HPP_
 
 #include <stdint.h>
 
@@ -236,4 +236,4 @@ enum class FEATURE_t : uint8_t {
     EN_DPL_MASK        = 0b00000100
 };
 
-#endif // NRF24L01P_REGISTER_MAP_HPP_
+#endif // NRF24L01P_DEFINITIONS_HPP_

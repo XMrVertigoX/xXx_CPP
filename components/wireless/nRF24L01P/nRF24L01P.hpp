@@ -1,83 +1,39 @@
 #ifndef NRF24L01P_HPP_
 #define NRF24L01P_HPP_
 
-#include <stdint.h>
-
-#include <xXx/components/wireless/nRF24L01P/nrf24l01p_spi.hpp>
-#include <xXx/interfaces/igpio.hpp>
+#include <xXx/components/wireless/nRF24L01P/nrf24l01p_definitions.hpp>
 #include <xXx/interfaces/ispi.hpp>
-#include <xXx/templates/queue.hpp>
-#define LAMBDA []
 
-using namespace xXx;
+#define VALUE_8(x) static_cast<uint8_t>(x)
+#define VALUE_64(x) static_cast<uint64_t>(x)
 
-enum class DataRate_t : uint8_t {
-    DataRate_1MBPS,
-    DataRate_2MBPS,
-    DataRate_250KBPS
-};
+namespace xXx {
 
-enum class Crc_t : uint8_t { DISABLED, CRC8, CRC16 };
-
-enum class OutputPower_t : uint8_t {
-    PowerLevel_18dBm,
-    PowerLevel_12dBm,
-    PowerLevel_6dBm,
-    PowerLevel_0dBm
-};
-
-enum class OperatingMode_t : uint8_t { Shutdown, Standby, Rx, Tx };
-
-class nRF24L01P : public nRF24L01P_SPI {
+class nRF24L01P {
   private:
-    IGpio &_ce;
-    IGpio &_irq;
+    ISpi &_spi;
 
-    Queue_Handle_t<uint8_t> _rxQueue[6];
-    Queue_Handle_t<uint8_t> _txQueue;
+    uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
+                     size_t numBytes);
 
-    OperatingMode_t _operatingMode;
-
-    uint8_t readShortRegister(Register_t reg);
-    void writeShortRegister(Register_t reg, uint8_t regValue);
-    void clearSingleBit(Register_t address, uint8_t bitIndex);
-    void setSingleBit(Register_t address, uint8_t bitIndex);
-
-    void enterRxMode();
-    void enterShutdownMode();
-    void enterStandbyMode();
-    void enterTxMode();
-
-    uint8_t getPayloadLength();
-    void enableDataPipe(uint8_t pipe, bool enable = true);
-    void clearInterruptFlags();
-
-    uint8_t getChannel();
-    Crc_t getCrcConfig();
-    DataRate_t getDataRate();
-    // TODO: OutputPower_t getOutputPower();
-    // TODO: ??? getRetries();
-    uint64_t getRxAddress(uint8_t pipe);
-    uint64_t getTxAddress();
+  protected:
+    uint8_t cmd_R_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
+    uint8_t cmd_W_REGISTER(Register_t reg, uint8_t *bytes, size_t numBytes);
+    uint8_t cmd_R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes);
+    uint8_t cmd_W_TX_PAYLOAD(uint8_t *bytes, size_t numBytes);
+    uint8_t cmd_FLUSH_TX();
+    uint8_t cmd_FLUSH_RX();
+    uint8_t cmd_REUSE_TX_PL();
+    uint8_t cmd_R_RX_PL_WID(uint8_t &payloadLength);
+    uint8_t cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_W_TX_PAYLOAD_NOACK();
+    uint8_t cmd_NOP();
 
   public:
-    nRF24L01P(ISpi &spi, IGpio &ce, IGpio &irq);
-    ~nRF24L01P();
-
-    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
-                         uint64_t address = 0);
-    void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
-    void init();
-    void switchOperatingMode(OperatingMode_t mode);
-    void update();
-
-    void setChannel(uint8_t channel);
-    void setCrcConfig(Crc_t crc);
-    void setDataRate(DataRate_t dataRate);
-    void setOutputPower(OutputPower_t level);
-    void setRetries(uint8_t delay, uint8_t count);
-    void setRxAddress(uint8_t pipe, uint64_t address);
-    void setTxAddress(uint64_t address);
+    nRF24L01P(ISpi &spi);
+    virtual ~nRF24L01P();
 };
 
-#endif // NRF24L01P_HPP_
+} /* namespace xXx */
+
+#endif /* NRF24L01P_HPP_ */
