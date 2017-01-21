@@ -11,6 +11,8 @@
 
 #include <nRF24L01_config.h>
 
+#define LAMBDA []
+
 #define min(a, b)                                                              \
     ({                                                                         \
         __typeof__(a) _a = (a);                                                \
@@ -23,18 +25,158 @@ namespace xXx {
 static const uint8_t rxSettling = 130;
 static const uint8_t txSettling = 130;
 
-nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq), _txQueue(NULL),
-      _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
-      _operatingMode(OperatingMode_t::Shutdown), _interrupt(false) {}
-
-nRF24L01P_API::~nRF24L01P_API() {}
-
 static inline uint8_t getPipeIndex(uint8_t status) {
     bitwiseAND_r(status, VALUE_8(STATUS_t::RX_P_NO_MASK));
     shiftRight_r(status, VALUE_8(STATUS_t::RX_P_NO));
 
     return (status);
+}
+
+nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
+    : nRF24L01P_BASE(spi), ArduinoTask(1024, 2), _ce(ce), _irq(irq),
+      _txQueue(NULL), _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
+      _operatingMode(OperatingMode_t::Shutdown) {}
+
+nRF24L01P_API::~nRF24L01P_API() {}
+
+void nRF24L01P_API::setup() {
+    LOG("(%p) nRF24L01P up and running", this);
+
+    auto interruptFunction = LAMBDA(void *user) {
+        nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
+
+        BaseType_t taskSwitchRequested = pdFALSE;
+        vTaskNotifyGiveFromISR(self->_handle, &taskSwitchRequested);
+        portYIELD_FROM_ISR(taskSwitchRequested);
+    };
+
+    clearInterrupts();
+
+    // Enable Enhanced ShockBurst™
+    uint8_t feature = readShortRegister(Register_t::FEATURE);
+    setBit_r(feature, VALUE_8(FEATURE_t::EN_DYN_ACK));
+    setBit_r(feature, VALUE_8(FEATURE_t::EN_ACK_PAY));
+    setBit_r(feature, VALUE_8(FEATURE_t::EN_DPL));
+    writeShortRegister(Register_t::FEATURE, feature);
+
+    cmd_FLUSH_TX();
+    cmd_FLUSH_RX();
+
+    _irq.enableInterrupt(interruptFunction, this);
+}
+
+void nRF24L01P_API::foo() {
+    if (_txQueue == NULL) {
+        return;
+    }
+
+    UBaseType_t usedSlots = _txQueue->usedSlots();
+
+    if (!usedSlots) {
+        return;
+    }
+
+    uint8_t status = cmd_NOP();
+
+    while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
+        uint8_t numBytes = min(32, usedSlots);
+        uint8_t bytes[numBytes];
+
+        for (int i = 0; i < numBytes; ++i) {
+            _txQueue->dequeue(bytes[i]);
+        }
+
+        status = cmd_W_TX_PAYLOAD(bytes, numBytes);
+    }
+
+    switchOperatingMode(OperatingMode_t::Tx);
+}
+
+void nRF24L01P_API::handle_MAX_RT(uint8_t status) {
+    switchOperatingMode(OperatingMode_t::Standby);
+}
+
+void nRF24L01P_API::handle_RX_DR(uint8_t status) {
+    portENTER_CRITICAL();
+
+    uint8_t fifo_status;
+
+    do {
+        uint8_t status     = cmd_NOP();
+        uint8_t rxNumBytes = getPayloadLength();
+        uint8_t rxBytes[min(32, rxNumBytes)];
+
+        assert(!(rxNumBytes > 32));
+
+        if (rxNumBytes > 32) {
+            cmd_FLUSH_RX();
+        } else {
+            cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
+        }
+
+        uint8_t pipeIndex = getPipeIndex(status);
+
+        if ((pipeIndex <= 5) && (_rxQueue[pipeIndex] != NULL)) {
+            for (int i = 0; i < rxNumBytes; ++i) {
+                BaseType_t success =
+                    _rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
+
+                // assert(success == pdTRUE);
+            }
+        }
+
+        fifo_status = readShortRegister(Register_t::FIFO_STATUS);
+    } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
+
+    portEXIT_CRITICAL();
+}
+
+void nRF24L01P_API::handle_TX_DS(uint8_t status) {
+    portENTER_CRITICAL();
+
+    if (_txQueue) {
+
+        UBaseType_t usedSlots = _txQueue->usedSlots();
+
+        if (usedSlots) {
+
+            while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
+                uint8_t numBytes = min(32, usedSlots);
+                uint8_t bytes[numBytes];
+
+                for (int i = 0; i < numBytes; ++i) {
+                    _txQueue->dequeue(bytes[i]);
+                }
+
+                status = cmd_W_TX_PAYLOAD(bytes, numBytes);
+            }
+        } else {
+            switchOperatingMode(OperatingMode_t::Standby);
+        }
+    }
+
+    portEXIT_CRITICAL();
+}
+
+void nRF24L01P_API::loop() {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    uint8_t status = cmd_NOP();
+
+    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
+        handle_MAX_RT(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::MAX_RT));
+    }
+
+    if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
+        handle_RX_DR(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::RX_DR));
+    }
+
+    if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
+        handle_TX_DS(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::TX_DS));
+    }
 }
 
 void nRF24L01P_API::enterRxMode() {
@@ -105,103 +247,6 @@ void nRF24L01P_API::switchOperatingMode(OperatingMode_t operatingMode) {
     _operatingMode = operatingMode;
 }
 
-void nRF24L01P_API::init() {
-    auto interruptFunction = LAMBDA(void *user) {
-        nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
-
-        self->_interrupt = true;
-    };
-
-    clearInterrupts();
-
-    // Enable Enhanced ShockBurst™
-    uint8_t feature = readShortRegister(Register_t::FEATURE);
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_DYN_ACK));
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_ACK_PAY));
-    setBit_r(feature, VALUE_8(FEATURE_t::EN_DPL));
-    writeShortRegister(Register_t::FEATURE, feature);
-
-    cmd_FLUSH_TX();
-    cmd_FLUSH_RX();
-
-    _irq.enableInterrupt(interruptFunction, this);
-}
-
-void nRF24L01P_API::handleInterrupt() {
-    uint8_t status = cmd_NOP();
-
-    assert(!(readBit(status, VALUE_8(STATUS_t::MAX_RT))));
-
-    if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
-        uint8_t fifo_status;
-
-        do {
-            uint8_t status     = cmd_NOP();
-            uint8_t rxNumBytes = getPayloadLength();
-            uint8_t rxBytes[min(32, rxNumBytes)];
-
-            assert(!(rxNumBytes > 32));
-
-            if (rxNumBytes > 32) {
-                cmd_FLUSH_RX();
-            } else {
-                cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
-            }
-
-            uint8_t pipeIndex = getPipeIndex(status);
-
-            if ((pipeIndex <= 5) && (_rxQueue[pipeIndex] != NULL)) {
-                for (int i = 0; i < rxNumBytes; ++i) {
-                    BaseType_t success =
-                        _rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
-
-                    assert(success == pdTRUE);
-                }
-            }
-
-            fifo_status = readShortRegister(Register_t::FIFO_STATUS);
-        } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
-    }
-
-    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
-        switchOperatingMode(OperatingMode_t::Standby);
-    }
-
-    if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
-    }
-
-    clearInterrupts();
-}
-
-void nRF24L01P_API::update() {
-    if (_interrupt) {
-        handleInterrupt();
-    }
-
-    if (_txQueue) {
-        UBaseType_t usedSlots = _txQueue->usedSlots();
-
-        if (usedSlots) {
-            uint8_t status = cmd_NOP();
-
-            while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
-                uint8_t numBytes = min(32, usedSlots);
-                uint8_t bytes[numBytes];
-
-                for (int i = 0; i < numBytes; ++i) {
-                    _txQueue->dequeue(bytes[i]);
-                }
-
-                status = cmd_W_TX_PAYLOAD(bytes, numBytes);
-            }
-
-            switchOperatingMode(OperatingMode_t::Tx);
-        } else {
-            switchOperatingMode(OperatingMode_t::Standby);
-        }
-    }
-}
-
 void nRF24L01P_API::enableDataPipe(uint8_t pipe, bool enable) {
     if (pipe > 5) {
         return;
@@ -219,10 +264,6 @@ void nRF24L01P_API::enableDataPipe(uint8_t pipe, bool enable) {
 void nRF24L01P_API::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
                                     uint64_t address) {
     assert(!(pipe > 5));
-
-    if (pipe > 5) {
-        return;
-    }
 
     if (address > 0) {
         setRxAddress(pipe, address);

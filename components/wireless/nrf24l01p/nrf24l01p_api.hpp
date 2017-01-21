@@ -6,9 +6,8 @@
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
+#include <xXx/os/arduinotask.hpp>
 #include <xXx/templates/queue.hpp>
-
-#define LAMBDA []
 
 enum class DataRate_t : uint8_t {
     DataRate_1MBPS,
@@ -29,7 +28,7 @@ enum class OperatingMode_t : uint8_t { Shutdown, Standby, Rx, Tx };
 
 namespace xXx {
 
-class nRF24L01P_API : public nRF24L01P_BASE {
+class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
   private:
     IGpio &_ce;
     IGpio &_irq;
@@ -39,23 +38,26 @@ class nRF24L01P_API : public nRF24L01P_BASE {
 
     OperatingMode_t _operatingMode;
 
-    bool _interrupt;
-
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
     void clearSingleBit(Register_t address, uint8_t bitIndex);
     void setSingleBit(Register_t address, uint8_t bitIndex);
+
+    void setup();
+    void loop();
 
     void enterRxMode();
     void enterShutdownMode();
     void enterStandbyMode();
     void enterTxMode();
 
+    void handle_MAX_RT(uint8_t status);
+    void handle_RX_DR(uint8_t status);
+    void handle_TX_DS(uint8_t status);
+
     uint8_t getPayloadLength();
     void enableDataPipe(uint8_t pipe, bool enable = true);
     void clearInterrupts();
-
-    void handleInterrupt();
 
   public:
     nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -64,9 +66,9 @@ class nRF24L01P_API : public nRF24L01P_BASE {
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
                          uint64_t address = 0);
     void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
-    void init();
     void switchOperatingMode(OperatingMode_t mode);
-    void update();
+
+    void foo();
 
     uint8_t getChannel();
     Crc_t getCrcConfig();

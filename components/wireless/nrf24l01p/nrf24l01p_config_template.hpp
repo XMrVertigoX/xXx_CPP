@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-static inline void delayMs(uint32_t ms) {}
-
 static inline void delayUs(uint32_t us) {}
 
 #endif // NRF24L01P_CONFIG_TEMPLATE_HPP_

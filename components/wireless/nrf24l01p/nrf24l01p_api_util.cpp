@@ -44,8 +44,11 @@ uint8_t nRF24L01P_API::getPayloadLength() {
 }
 
 void nRF24L01P_API::clearInterrupts() {
-    writeShortRegister(Register_t::STATUS, 0x70);
-    _interrupt = false;
+    uint8_t status = readShortRegister(Register_t::STATUS);
+    setBit_r(status, VALUE_8(STATUS_t::MAX_RT));
+    setBit_r(status, VALUE_8(STATUS_t::RX_DR));
+    setBit_r(status, VALUE_8(STATUS_t::TX_DS));
+    writeShortRegister(Register_t::STATUS, status);
 }
 
 // ----- getters and setters --------------------------------------------------
