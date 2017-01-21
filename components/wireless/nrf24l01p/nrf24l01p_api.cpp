@@ -130,6 +130,8 @@ void nRF24L01P_API::init() {
 void nRF24L01P_API::handleInterrupt() {
     uint8_t status = cmd_NOP();
 
+    assert(!(readBit(status, VALUE_8(STATUS_t::MAX_RT))));
+
     if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
         uint8_t fifo_status;
 
@@ -138,9 +140,10 @@ void nRF24L01P_API::handleInterrupt() {
             uint8_t rxNumBytes = getPayloadLength();
             uint8_t rxBytes[min(32, rxNumBytes)];
 
+            assert(!(rxNumBytes > 32));
+
             if (rxNumBytes > 32) {
                 cmd_FLUSH_RX();
-                LOG("FUCK!");
             } else {
                 cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
             }
@@ -161,13 +164,10 @@ void nRF24L01P_API::handleInterrupt() {
     }
 
     if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
-        // LOG("MAX_RT");
-        // switchOperatingMode(OperatingMode_t::Standby);
+        switchOperatingMode(OperatingMode_t::Standby);
     }
 
     if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
-        // LOG("TX_DS");
-        // switchOperatingMode(OperatingMode_t::Standby);
     }
 
     clearInterrupts();
@@ -184,7 +184,7 @@ void nRF24L01P_API::update() {
         if (usedSlots) {
             uint8_t status = cmd_NOP();
 
-            if (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
+            while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
                 uint8_t numBytes = min(32, usedSlots);
                 uint8_t bytes[numBytes];
 
@@ -192,11 +192,13 @@ void nRF24L01P_API::update() {
                     _txQueue->dequeue(bytes[i]);
                 }
 
-                cmd_W_TX_PAYLOAD(bytes, numBytes);
+                status = cmd_W_TX_PAYLOAD(bytes, numBytes);
             }
-        }
 
-        // switchOperatingMode(OperatingMode_t::Tx);
+            switchOperatingMode(OperatingMode_t::Tx);
+        } else {
+            switchOperatingMode(OperatingMode_t::Standby);
+        }
     }
 }
 
