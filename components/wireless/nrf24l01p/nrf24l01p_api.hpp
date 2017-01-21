@@ -39,6 +39,8 @@ class nRF24L01P_API : public nRF24L01P_BASE {
 
     OperatingMode_t _operatingMode;
 
+    bool _interrupt;
+
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
     void clearSingleBit(Register_t address, uint8_t bitIndex);
@@ -51,15 +53,9 @@ class nRF24L01P_API : public nRF24L01P_BASE {
 
     uint8_t getPayloadLength();
     void enableDataPipe(uint8_t pipe, bool enable = true);
-    void clearInterruptFlags();
+    void clearInterrupts();
 
-    uint8_t getChannel();
-    Crc_t getCrcConfig();
-    DataRate_t getDataRate();
-    // TODO: OutputPower_t getOutputPower();
-    // TODO: ??? getRetries();
-    uint64_t getRxAddress(uint8_t pipe);
-    uint64_t getTxAddress();
+    void handleInterrupt();
 
   public:
     nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -71,6 +67,14 @@ class nRF24L01P_API : public nRF24L01P_BASE {
     void init();
     void switchOperatingMode(OperatingMode_t mode);
     void update();
+
+    uint8_t getChannel();
+    Crc_t getCrcConfig();
+    DataRate_t getDataRate();
+    // TODO: OutputPower_t getOutputPower();
+    // TODO: ??? getRetries();
+    uint64_t getRxAddress(uint8_t pipe);
+    uint64_t getTxAddress();
 
     void setChannel(uint8_t channel);
     void setCrcConfig(Crc_t crc);

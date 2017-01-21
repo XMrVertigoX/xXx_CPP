@@ -3,6 +3,7 @@
 
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/utils/bitoperations.hpp>
+#include <xXx/utils/logging.hpp>
 
 namespace xXx {
 
