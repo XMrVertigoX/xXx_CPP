@@ -55,6 +55,8 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
     void handle_RX_DR(uint8_t status);
     void handle_TX_DS(uint8_t status);
 
+    void foo();
+
     uint8_t getPayloadLength();
     void enableDataPipe(uint8_t pipe, bool enable = true);
     void clearInterrupts();
@@ -68,7 +70,7 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
     void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
     void switchOperatingMode(OperatingMode_t mode);
 
-    void foo();
+    void send(uint8_t bytes[], size_t numBytes);
 
     uint8_t getChannel();
     Crc_t getCrcConfig();

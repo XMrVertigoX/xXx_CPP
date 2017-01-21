@@ -13,12 +13,7 @@
 
 #define LAMBDA []
 
-#define min(a, b)                                                              \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        __typeof__(b) _b = (b);                                                \
-        _a < _b ? _a : _b;                                                     \
-    })
+#define min(a, b) (a < b ? a : b)
 
 namespace xXx {
 
@@ -33,15 +28,13 @@ static inline uint8_t getPipeIndex(uint8_t status) {
 }
 
 nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_BASE(spi), ArduinoTask(1024, 2), _ce(ce), _irq(irq),
+    : nRF24L01P_BASE(spi), ArduinoTask(256, 2), _ce(ce), _irq(irq),
       _txQueue(NULL), _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
       _operatingMode(OperatingMode_t::Shutdown) {}
 
 nRF24L01P_API::~nRF24L01P_API() {}
 
 void nRF24L01P_API::setup() {
-    LOG("(%p) nRF24L01P up and running", this);
-
     auto interruptFunction = LAMBDA(void *user) {
         nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
 
@@ -63,6 +56,31 @@ void nRF24L01P_API::setup() {
     cmd_FLUSH_RX();
 
     _irq.enableInterrupt(interruptFunction, this);
+}
+
+void nRF24L01P_API::loop() {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    uint8_t status = cmd_NOP();
+
+    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
+        handle_MAX_RT(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::MAX_RT));
+    }
+
+    if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
+        handle_RX_DR(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::RX_DR));
+    }
+
+    if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
+        handle_TX_DS(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::TX_DS));
+    }
+
+    if (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
+        foo();
+    }
 }
 
 void nRF24L01P_API::foo() {
@@ -135,11 +153,9 @@ void nRF24L01P_API::handle_TX_DS(uint8_t status) {
     portENTER_CRITICAL();
 
     if (_txQueue) {
-
         UBaseType_t usedSlots = _txQueue->usedSlots();
 
         if (usedSlots) {
-
             while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
                 uint8_t numBytes = min(32, usedSlots);
                 uint8_t bytes[numBytes];
@@ -156,27 +172,6 @@ void nRF24L01P_API::handle_TX_DS(uint8_t status) {
     }
 
     portEXIT_CRITICAL();
-}
-
-void nRF24L01P_API::loop() {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-    uint8_t status = cmd_NOP();
-
-    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
-        handle_MAX_RT(status);
-        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::MAX_RT));
-    }
-
-    if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
-        handle_RX_DR(status);
-        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::RX_DR));
-    }
-
-    if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
-        handle_TX_DS(status);
-        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::TX_DS));
-    }
 }
 
 void nRF24L01P_API::enterRxMode() {
@@ -262,11 +257,11 @@ void nRF24L01P_API::enableDataPipe(uint8_t pipe, bool enable) {
 }
 
 void nRF24L01P_API::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
-                                    uint64_t address) {
+                                    uint64_t rxAddress) {
     assert(!(pipe > 5));
 
-    if (address > 0) {
-        setRxAddress(pipe, address);
+    if (rxAddress > 0) {
+        setRxAddress(pipe, rxAddress);
     }
 
     enableDataPipe(pipe, true);
@@ -274,18 +269,20 @@ void nRF24L01P_API::configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
     _rxQueue[pipe] = &queue;
 }
 
-void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &queue, uint64_t address) {
-    if (address > 0) {
-        setTxAddress(address);
+void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &queue, uint64_t txAddress) {
+    if (txAddress > 0) {
+        setTxAddress(txAddress);
     } else {
-        address = getTxAddress();
+        txAddress = getTxAddress();
     }
 
-    setRxAddress(0, address);
+    setRxAddress(0, txAddress);
 
     enableDataPipe(0, true);
 
     _txQueue = &queue;
 }
+
+void nRF24L01P_API::send(uint8_t bytes[], size_t numBytes) {}
 
 } /* namespace xXx */
