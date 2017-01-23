@@ -45,6 +45,13 @@ void nRF24L01P_API::setup() {
 
     clearInterrupts();
 
+    // Mask all interrupts
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    writeShortRegister(Register_t::CONFIG, config);
+
     // Enable Enhanced ShockBurst™
     uint8_t feature = readShortRegister(Register_t::FEATURE);
     setBit_r(feature, VALUE_8(FEATURE_t::EN_DYN_ACK));
@@ -63,14 +70,14 @@ void nRF24L01P_API::loop() {
 
     uint8_t status = cmd_NOP();
 
-    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
-        handle_MAX_RT(status);
-        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::MAX_RT));
-    }
-
     if (readBit(status, VALUE_8(STATUS_t::RX_DR))) {
         handle_RX_DR(status);
         setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::RX_DR));
+    }
+
+    if (readBit(status, VALUE_8(STATUS_t::MAX_RT))) {
+        handle_MAX_RT(status);
+        setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::MAX_RT));
     }
 
     if (readBit(status, VALUE_8(STATUS_t::TX_DS))) {
@@ -78,23 +85,25 @@ void nRF24L01P_API::loop() {
         setSingleBit(Register_t::STATUS, VALUE_8(STATUS_t::TX_DS));
     }
 
-    if (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
-        foo();
+    if (transmitData(status)) {
+        switchOperatingMode(OperatingMode_t::Tx);
     }
 }
 
-void nRF24L01P_API::foo() {
-    if (_txQueue == NULL) {
-        return;
+bool nRF24L01P_API::receiveData(UBaseType_t freeSlots) {
+    return (false);
+}
+
+bool nRF24L01P_API::transmitData(uint8_t status) {
+    if (!_txQueue) {
+        return (false);
     }
 
     UBaseType_t usedSlots = _txQueue->usedSlots();
 
     if (!usedSlots) {
-        return;
+        return (false);
     }
-
-    uint8_t status = cmd_NOP();
 
     while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
         uint8_t numBytes = min(32, usedSlots);
@@ -104,27 +113,29 @@ void nRF24L01P_API::foo() {
             _txQueue->dequeue(bytes[i]);
         }
 
-        status = cmd_W_TX_PAYLOAD(bytes, numBytes);
+        cmd_W_TX_PAYLOAD(bytes, numBytes);
+
+        status = cmd_NOP();
     }
 
-    switchOperatingMode(OperatingMode_t::Tx);
+    return (true);
 }
 
 void nRF24L01P_API::handle_MAX_RT(uint8_t status) {
+    cmd_FLUSH_TX();
     switchOperatingMode(OperatingMode_t::Standby);
 }
 
 void nRF24L01P_API::handle_RX_DR(uint8_t status) {
-    portENTER_CRITICAL();
+    // portENTER_CRITICAL();
 
     uint8_t fifo_status;
 
     do {
-        uint8_t status     = cmd_NOP();
         uint8_t rxNumBytes = getPayloadLength();
         uint8_t rxBytes[min(32, rxNumBytes)];
 
-        assert(!(rxNumBytes > 32));
+        assert(rxNumBytes <= 32);
 
         if (rxNumBytes > 32) {
             cmd_FLUSH_RX();
@@ -144,47 +155,32 @@ void nRF24L01P_API::handle_RX_DR(uint8_t status) {
         }
 
         fifo_status = readShortRegister(Register_t::FIFO_STATUS);
+        status      = cmd_NOP();
     } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
 
-    portEXIT_CRITICAL();
+    // portEXIT_CRITICAL();
 }
 
 void nRF24L01P_API::handle_TX_DS(uint8_t status) {
-    portENTER_CRITICAL();
+    transmitData(status);
 
-    if (_txQueue) {
-        UBaseType_t usedSlots = _txQueue->usedSlots();
+    uint8_t fifo_status = readShortRegister(Register_t::FIFO_STATUS);
 
-        if (usedSlots) {
-            while (!(readBit(status, VALUE_8(STATUS_t::TX_FULL)))) {
-                uint8_t numBytes = min(32, usedSlots);
-                uint8_t bytes[numBytes];
-
-                for (int i = 0; i < numBytes; ++i) {
-                    _txQueue->dequeue(bytes[i]);
-                }
-
-                status = cmd_W_TX_PAYLOAD(bytes, numBytes);
-            }
-        } else {
-            switchOperatingMode(OperatingMode_t::Standby);
-        }
+    if (readBit(fifo_status, VALUE_8(FIFO_STATUS_t::TX_EMPTY))) {
+        switchOperatingMode(OperatingMode_t::Standby);
+    } else {
+        switchOperatingMode(OperatingMode_t::Tx);
     }
-
-    portEXIT_CRITICAL();
 }
 
 void nRF24L01P_API::enterRxMode() {
-    if (_operatingMode == OperatingMode_t::Rx) {
-        return;
-    }
+    switchOperatingMode(OperatingMode_t::Standby);
 
-    if (_operatingMode != OperatingMode_t::Standby) {
-        enterStandbyMode();
-    }
-
-    // Enter PRX mode
-    setSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PRIM_RX));
+    // Enter PRX mode, unmask interrupt
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    setBit_r(config, VALUE_8(CONFIG_t::PRIM_RX));
+    writeShortRegister(Register_t::CONFIG, config);
 
     _ce.set();
 
@@ -192,31 +188,36 @@ void nRF24L01P_API::enterRxMode() {
 }
 
 void nRF24L01P_API::enterShutdownMode() {
-    if (_operatingMode == OperatingMode_t::Rx |
-        _operatingMode == OperatingMode_t::Tx) {
-        enterStandbyMode();
-    }
+    _ce.clear();
 
-    clearSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    clearBit_r(config, VALUE_8(CONFIG_t::PWR_UP));
+    writeShortRegister(Register_t::CONFIG, config);
 }
 
 void nRF24L01P_API::enterStandbyMode() {
     _ce.clear();
 
-    setSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PWR_UP));
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    setBit_r(config, VALUE_8(CONFIG_t::PWR_UP));
+    writeShortRegister(Register_t::CONFIG, config);
 }
 
 void nRF24L01P_API::enterTxMode() {
-    if (_operatingMode == OperatingMode_t::Tx) {
-        return;
-    }
+    switchOperatingMode(OperatingMode_t::Standby);
 
-    if (_operatingMode != OperatingMode_t::Standby) {
-        enterStandbyMode();
-    }
-
-    // Enter PTX mode
-    clearSingleBit(Register_t::CONFIG, VALUE_8(CONFIG_t::PRIM_RX));
+    // Enter PTX mode, unmask interrupts
+    uint8_t config = readShortRegister(Register_t::CONFIG);
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    clearBit_r(config, VALUE_8(CONFIG_t::PRIM_RX));
+    writeShortRegister(Register_t::CONFIG, config);
 
     _ce.set();
 
@@ -224,6 +225,10 @@ void nRF24L01P_API::enterTxMode() {
 }
 
 void nRF24L01P_API::switchOperatingMode(OperatingMode_t operatingMode) {
+    if (_operatingMode == operatingMode) {
+        return;
+    }
+
     switch (operatingMode) {
         case OperatingMode_t::Rx: {
             enterRxMode();
@@ -283,6 +288,8 @@ void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &queue, uint64_t txAddress) {
     _txQueue = &queue;
 }
 
-void nRF24L01P_API::send(uint8_t bytes[], size_t numBytes) {}
+void nRF24L01P_API::send() {
+    xTaskNotifyGive(_handle);
+}
 
 } /* namespace xXx */
