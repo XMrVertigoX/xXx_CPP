@@ -43,8 +43,6 @@ void nRF24L01P_API::setup() {
         portYIELD_FROM_ISR(taskSwitchRequested);
     };
 
-    clearInterrupts();
-
     // Mask all interrupts
     uint8_t config = readShortRegister(Register_t::CONFIG);
     setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
@@ -58,6 +56,8 @@ void nRF24L01P_API::setup() {
     setBit_r(feature, VALUE_8(FEATURE_t::EN_ACK_PAY));
     setBit_r(feature, VALUE_8(FEATURE_t::EN_DPL));
     writeShortRegister(Register_t::FEATURE, feature);
+
+    clearInterrupts();
 
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
@@ -191,9 +191,9 @@ void nRF24L01P_API::enterShutdownMode() {
     _ce.clear();
 
     uint8_t config = readShortRegister(Register_t::CONFIG);
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
     clearBit_r(config, VALUE_8(CONFIG_t::PWR_UP));
     writeShortRegister(Register_t::CONFIG, config);
 }
@@ -202,9 +202,9 @@ void nRF24L01P_API::enterStandbyMode() {
     _ce.clear();
 
     uint8_t config = readShortRegister(Register_t::CONFIG);
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    //    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
     setBit_r(config, VALUE_8(CONFIG_t::PWR_UP));
     writeShortRegister(Register_t::CONFIG, config);
 }
