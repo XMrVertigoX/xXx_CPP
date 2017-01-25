@@ -21,9 +21,6 @@ uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[],
     uint8_t mosiBytes[transmissionNumBytes];
     uint8_t misoBytes[transmissionNumBytes];
 
-    // uint8_t *mosiBytes = new uint8_t[transmissionNumBytes];
-    // uint8_t *misoBytes = new uint8_t[transmissionNumBytes];
-
     mosiBytes[0] = command;
 
     if (txBytes != NULL) {
@@ -32,7 +29,7 @@ uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[],
         memset(&mosiBytes[1], dummyByte, numBytes);
     }
 
-    _spi.transmit(mosiBytes, misoBytes, transmissionNumBytes);
+    _spi.transmit_receive(mosiBytes, misoBytes, transmissionNumBytes);
 
     status = misoBytes[0];
 

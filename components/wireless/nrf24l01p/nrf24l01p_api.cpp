@@ -38,9 +38,7 @@ void nRF24L01P_API::setup() {
     auto interruptFunction = LAMBDA(void *user) {
         nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
 
-        BaseType_t taskSwitchRequested = pdFALSE;
-        vTaskNotifyGiveFromISR(self->_handle, &taskSwitchRequested);
-        portYIELD_FROM_ISR(taskSwitchRequested);
+        self->notifyFromISR();
     };
 
     // Mask all interrupts
@@ -66,7 +64,7 @@ void nRF24L01P_API::setup() {
 }
 
 void nRF24L01P_API::loop() {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    notifyTake(true);
 
     uint8_t status = cmd_NOP();
 
@@ -127,8 +125,6 @@ void nRF24L01P_API::handle_MAX_RT(uint8_t status) {
 }
 
 void nRF24L01P_API::handle_RX_DR(uint8_t status) {
-    // portENTER_CRITICAL();
-
     uint8_t fifo_status;
 
     do {
@@ -149,16 +145,12 @@ void nRF24L01P_API::handle_RX_DR(uint8_t status) {
             for (int i = 0; i < rxNumBytes; ++i) {
                 BaseType_t success =
                     _rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
-
-                // assert(success == pdTRUE);
             }
         }
 
         fifo_status = readShortRegister(Register_t::FIFO_STATUS);
         status      = cmd_NOP();
     } while (!(readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY))));
-
-    // portEXIT_CRITICAL();
 }
 
 void nRF24L01P_API::handle_TX_DS(uint8_t status) {
