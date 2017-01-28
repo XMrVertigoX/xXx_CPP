@@ -28,11 +28,24 @@ static inline uint8_t getPipeIndex(uint8_t status) {
 }
 
 nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_BASE(spi), ArduinoTask(256, 2), _ce(ce), _irq(irq),
-      _txQueue(NULL), _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
+    : ArduinoTask(256, 2), _ce(ce), _irq(irq), _spi(spi), _txQueue(NULL),
+      _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL},
       _operatingMode(OperatingMode_t::Shutdown) {}
 
 nRF24L01P_API::~nRF24L01P_API() {}
+
+void nRF24L01P_API::transmit_receive(Queue<uint8_t> mosiQueue,
+                                     Queue<uint8_t> misoQueue) {
+    auto interruptFunction = LAMBDA(void *user) {
+        nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
+
+        self->notifyFromISR();
+    };
+
+    _spi.transmit_receive(mosiQueue, misoQueue, interruptFunction, this);
+
+    notifyTake(true);
+}
 
 void nRF24L01P_API::setup() {
     auto interruptFunction = LAMBDA(void *user) {
@@ -278,10 +291,6 @@ void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &queue, uint64_t txAddress) {
     enableDataPipe(0, true);
 
     _txQueue = &queue;
-}
-
-void nRF24L01P_API::send() {
-    xTaskNotifyGive(_handle);
 }
 
 } /* namespace xXx */

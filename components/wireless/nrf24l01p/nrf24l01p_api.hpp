@@ -32,11 +32,14 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
   private:
     IGpio &_ce;
     IGpio &_irq;
+    ISpi &_spi;
 
     Queue_Handle_t<uint8_t> _rxQueue[6];
     Queue_Handle_t<uint8_t> _txQueue;
 
     OperatingMode_t _operatingMode;
+
+    void transmit_receive(Queue<uint8_t> mosiQueue, Queue<uint8_t> misoQueue);
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -70,8 +73,6 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
                          uint64_t address = 0);
     void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
     void switchOperatingMode(OperatingMode_t mode);
-
-    void send();
 
     uint8_t getChannel();
     Crc_t getCrcConfig();

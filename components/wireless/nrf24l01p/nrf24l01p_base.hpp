@@ -8,7 +8,8 @@ namespace xXx {
 
 class nRF24L01P_BASE {
   private:
-    ISpi &_spi;
+    virtual void transmit_receive(Queue<uint8_t> mosiQueue,
+                                  Queue<uint8_t> misoQueue) = 0;
 
     uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
                      size_t numBytes);
@@ -27,7 +28,7 @@ class nRF24L01P_BASE {
     uint8_t cmd_NOP();
 
   public:
-    nRF24L01P_BASE(ISpi &spi);
+    nRF24L01P_BASE();
     virtual ~nRF24L01P_BASE();
 };
 

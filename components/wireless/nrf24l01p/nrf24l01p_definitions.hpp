@@ -228,13 +228,13 @@ enum class DYNPD_t : uint8_t {
 };
 
 enum class FEATURE_t : uint8_t {
-    EN_DYN_ACK         = 1,
+    EN_DYN_ACK         = 0,
     EN_DYN_ACK_DEFAULT = 0b0,
     EN_DYN_ACK_MASK    = 0b00000001,
-    EN_ACK_PAY         = 2,
+    EN_ACK_PAY         = 1,
     EN_ACK_PAY_DEFAULT = 0b0,
     EN_ACK_PAY_MASK    = 0b00000010,
-    EN_DPL             = 3,
+    EN_DPL             = 2,
     EN_DPL_DEFAULT     = 0b0,
     EN_DPL_MASK        = 0b00000100
 };

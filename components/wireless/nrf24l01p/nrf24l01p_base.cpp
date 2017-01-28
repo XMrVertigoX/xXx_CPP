@@ -2,39 +2,47 @@
 #include <string.h>
 
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
+#include <xXx/templates/queue.hpp>
 #include <xXx/utils/bitoperations.hpp>
 #include <xXx/utils/logging.hpp>
 
 namespace xXx {
 
-nRF24L01P_BASE::nRF24L01P_BASE(ISpi &spi) : _spi(spi) {}
+nRF24L01P_BASE::nRF24L01P_BASE() {}
 
 nRF24L01P_BASE::~nRF24L01P_BASE() {}
 
-static const uint8_t dummyByte = 0xFF;
+static uint8_t dummyByte = 0xFF;
 
 uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[],
                                  uint8_t rxBytes[], size_t numBytes) {
     uint8_t status;
-    size_t transmissionNumBytes = numBytes + 1;
 
-    uint8_t mosiBytes[transmissionNumBytes];
-    uint8_t misoBytes[transmissionNumBytes];
+    Queue<uint8_t> mosiQueue(numBytes + 1);
+    Queue<uint8_t> misoQueue(numBytes + 1);
 
-    mosiBytes[0] = command;
+    mosiQueue.enqueue(command);
 
-    if (txBytes != NULL) {
-        memcpy(&mosiBytes[1], txBytes, numBytes);
-    } else {
-        memset(&mosiBytes[1], dummyByte, numBytes);
+    for (int i = 0; i < numBytes; ++i) {
+        mosiQueue.enqueue(txBytes[i]);
     }
 
-    _spi.transmit_receive(mosiBytes, misoBytes, transmissionNumBytes);
+    if (txBytes) {
+        for (int i = 0; i < numBytes; ++i) {
+            mosiQueue.enqueue(txBytes[i]);
+        }
+    } else {
+        for (int i = 0; i < numBytes; ++i) {
+            mosiQueue.enqueue(dummyByte);
+        }
+    }
 
-    status = misoBytes[0];
+    transmit_receive(mosiQueue, misoQueue);
 
-    if (rxBytes != NULL) {
-        memcpy(rxBytes, &misoBytes[1], numBytes);
+    misoQueue.dequeue(status);
+
+    for (int i = 0; i < numBytes; ++i) {
+        misoQueue.dequeue(rxBytes[i]);
     }
 
     return (status);
