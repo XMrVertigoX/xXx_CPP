@@ -10,8 +10,10 @@ template <typename TYPE> class Queue {
   public:
     Queue(UBaseType_t size);
     ~Queue();
-    BaseType_t dequeue(TYPE &element, bool isr = false);
-    BaseType_t enqueue(TYPE &element, bool isr = false);
+    BaseType_t dequeue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY,
+                       bool isr = false);
+    BaseType_t enqueue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY,
+                       bool isr = false);
 
     UBaseType_t freeSlots();
     UBaseType_t usedSlots(bool isr = false);
@@ -29,20 +31,22 @@ template <typename TYPE> Queue<TYPE>::~Queue() {
 }
 
 template <typename TYPE>
-BaseType_t Queue<TYPE>::enqueue(TYPE &element, bool isr) {
+BaseType_t Queue<TYPE>::enqueue(TYPE &element, TickType_t ticksToWait,
+                                bool isr) {
     if (isr) {
         return (xQueueSendToBackFromISR(_queue, &element, pdFALSE));
     } else {
-        return (xQueueSendToBack(_queue, &element, 0));
+        return (xQueueSendToBack(_queue, &element, ticksToWait));
     }
 }
 
 template <typename TYPE>
-BaseType_t Queue<TYPE>::dequeue(TYPE &element, bool isr) {
+BaseType_t Queue<TYPE>::dequeue(TYPE &element, TickType_t ticksToWait,
+                                bool isr) {
     if (isr) {
         return (xQueueReceiveFromISR(_queue, &element, pdFALSE));
     } else {
-        return (xQueueReceive(_queue, &element, 0));
+        return (xQueueReceive(_queue, &element, ticksToWait));
     }
 }
 

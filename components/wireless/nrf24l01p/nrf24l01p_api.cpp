@@ -34,17 +34,17 @@ nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
 
 nRF24L01P_API::~nRF24L01P_API() {}
 
-void nRF24L01P_API::transmit_receive(Queue<uint8_t> mosiQueue,
-                                     Queue<uint8_t> misoQueue) {
+void nRF24L01P_API::transmit_receive(Queue<uint8_t> &mosiQueue,
+                                     Queue<uint8_t> &misoQueue) {
     auto interruptFunction = LAMBDA(void *user) {
         nRF24L01P_API *self = static_cast<nRF24L01P_API *>(user);
 
-        self->notifyFromISR();
+        // self->notifyFromISR();
     };
 
-    _spi.transmit_receive(mosiQueue, misoQueue, interruptFunction, this);
+    _spi.transmit_receive(mosiQueue, misoQueue, NULL, NULL);
 
-    notifyTake(true);
+    // notifyTake(true);
 }
 
 void nRF24L01P_API::setup() {
@@ -54,11 +54,11 @@ void nRF24L01P_API::setup() {
         self->notifyFromISR();
     };
 
-    // Mask all interrupts
+    // Unmask all interrupts
     uint8_t config = readShortRegister(Register_t::CONFIG);
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
-    setBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    clearBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
     writeShortRegister(Register_t::CONFIG, config);
 
     // Enable Enhanced ShockBurst™
@@ -67,6 +67,8 @@ void nRF24L01P_API::setup() {
     setBit_r(feature, VALUE_8(FEATURE_t::EN_ACK_PAY));
     setBit_r(feature, VALUE_8(FEATURE_t::EN_DPL));
     writeShortRegister(Register_t::FEATURE, feature);
+
+    setCrcConfig(Crc_t::CRC8);
 
     clearInterrupts();
 
@@ -183,7 +185,7 @@ void nRF24L01P_API::enterRxMode() {
 
     // Enter PRX mode, unmask interrupt
     uint8_t config = readShortRegister(Register_t::CONFIG);
-    clearBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
+    //    clearBit_r(config, VALUE_8(CONFIG_t::MASK_RX_DR));
     setBit_r(config, VALUE_8(CONFIG_t::PRIM_RX));
     writeShortRegister(Register_t::CONFIG, config);
 
@@ -219,8 +221,8 @@ void nRF24L01P_API::enterTxMode() {
 
     // Enter PTX mode, unmask interrupts
     uint8_t config = readShortRegister(Register_t::CONFIG);
-    clearBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
-    clearBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
+    //    clearBit_r(config, VALUE_8(CONFIG_t::MASK_MAX_RT));
+    //    clearBit_r(config, VALUE_8(CONFIG_t::MASK_TX_DS));
     clearBit_r(config, VALUE_8(CONFIG_t::PRIM_RX));
     writeShortRegister(Register_t::CONFIG, config);
 

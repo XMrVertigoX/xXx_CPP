@@ -39,7 +39,7 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
 
     OperatingMode_t _operatingMode;
 
-    void transmit_receive(Queue<uint8_t> mosiQueue, Queue<uint8_t> misoQueue);
+    void transmit_receive(Queue<uint8_t> &mosiQueue, Queue<uint8_t> &misoQueue);
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);

@@ -23,16 +23,12 @@ uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[],
 
     mosiQueue.enqueue(command);
 
-    for (int i = 0; i < numBytes; ++i) {
-        mosiQueue.enqueue(txBytes[i]);
-    }
-
     if (txBytes) {
-        for (int i = 0; i < numBytes; ++i) {
+        for (int i = 0; i < numBytes; i++) {
             mosiQueue.enqueue(txBytes[i]);
         }
     } else {
-        for (int i = 0; i < numBytes; ++i) {
+        for (int i = 0; i < numBytes; i++) {
             mosiQueue.enqueue(dummyByte);
         }
     }
@@ -41,8 +37,10 @@ uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[],
 
     misoQueue.dequeue(status);
 
-    for (int i = 0; i < numBytes; ++i) {
-        misoQueue.dequeue(rxBytes[i]);
+    if (rxBytes) {
+        for (int i = 0; i < numBytes; i++) {
+            misoQueue.dequeue(rxBytes[i]);
+        }
     }
 
     return (status);
