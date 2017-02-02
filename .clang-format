@@ -5,6 +5,7 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
+ColumnLimit: 100
 IndentCaseLabels: true
 IndentWidth: 4
 ReflowComments: false
