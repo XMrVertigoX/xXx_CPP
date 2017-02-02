@@ -11,28 +11,28 @@ namespace xXx {
 
 // ----- helper functions -----------------------------------------------------
 
-uint8_t nRF24L01P_API::readShortRegister(Register_t address) {
+uint8_t nRF24L01P_API::readShortRegister(Register_t reg) {
     uint8_t result;
 
-    cmd_R_REGISTER(address, &result, 1);
+    cmd_R_REGISTER(reg, &result, 1);
 
     return (result);
 }
 
-void nRF24L01P_API::writeShortRegister(Register_t address, uint8_t reg) {
-    cmd_W_REGISTER(address, &reg, 1);
+void nRF24L01P_API::writeShortRegister(Register_t reg, uint8_t val) {
+    cmd_W_REGISTER(reg, &val, 1);
 }
 
-void nRF24L01P_API::clearSingleBit(Register_t address, uint8_t bitIndex) {
-    uint8_t reg = readShortRegister(address);
-    clearBit_r(reg, bitIndex);
-    writeShortRegister(address, reg);
+void nRF24L01P_API::clearSingleBit(Register_t reg, uint8_t bitIndex) {
+    uint8_t tmp = readShortRegister(reg);
+    clearBit_r(tmp, bitIndex);
+    writeShortRegister(reg, tmp);
 }
 
-void nRF24L01P_API::setSingleBit(Register_t address, uint8_t bitIndex) {
-    uint8_t reg = readShortRegister(address);
-    setBit_r(reg, bitIndex);
-    writeShortRegister(address, reg);
+void nRF24L01P_API::setSingleBit(Register_t reg, uint8_t bitIndex) {
+    uint8_t tmp = readShortRegister(reg);
+    setBit_r(tmp, bitIndex);
+    writeShortRegister(reg, tmp);
 }
 
 uint8_t nRF24L01P_API::getPayloadLength() {
