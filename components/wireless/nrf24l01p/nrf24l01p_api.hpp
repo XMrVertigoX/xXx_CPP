@@ -9,11 +9,7 @@
 #include <xXx/os/arduinotask.hpp>
 #include <xXx/templates/queue.hpp>
 
-enum class DataRate_t : uint8_t {
-    DataRate_1MBPS,
-    DataRate_2MBPS,
-    DataRate_250KBPS
-};
+enum class DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
 enum class Crc_t : uint8_t { DISABLED, CRC8, CRC16 };
 
@@ -43,8 +39,8 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
-    void clearSingleBit(Register_t address, uint8_t bitIndex);
-    void setSingleBit(Register_t address, uint8_t bitIndex);
+    void clearSingleBit(Register_t reg, uint8_t bitIndex);
+    void setSingleBit(Register_t reg, uint8_t bitIndex);
 
     void setup();
     void loop();
@@ -58,8 +54,8 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
     void handle_RX_DR(uint8_t status);
     void handle_TX_DS(uint8_t status);
 
-    bool receiveData(UBaseType_t freeSlots);
-    bool transmitData(uint8_t status);
+    bool readRxFifo(uint8_t status);
+    bool writeTxFifo(uint8_t status);
 
     uint8_t getPayloadLength();
     void enableDataPipe(uint8_t pipe, bool enable = true);
@@ -69,10 +65,11 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
     nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq);
     ~nRF24L01P_API();
 
-    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue,
-                         uint64_t address = 0);
-    void configureTxPipe(Queue<uint8_t> &queue, uint64_t address = 0);
+    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &queue, uint64_t address = 0);
+    void configureTxPipe(uint64_t address = 0);
     void switchOperatingMode(OperatingMode_t mode);
+
+    bool send(Queue<uint8_t> &txQueue);
 
     uint8_t getChannel();
     Crc_t getCrcConfig();
