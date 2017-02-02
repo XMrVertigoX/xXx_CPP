@@ -4,8 +4,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-static const uint16_t defaultStackSize   = configMINIMAL_STACK_SIZE;
-static const uint8_t defaultTaskPriority = tskIDLE_PRIORITY + 1;
+static const uint16_t defaultStackSize = configMINIMAL_STACK_SIZE;
+static const uint8_t defaultPriority   = tskIDLE_PRIORITY + 1;
 
 namespace xXx {
 
@@ -16,12 +16,11 @@ class ArduinoTask {
   protected:
     TaskHandle_t _handle;
 
-    void notifyTake(bool clearCounter      = false,
-                    TickType_t ticksToWait = portMAX_DELAY);
+    void notifyTake(bool clearCounter = false, TickType_t ticksToWait = portMAX_DELAY);
 
   public:
-    ArduinoTask(uint16_t stackSize = defaultStackSize,
-                uint8_t priority = defaultTaskPriority, char *name = NULL);
+    ArduinoTask(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority,
+                char *friendlyName = NULL);
     virtual ~ArduinoTask();
 
     virtual void setup() = 0;
