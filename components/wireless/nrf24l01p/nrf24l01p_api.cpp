@@ -17,9 +17,10 @@
 
 namespace xXx {
 
-static uint8_t rxSettling = 130;
-static uint8_t txSettling = 130;
-static uint8_t fifoSize   = 32;
+static const uint8_t txSettling = 130;
+static const uint8_t rxSettling = 130;
+static const uint8_t txFifoSize = 32;
+static const uint8_t rxFifoSize = 32;
 
 static inline uint8_t getPipeIndex(uint8_t status) {
     bitwiseAND_r(status, VALUE_8(STATUS_t::RX_P_NO_MASK));
@@ -92,7 +93,7 @@ bool nRF24L01P_API::readRxFifo(uint8_t status) {
 
     uint8_t rxNumBytes = getPayloadLength();
 
-    if (rxNumBytes > fifoSize) {
+    if (rxNumBytes > rxFifoSize) {
         return (false);
     }
 
@@ -118,11 +119,7 @@ bool nRF24L01P_API::writeTxFifo(uint8_t status) {
         return (false);
     }
 
-    if (readBit(status, VALUE_8(STATUS_t::TX_FULL))) {
-        return (false);
-    }
-
-    uint8_t numBytes = min(fifoSize, usedSlots);
+    uint8_t numBytes = min(txFifoSize, usedSlots);
     uint8_t bytes[numBytes];
 
     for (int i = 0; i < numBytes; ++i) {
@@ -159,7 +156,9 @@ void nRF24L01P_API::handle_RX_DR(uint8_t status) {
     do {
         bool success = readRxFifo(status);
 
-        assert(success);
+        if (success == false) {
+            break;
+        }
 
         fifo_status = readShortRegister(Register_t::FIFO_STATUS);
     } while (readBit(fifo_status, VALUE_8(FIFO_STATUS_t::RX_EMPTY)) == false);
@@ -173,7 +172,9 @@ void nRF24L01P_API::handle_TX_DS(uint8_t status) {
     do {
         bool success = writeTxFifo(status);
 
-        assert(success);
+        if (success == false) {
+            break;
+        }
 
         fifo_status = readShortRegister(Register_t::FIFO_STATUS);
     } while (readBit(fifo_status, VALUE_8(FIFO_STATUS_t::TX_FULL)) == false);
