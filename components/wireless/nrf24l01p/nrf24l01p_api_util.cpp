@@ -25,29 +25,21 @@ void nRF24L01P_API::writeShortRegister(Register_t reg, uint8_t val) {
 
 void nRF24L01P_API::clearSingleBit(Register_t reg, uint8_t bitIndex) {
     uint8_t tmp = readShortRegister(reg);
-    clearBit_r(tmp, bitIndex);
+    clearBit_eq(tmp, bitIndex);
     writeShortRegister(reg, tmp);
 }
 
 void nRF24L01P_API::setSingleBit(Register_t reg, uint8_t bitIndex) {
     uint8_t tmp = readShortRegister(reg);
-    setBit_r(tmp, bitIndex);
+    setBit_eq(tmp, bitIndex);
     writeShortRegister(reg, tmp);
-}
-
-uint8_t nRF24L01P_API::getPayloadLength() {
-    uint8_t rxNumBytes;
-
-    cmd_R_RX_PL_WID(rxNumBytes);
-
-    return (rxNumBytes);
 }
 
 void nRF24L01P_API::clearInterrupts() {
     uint8_t status = cmd_NOP();
-    setBit_r(status, VALUE_8(STATUS_t::MAX_RT));
-    setBit_r(status, VALUE_8(STATUS_t::RX_DR));
-    setBit_r(status, VALUE_8(STATUS_t::TX_DS));
+    setBit_eq<uint8_t>(status, STATUS_MAX_RT);
+    setBit_eq<uint8_t>(status, STATUS_RX_DR);
+    setBit_eq<uint8_t>(status, STATUS_TX_DS);
     writeShortRegister(Register_t::STATUS, status);
 }
 
@@ -56,11 +48,11 @@ void nRF24L01P_API::clearInterrupts() {
 Crc_t nRF24L01P_API::getCrcConfig() {
     uint8_t config = readShortRegister(Register_t::CONFIG);
 
-    if (!readBit(config, VALUE_8(CONFIG_t::EN_CRC))) {
+    if (!readBit<uint8_t>(config, CONFIG_EN_CRC)) {
         return (Crc_t::DISABLED);
     }
 
-    if (readBit(config, VALUE_8(CONFIG_t::CRCO))) {
+    if (readBit<uint8_t>(config, CONFIG_CRCO)) {
         return (Crc_t::CRC16);
     } else {
         return (Crc_t::CRC8);
@@ -72,15 +64,15 @@ void nRF24L01P_API::setCrcConfig(Crc_t crc) {
 
     switch (crc) {
         case Crc_t::DISABLED: {
-            clearBit_r(config, VALUE_8(CONFIG_t::EN_CRC));
+            clearBit_eq<uint8_t>(config, CONFIG_EN_CRC);
         } break;
         case Crc_t::CRC8: {
-            setBit_r(config, VALUE_8(CONFIG_t::EN_CRC));
-            clearBit_r(config, VALUE_8(CONFIG_t::CRCO));
+            setBit_eq<uint8_t>(config, CONFIG_EN_CRC);
+            clearBit_eq<uint8_t>(config, CONFIG_CRCO);
         } break;
         case Crc_t::CRC16: {
-            setBit_r(config, VALUE_8(CONFIG_t::EN_CRC));
-            setBit_r(config, VALUE_8(CONFIG_t::CRCO));
+            setBit_eq<uint8_t>(config, CONFIG_EN_CRC);
+            setBit_eq<uint8_t>(config, CONFIG_CRCO);
         } break;
     }
 
@@ -94,7 +86,7 @@ uint8_t nRF24L01P_API::getChannel() {
 }
 
 void nRF24L01P_API::setChannel(uint8_t channel) {
-    if (channel <= VALUE_8(RF_CH_t::RF_CH_MASK)) {
+    if (channel <= RF_CH_MASK) {
         writeShortRegister(Register_t::RF_CH, channel);
     }
 }
@@ -102,11 +94,11 @@ void nRF24L01P_API::setChannel(uint8_t channel) {
 DataRate_t nRF24L01P_API::getDataRate() {
     uint8_t rfSetup = readShortRegister(Register_t::RF_SETUP);
 
-    if (readBit(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_LOW))) {
+    if (readBit<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW)) {
         return (DataRate_t::DataRate_250KBPS);
     }
 
-    if (readBit(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_HIGH))) {
+    if (readBit<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH)) {
         return (DataRate_t::DataRate_2MBPS);
     }
 
@@ -118,41 +110,53 @@ void nRF24L01P_API::setDataRate(DataRate_t dataRate) {
 
     switch (dataRate) {
         case (DataRate_t::DataRate_1MBPS): {
-            clearBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
+            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
         } break;
         case DataRate_t::DataRate_2MBPS: {
-            clearBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
+            setBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
         } break;
         case DataRate_t::DataRate_250KBPS: {
-            setBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rfSetup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            setBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
+            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
         } break;
     }
 
     writeShortRegister(Register_t::RF_SETUP, rfSetup);
 }
 
+OutputPower_t nRF24L01P_API::getOutputPower() {
+    uint8_t rf_setup = readShortRegister(Register_t::RF_SETUP);
+
+    AND_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
+    RIGHT_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR);
+
+    switch (rf_setup) {
+        case 0: return (OutputPower_t::PowerLevel_18dBm); break;
+        case 1: return (OutputPower_t::PowerLevel_12dBm); break;
+        case 2: return (OutputPower_t::PowerLevel_6dBm); break;
+        default: return (OutputPower_t::PowerLevel_0dBm); break;
+    }
+}
+
 void nRF24L01P_API::setOutputPower(OutputPower_t level) {
     uint8_t rf_setup = readShortRegister(Register_t::RF_SETUP);
 
+    AND_eq(rf_setup, INVERT<uint8_t>(RF_SETUP_RF_PWR_MASK));
+
     switch (level) {
         case OutputPower_t::PowerLevel_18dBm: {
-            clearBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b00, RF_SETUP_RF_PWR));
         } break;
         case OutputPower_t::PowerLevel_12dBm: {
-            setBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            clearBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b01, RF_SETUP_RF_PWR));
         } break;
         case OutputPower_t::PowerLevel_6dBm: {
-            clearBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b10, RF_SETUP_RF_PWR));
         } break;
         case OutputPower_t::PowerLevel_0dBm: {
-            setBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_LOW));
-            setBit_r(rf_setup, VALUE_8(RF_SETUP_t::RF_DR_HIGH));
+            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b11, RF_SETUP_RF_PWR));
         } break;
     }
 
@@ -162,13 +166,13 @@ void nRF24L01P_API::setOutputPower(OutputPower_t level) {
 void nRF24L01P_API::setRetries(uint8_t delay, uint8_t count) {
     uint8_t setup_retr;
 
-    bitwiseAND_r(delay, VALUE_8(SETUP_RETR_t::ARD_MASK));
-    shiftLeft_r(delay, VALUE_8(SETUP_RETR_t::ARD));
+    AND_eq<uint8_t>(delay, SETUP_RETR_ARD_MASK);
+    LEFT_eq<uint8_t>(delay, SETUP_RETR_ARD);
 
-    bitwiseAND_r(count, VALUE_8(SETUP_RETR_t::ARC_MASK));
-    shiftLeft_r(count, VALUE_8(SETUP_RETR_t::ARC));
+    AND_eq<uint8_t>(count, SETUP_RETR_ARC_MASK);
+    LEFT_eq<uint8_t>(count, SETUP_RETR_ARC);
 
-    setup_retr = bitwiseOR(delay, count);
+    setup_retr = OR<uint8_t>(delay, count);
 
     writeShortRegister(Register_t::SETUP_RETR, setup_retr);
 }
@@ -184,27 +188,27 @@ uint64_t nRF24L01P_API::getRxAddress(uint8_t pipe) {
     switch (pipe) {
         case 0: {
             addressRegister = Register_t::RX_ADDR_P0;
-            addressLength   = VALUE_64(RX_ADDR_P0_t::LENGTH);
+            addressLength   = RX_ADDR_P0_LENGTH;
         } break;
         case 1: {
             addressRegister = Register_t::RX_ADDR_P1;
-            addressLength   = VALUE_64(RX_ADDR_P1_t::LENGTH);
+            addressLength   = RX_ADDR_P1_LENGTH;
         } break;
         case 2: {
             addressRegister = Register_t::RX_ADDR_P2;
-            addressLength   = VALUE_64(RX_ADDR_P2_t::LENGTH);
+            addressLength   = RX_ADDR_P2_LENGTH;
         } break;
         case 3: {
             addressRegister = Register_t::RX_ADDR_P3;
-            addressLength   = VALUE_64(RX_ADDR_P3_t::LENGTH);
+            addressLength   = RX_ADDR_P3_LENGTH;
         } break;
         case 4: {
             addressRegister = Register_t::RX_ADDR_P4;
-            addressLength   = VALUE_64(RX_ADDR_P4_t::LENGTH);
+            addressLength   = RX_ADDR_P4_LENGTH;
         } break;
         case 5: {
             addressRegister = Register_t::RX_ADDR_P5;
-            addressLength   = VALUE_64(RX_ADDR_P5_t::LENGTH);
+            addressLength   = RX_ADDR_P5_LENGTH;
         } break;
     }
 
@@ -228,33 +232,33 @@ void nRF24L01P_API::setRxAddress(uint8_t pipe, uint64_t address) {
     switch (pipe) {
         case 0: {
             addressRegister = Register_t::RX_ADDR_P0;
-            addressLength   = VALUE_64(RX_ADDR_P0_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P0_t::MASK);
+            addressLength   = RX_ADDR_P0_LENGTH;
+            addressMask     = RX_ADDR_P0_MASK;
         } break;
         case 1: {
             addressRegister = Register_t::RX_ADDR_P1;
-            addressLength   = VALUE_64(RX_ADDR_P1_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P1_t::MASK);
+            addressLength   = RX_ADDR_P1_LENGTH;
+            addressMask     = RX_ADDR_P1_MASK;
         } break;
         case 2: {
             addressRegister = Register_t::RX_ADDR_P2;
-            addressLength   = VALUE_64(RX_ADDR_P2_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P2_t::MASK);
+            addressLength   = RX_ADDR_P2_LENGTH;
+            addressMask     = RX_ADDR_P2_MASK;
         } break;
         case 3: {
             addressRegister = Register_t::RX_ADDR_P3;
-            addressLength   = VALUE_64(RX_ADDR_P3_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P3_t::MASK);
+            addressLength   = RX_ADDR_P3_LENGTH;
+            addressMask     = RX_ADDR_P3_MASK;
         } break;
         case 4: {
             addressRegister = Register_t::RX_ADDR_P4;
-            addressLength   = VALUE_64(RX_ADDR_P4_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P4_t::MASK);
+            addressLength   = RX_ADDR_P4_LENGTH;
+            addressMask     = RX_ADDR_P4_MASK;
         } break;
         case 5: {
             addressRegister = Register_t::RX_ADDR_P5;
-            addressLength   = VALUE_64(RX_ADDR_P5_t::LENGTH);
-            addressMask     = VALUE_64(RX_ADDR_P5_t::MASK);
+            addressLength   = RX_ADDR_P5_LENGTH;
+            addressMask     = RX_ADDR_P5_MASK;
         } break;
     }
 
@@ -267,7 +271,7 @@ uint64_t nRF24L01P_API::getTxAddress() {
     uint64_t address = 0;
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
-    cmd_R_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));
+    cmd_R_REGISTER(Register_t::TX_ADDR, tx_addr, TX_ADDR_LENGTH);
 
     return (address);
 }
@@ -275,7 +279,7 @@ uint64_t nRF24L01P_API::getTxAddress() {
 void nRF24L01P_API::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
-    cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, VALUE_64(TX_ADDR_t::LENGTH));
+    cmd_W_REGISTER(Register_t::TX_ADDR, tx_addr, TX_ADDR_LENGTH);
 }
 
 } /* namespace xXx */
