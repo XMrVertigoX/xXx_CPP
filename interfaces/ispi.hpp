@@ -17,7 +17,7 @@ class ISpi {
     // virtual uint8_t transmit(uint8_t mosiBytes[], size_t numBytes) = 0;
     // virtual uint8_t receive(uint8_t misoBytes[], size_t numBytes)  = 0;
 
-    virtual uint8_t transmit_receive(Queue<uint8_t> &mosiQueue, Queue<uint8_t> &misoQueue) = 0;
+    virtual uint8_t transmit_receive(Queue<uint8_t> &queue) = 0;
 };
 
 } /* namespace xXx */
