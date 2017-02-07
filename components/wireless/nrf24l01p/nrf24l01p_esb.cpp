@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_api.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_esb.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/bitoperations.hpp>
@@ -23,38 +23,43 @@ static const uint8_t rxFifoSize = 32;
 
 namespace xXx {
 
-nRF24L01P_API::nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq)
+nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
     : ArduinoTask(256, 2), _ce(ce), _irq(irq), _spi(spi),
       _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL}, _txQueue(NULL),
-      _operatingMode(OperatingMode_t::Shutdown) {}
+      _operatingMode(OperatingMode_Shutdown) {}
 
-nRF24L01P_API::~nRF24L01P_API() {}
+nRF24L01P_ESB::~nRF24L01P_ESB() {}
 
-void nRF24L01P_API::transmit_receive(Queue<uint8_t> &mosiQueue, Queue<uint8_t> &misoQueue) {
-    _spi.transmit_receive(mosiQueue, misoQueue);
+void nRF24L01P_ESB::transmit_receive(Queue<uint8_t> &queue) {
+    _spi.transmit_receive(queue);
 }
 
-void nRF24L01P_API::setup() {
+void nRF24L01P_ESB::setup() {
     auto interruptFunction = LAMBDA(void *user) {
-        static_cast<nRF24L01P_API *>(user)->notifyFromISR();
+        static_cast<nRF24L01P_ESB *>(user)->notifyFromISR();
     };
 
     // Enable Enhanced ShockBurst™
-    uint8_t feature = readShortRegister(Register_t::FEATURE);
+    uint8_t feature = readShortRegister(Register_FEATURE);
     setBit_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK);
     setBit_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY);
     setBit_eq<uint8_t>(feature, FEATURE_EN_DPL);
-    writeShortRegister(Register_t::FEATURE, feature);
+    writeShortRegister(Register_FEATURE, feature);
 
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
 
-    clearInterrupts();
+    // Clear interrupts
+    uint8_t status = 0;
+    setBit_eq<uint8_t>(status, STATUS_MAX_RT);
+    setBit_eq<uint8_t>(status, STATUS_RX_DR);
+    setBit_eq<uint8_t>(status, STATUS_TX_DS);
+    writeShortRegister(Register_STATUS, status);
 
     _irq.enableInterrupt(interruptFunction, this);
 }
 
-void nRF24L01P_API::loop() {
+void nRF24L01P_ESB::loop() {
     notifyTake(true);
 
     uint8_t status = cmd_NOP();
@@ -72,18 +77,18 @@ void nRF24L01P_API::loop() {
     }
 }
 
-static inline uint8_t getPipeIndex(uint8_t status) {
+static inline uint8_t extractPipeIndex(uint8_t status) {
     AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
     RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
 
     return (status);
 }
 
-uint8_t nRF24L01P_API::readRxFifo(uint8_t status) {
+uint8_t nRF24L01P_ESB::readRxFifo(uint8_t status) {
     uint8_t rxNumBytes;
     uint8_t pipeIndex;
 
-    pipeIndex = getPipeIndex(status);
+    pipeIndex = extractPipeIndex(status);
 
     if (pipeIndex > 5) {
         return (EXIT_FAILURE);
@@ -111,7 +116,7 @@ uint8_t nRF24L01P_API::readRxFifo(uint8_t status) {
     return (EXIT_SUCCESS);
 }
 
-uint8_t nRF24L01P_API::writeTxFifo(uint8_t status) {
+uint8_t nRF24L01P_ESB::writeTxFifo(uint8_t status) {
     if (_txQueue == NULL) {
         return (EXIT_FAILURE);
     }
@@ -134,11 +139,11 @@ uint8_t nRF24L01P_API::writeTxFifo(uint8_t status) {
     return (EXIT_SUCCESS);
 }
 
-void nRF24L01P_API::handle_MAX_RT(uint8_t status) {
-    writeShortRegister(Register_t::STATUS, STATUS_MAX_RT_MASK);
+void nRF24L01P_ESB::handle_MAX_RT(uint8_t status) {
+    writeShortRegister(Register_STATUS, STATUS_MAX_RT_MASK);
 }
 
-void nRF24L01P_API::handle_RX_DR(uint8_t status) {
+void nRF24L01P_ESB::handle_RX_DR(uint8_t status) {
     uint8_t fifo_status;
 
     do {
@@ -148,13 +153,13 @@ void nRF24L01P_API::handle_RX_DR(uint8_t status) {
             break;
         }
 
-        fifo_status = readShortRegister(Register_t::FIFO_STATUS);
+        fifo_status = readShortRegister(Register_FIFO_STATUS);
     } while (readBit<uint8_t>(fifo_status, FIFO_STATUS_RX_EMPTY) == false);
 
-    writeShortRegister(Register_t::STATUS, STATUS_RX_DR_MASK);
+    writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
 }
 
-void nRF24L01P_API::handle_TX_DS(uint8_t status) {
+void nRF24L01P_ESB::handle_TX_DS(uint8_t status) {
     uint8_t fifo_status;
 
     do {
@@ -164,62 +169,62 @@ void nRF24L01P_API::handle_TX_DS(uint8_t status) {
             break;
         }
 
-        fifo_status = readShortRegister(Register_t::FIFO_STATUS);
+        fifo_status = readShortRegister(Register_FIFO_STATUS);
     } while (readBit<uint8_t>(fifo_status, FIFO_STATUS_TX_FULL) == false);
 
-    writeShortRegister(Register_t::STATUS, STATUS_TX_DS_MASK);
+    writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
 }
 
-void nRF24L01P_API::enterRxMode() {
-    switchOperatingMode(OperatingMode_t::Standby);
+void nRF24L01P_ESB::enterRxMode() {
+    switchOperatingMode(OperatingMode_Standby);
 
     // Enter PRX mode
-    setSingleBit(Register_t::CONFIG, CONFIG_PRIM_RX);
+    setSingleBit(Register_CONFIG, CONFIG_PRIM_RX);
 
     _ce.set();
 
     delayUs(rxSettling);
 }
 
-void nRF24L01P_API::enterShutdownMode() {
+void nRF24L01P_ESB::enterShutdownMode() {
     _ce.clear();
 
-    clearSingleBit(Register_t::CONFIG, CONFIG_PWR_UP);
+    clearSingleBit(Register_CONFIG, CONFIG_PWR_UP);
 }
 
-void nRF24L01P_API::enterStandbyMode() {
+void nRF24L01P_ESB::enterStandbyMode() {
     _ce.clear();
 
-    setSingleBit(Register_t::CONFIG, CONFIG_PWR_UP);
+    setSingleBit(Register_CONFIG, CONFIG_PWR_UP);
 }
 
-void nRF24L01P_API::enterTxMode() {
-    switchOperatingMode(OperatingMode_t::Standby);
+void nRF24L01P_ESB::enterTxMode() {
+    switchOperatingMode(OperatingMode_Standby);
 
     // Enter PTX mode
-    clearSingleBit(Register_t::CONFIG, CONFIG_PRIM_RX);
+    clearSingleBit(Register_CONFIG, CONFIG_PRIM_RX);
 
     _ce.set();
 
     delayUs(txSettling);
 }
 
-void nRF24L01P_API::switchOperatingMode(OperatingMode_t operatingMode) {
+void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     if (_operatingMode == operatingMode) {
         return;
     }
 
     switch (operatingMode) {
-        case OperatingMode_t::Rx: {
+        case OperatingMode_Rx: {
             enterRxMode();
         } break;
-        case OperatingMode_t::Shutdown: {
+        case OperatingMode_Shutdown: {
             enterShutdownMode();
         } break;
-        case OperatingMode_t::Standby: {
+        case OperatingMode_Standby: {
             enterStandbyMode();
         } break;
-        case OperatingMode_t::Tx: {
+        case OperatingMode_Tx: {
             enterTxMode();
         } break;
     }
@@ -227,33 +232,21 @@ void nRF24L01P_API::switchOperatingMode(OperatingMode_t operatingMode) {
     _operatingMode = operatingMode;
 }
 
-void nRF24L01P_API::enableDataPipe(uint8_t pipe, bool enable) {
-    assert(pipe <= 5);
-
-    if (enable) {
-        setSingleBit(Register_t::EN_RXADDR, pipe);
-        setSingleBit(Register_t::DYNPD, pipe);
-    } else {
-        clearSingleBit(Register_t::EN_RXADDR, pipe);
-        clearSingleBit(Register_t::DYNPD, pipe);
-    }
-}
-
-void nRF24L01P_API::configureTxPipe(Queue<uint8_t> &txQueue, uint64_t txAddress) {
+void nRF24L01P_ESB::configureTxPipe(Queue<uint8_t> &txQueue, uint64_t txAddress) {
     setTxAddress(txAddress);
     setRxAddress(0, txAddress);
 
-    enableDataPipe(0, true);
+    enableDataPipe(0);
 
     _txQueue = &txQueue;
 }
 
-void nRF24L01P_API::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t rxAddress) {
+void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t rxAddress) {
     assert(pipe <= 5);
 
     setRxAddress(pipe, rxAddress);
 
-    enableDataPipe(pipe, true);
+    enableDataPipe(pipe);
 
     _rxQueue[pipe] = &rxQueue;
 }

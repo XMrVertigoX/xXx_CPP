@@ -1,5 +1,5 @@
-#ifndef NRF24L01P_SHOCKBURST_HPP_
-#define NRF24L01P_SHOCKBURST_HPP_
+#if not defined(NRF24L01P_ESB_HPP_)
+#define NRF24L01P_ESB_HPP_
 
 #include <stdint.h>
 
@@ -9,22 +9,27 @@
 #include <xXx/os/arduinotask.hpp>
 #include <xXx/templates/queue.hpp>
 
-enum class DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
+enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
-enum class Crc_t : uint8_t { DISABLED, CRC8, CRC16 };
+enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
 
-enum class OutputPower_t : uint8_t {
-    PowerLevel_18dBm,
-    PowerLevel_12dBm,
-    PowerLevel_6dBm,
-    PowerLevel_0dBm
+enum OutputPower_t : uint8_t {
+    OutputPower_18dBm,
+    OutputPower_12dBm,
+    OutputPower_6dBm,
+    OutputPower_0dBm
 };
 
-enum class OperatingMode_t : uint8_t { Shutdown, Standby, Rx, Tx };
+enum OperatingMode_t : uint8_t {
+    OperatingMode_Shutdown,
+    OperatingMode_Standby,
+    OperatingMode_Rx,
+    OperatingMode_Tx
+};
 
 namespace xXx {
 
-class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
+class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
   private:
     IGpio &_ce;
     IGpio &_irq;
@@ -35,7 +40,7 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
 
     OperatingMode_t _operatingMode;
 
-    void transmit_receive(Queue<uint8_t> &mosiQueue, Queue<uint8_t> &misoQueue);
+    void transmit_receive(Queue<uint8_t> &queue);
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -57,34 +62,35 @@ class nRF24L01P_API : public nRF24L01P_BASE, public ArduinoTask {
     uint8_t readRxFifo(uint8_t status);
     uint8_t writeTxFifo(uint8_t status);
 
-    void enableDataPipe(uint8_t pipe, bool enable = true);
-    void clearInterrupts();
+    void enableDataPipe(uint8_t pipe);
+    void disableDataPipe(uint8_t pipe);
 
   public:
-    nRF24L01P_API(ISpi &spi, IGpio &ce, IGpio &irq);
-    ~nRF24L01P_API();
+    nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
+    ~nRF24L01P_ESB();
 
     void configureTxPipe(Queue<uint8_t> &txQueue, uint64_t address = 0);
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address = 0);
     void switchOperatingMode(OperatingMode_t mode);
 
     uint8_t getChannel();
-    Crc_t getCrcConfig();
+    void setChannel(uint8_t channel);
+    CRCConfig_t getCrcConfig();
+    void setCrcConfig(CRCConfig_t crc);
+    void setDataRate(DataRate_t dataRate);
     DataRate_t getDataRate();
     OutputPower_t getOutputPower();
-    // TODO: ??? getRetries();
-    uint64_t getRxAddress(uint8_t pipe);
-    uint64_t getTxAddress();
-
-    void setChannel(uint8_t channel);
-    void setCrcConfig(Crc_t crc);
-    void setDataRate(DataRate_t dataRate);
     void setOutputPower(OutputPower_t level);
-    void setRetries(uint8_t delay, uint8_t count);
+    uint8_t getRetryCount();
+    void setRetryCount(uint8_t count);
+    uint8_t getRetryDelay();
+    void setRetryDelay(uint8_t delay);
+    uint64_t getRxAddress(uint8_t pipe);
     void setRxAddress(uint8_t pipe, uint64_t address);
+    uint64_t getTxAddress();
     void setTxAddress(uint64_t address);
 };
 
 } /* namespace xXx */
 
-#endif // NRF24L01P_SHOCKBURST_HPP_
+#endif // NRF24L01P_ESB_HPP_

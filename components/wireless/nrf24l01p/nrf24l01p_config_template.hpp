@@ -1,4 +1,4 @@
-#ifndef NRF24L01P_CONFIG_TEMPLATE_HPP_
+#if not defined(NRF24L01P_CONFIG_TEMPLATE_HPP_)
 #define NRF24L01P_CONFIG_TEMPLATE_HPP_
 
 #include <stdint.h>
