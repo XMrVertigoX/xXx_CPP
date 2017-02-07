@@ -21,6 +21,14 @@ template <typename TYPE> inline void OR_eq(TYPE &byte, TYPE mask) {
     byte or_eq mask;
 }
 
+template <typename TYPE> inline TYPE XOR(TYPE byte, TYPE mask) {
+    return (byte xor mask);
+}
+
+template <typename TYPE> inline void XOR_eq(TYPE &byte, TYPE mask) {
+    byte xor_eq mask;
+}
+
 template <typename TYPE> inline TYPE LEFT(uint8_t byte, uint8_t amount) {
     return (byte << amount);
 }
