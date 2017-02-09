@@ -137,33 +137,14 @@ OutputPower_t nRF24L01P_ESB::getOutputPower() {
     AND_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
     RIGHT_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR);
 
-    switch (rf_setup) {
-        case 0: return (OutputPower_18dBm); break;
-        case 1: return (OutputPower_12dBm); break;
-        case 2: return (OutputPower_6dBm); break;
-        default: return (OutputPower_0dBm); break;
-    }
+    return (static_cast<OutputPower_t>(rf_setup));
 }
 
 void nRF24L01P_ESB::setOutputPower(OutputPower_t level) {
     uint8_t rf_setup = readShortRegister(Register_RF_SETUP);
 
     AND_eq(rf_setup, INVERT<uint8_t>(RF_SETUP_RF_PWR_MASK));
-
-    switch (level) {
-        case OutputPower_18dBm: {
-            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b00, RF_SETUP_RF_PWR));
-        } break;
-        case OutputPower_12dBm: {
-            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b01, RF_SETUP_RF_PWR));
-        } break;
-        case OutputPower_6dBm: {
-            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b10, RF_SETUP_RF_PWR));
-        } break;
-        case OutputPower_0dBm: {
-            OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(0b11, RF_SETUP_RF_PWR));
-        } break;
-    }
+    OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(level, RF_SETUP_RF_PWR));
 
     writeShortRegister(Register_RF_SETUP, rf_setup);
 }
@@ -264,38 +245,31 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t address) {
 
     Register_t addressRegister;
     uint64_t addressLength;
-    uint64_t addressMask;
 
     switch (pipe) {
         case 0: {
             addressRegister = Register_RX_ADDR_P0;
             addressLength   = RX_ADDR_P0_LENGTH;
-            addressMask     = RX_ADDR_P0_MASK;
         } break;
         case 1: {
             addressRegister = Register_RX_ADDR_P1;
             addressLength   = RX_ADDR_P1_LENGTH;
-            addressMask     = RX_ADDR_P1_MASK;
         } break;
         case 2: {
             addressRegister = Register_RX_ADDR_P2;
             addressLength   = RX_ADDR_P2_LENGTH;
-            addressMask     = RX_ADDR_P2_MASK;
         } break;
         case 3: {
             addressRegister = Register_RX_ADDR_P3;
             addressLength   = RX_ADDR_P3_LENGTH;
-            addressMask     = RX_ADDR_P3_MASK;
         } break;
         case 4: {
             addressRegister = Register_RX_ADDR_P4;
             addressLength   = RX_ADDR_P4_LENGTH;
-            addressMask     = RX_ADDR_P4_MASK;
         } break;
         case 5: {
             addressRegister = Register_RX_ADDR_P5;
             addressLength   = RX_ADDR_P5_LENGTH;
-            addressMask     = RX_ADDR_P5_MASK;
         } break;
     }
 
