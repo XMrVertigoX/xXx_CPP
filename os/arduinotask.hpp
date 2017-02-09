@@ -16,7 +16,8 @@ class ArduinoTask {
   protected:
     TaskHandle_t _handle;
 
-    void notifyTake(bool clearCounter = false, TickType_t ticksToWait = portMAX_DELAY);
+    void taskDelay(TickType_t ticksToDelay);
+    void taskNotifyTake(bool clearCounter = false, TickType_t ticksToWait = portMAX_DELAY);
 
   public:
     ArduinoTask(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority,
@@ -26,11 +27,13 @@ class ArduinoTask {
     virtual void setup() = 0;
     virtual void loop()  = 0;
 
-    void notify(uint32_t value = 0, eNotifyAction action = eIncrement);
-    void notifyFromISR(uint32_t value = 0, eNotifyAction action = eIncrement);
-    void suspend();
-    void resume();
-    void resumeFromISR();
+    void taskCreate(uint16_t stackSize, uint8_t priority, char *friendlyName);
+    void taskDelete();
+    void taskNotify(uint32_t value = 0, eNotifyAction action = eIncrement);
+    void taskNotifyFromISR(uint32_t value = 0, eNotifyAction action = eIncrement);
+    void taskResume();
+    void taskResumeFromISR();
+    void taskSuspend();
 
     char *getTaskName();
     UBaseType_t getStackHighWaterMark();
