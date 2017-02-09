@@ -9,7 +9,7 @@ template <typename TYPE> inline TYPE AND(TYPE byte, TYPE mask) {
     return (byte bitand mask);
 }
 
-template <typename TYPE> inline void AND_eq(TYPE byte, TYPE mask) {
+template <typename TYPE> inline void AND_eq(TYPE &byte, TYPE mask) {
     byte and_eq mask;
 }
 
