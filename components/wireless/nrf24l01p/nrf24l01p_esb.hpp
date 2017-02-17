@@ -61,8 +61,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     int8_t readRxFifo();
     int8_t writeTxFifo();
 
-    void enableDataPipe(uint8_t pipe);
-    void disableDataPipe(uint8_t pipe);
+    void enableDataPipe(uint8_t pipeIndex);
+    void disableDataPipe(uint8_t pipeIndex);
 
   public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority);
@@ -72,8 +72,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address = 0);
     void switchOperatingMode(OperatingMode_t mode);
 
-    uint8_t getChannel();
-    void setChannel(uint8_t channel);
+    int8_t getChannel();
+    void setChannel(int8_t channel);
     CRCConfig_t getCrcConfig();
     void setCrcConfig(CRCConfig_t crc);
     void setDataRate(DataRate_t dataRate);

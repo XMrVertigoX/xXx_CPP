@@ -9,6 +9,14 @@
 
 namespace xXx {
 
+static inline bool isPipeIndexValid(uint8_t pipeIndex) {
+    if (pipeIndex > 5) {
+        return (false);
+    } else {
+        return (true);
+    }
+}
+
 // ----- helper functions -----------------------------------------------------
 
 uint8_t nRF24L01P_ESB::readShortRegister(Register_t reg) {
@@ -34,18 +42,18 @@ void nRF24L01P_ESB::setSingleBit(Register_t reg, uint8_t bitIndex) {
     writeShortRegister(reg, tmp);
 }
 
-void nRF24L01P_ESB::enableDataPipe(uint8_t pipe) {
-    assert(pipe <= 5);
+void nRF24L01P_ESB::enableDataPipe(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
 
-    setSingleBit(Register_EN_RXADDR, pipe);
-    setSingleBit(Register_DYNPD, pipe);
+    setSingleBit(Register_EN_RXADDR, pipeIndex);
+    setSingleBit(Register_DYNPD, pipeIndex);
 }
 
-void nRF24L01P_ESB::disableDataPipe(uint8_t pipe) {
-    assert(pipe <= 5);
+void nRF24L01P_ESB::disableDataPipe(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
 
-    clearSingleBit(Register_EN_RXADDR, pipe);
-    clearSingleBit(Register_DYNPD, pipe);
+    clearSingleBit(Register_EN_RXADDR, pipeIndex);
+    clearSingleBit(Register_DYNPD, pipeIndex);
 }
 
 // ----- getters and setters --------------------------------------------------
@@ -84,14 +92,14 @@ void nRF24L01P_ESB::setCrcConfig(CRCConfig_t crc) {
     writeShortRegister(Register_CONFIG, config);
 }
 
-uint8_t nRF24L01P_ESB::getChannel() {
-    uint8_t channel = readShortRegister(Register_RF_CH);
+int8_t nRF24L01P_ESB::getChannel() {
+    int8_t channel = readShortRegister(Register_RF_CH);
 
     return (channel);
 }
 
-void nRF24L01P_ESB::setChannel(uint8_t channel) {
-    if (channel <= RF_CH_MASK) {
+void nRF24L01P_ESB::setChannel(int8_t channel) {
+    if (channel < 0) {
         writeShortRegister(Register_RF_CH, channel);
     }
 }
