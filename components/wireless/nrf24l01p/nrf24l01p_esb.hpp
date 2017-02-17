@@ -31,14 +31,13 @@ namespace xXx {
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
   private:
+    OperatingMode_t _operatingMode      = OperatingMode_Shutdown;
+    Queue_Handle_t<uint8_t> _txQueue    = NULL;
+    Queue_Handle_t<uint8_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
     IGpio &_ce;
     IGpio &_irq;
     ISpi &_spi;
-
-    Queue_Handle_t<uint8_t> _rxQueue[6];
-    Queue_Handle_t<uint8_t> _txQueue;
-
-    OperatingMode_t _operatingMode;
 
     void transmit_receive(Queue<uint8_t> &queue);
 

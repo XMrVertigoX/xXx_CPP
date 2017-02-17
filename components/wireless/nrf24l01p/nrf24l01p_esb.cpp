@@ -24,9 +24,7 @@ const uint8_t txFifoSize = 32;
 const uint8_t rxFifoSize = 32;
 
 nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
-    : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi),
-      _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL}, _txQueue(NULL),
-      _operatingMode(OperatingMode_Shutdown) {}
+    : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi) {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {}
 
