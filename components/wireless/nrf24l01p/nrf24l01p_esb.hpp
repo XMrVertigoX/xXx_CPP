@@ -55,18 +55,18 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     void enterStandbyMode();
     void enterTxMode();
 
-    void handle_MAX_RT(uint8_t status);
-    void handle_RX_DR(uint8_t status);
-    void handle_TX_DS(uint8_t status);
+    void handle_MAX_RT();
+    void handle_RX_DR();
+    void handle_TX_DS();
 
-    uint8_t readRxFifo(uint8_t status);
-    uint8_t writeTxFifo(uint8_t status);
+    int8_t readRxFifo();
+    int8_t writeTxFifo();
 
     void enableDataPipe(uint8_t pipe);
     void disableDataPipe(uint8_t pipe);
 
   public:
-    nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
+    nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority);
     ~nRF24L01P_ESB();
 
     void configureTxPipe(Queue<uint8_t> &txQueue, uint64_t address = 0);

@@ -16,15 +16,15 @@
 
 #define min(a, b) (a < b ? a : b)
 
-static const uint8_t txSettling = 130;
-static const uint8_t rxSettling = 130;
-static const uint8_t txFifoSize = 32;
-static const uint8_t rxFifoSize = 32;
-
 namespace xXx {
 
-nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
-    : ArduinoTask(256, 2), _ce(ce), _irq(irq), _spi(spi),
+const uint8_t txSettling = 130;
+const uint8_t rxSettling = 130;
+const uint8_t txFifoSize = 32;
+const uint8_t rxFifoSize = 32;
+
+nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
+    : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi),
       _rxQueue{NULL, NULL, NULL, NULL, NULL, NULL}, _txQueue(NULL),
       _operatingMode(OperatingMode_Shutdown) {}
 
@@ -36,44 +36,50 @@ void nRF24L01P_ESB::transmit_receive(Queue<uint8_t> &queue) {
 
 void nRF24L01P_ESB::setup() {
     auto interruptFunction = LAMBDA(void *user) {
-        static_cast<nRF24L01P_ESB *>(user)->notifyFromISR();
+        nRF24L01P_ESB *self = static_cast<nRF24L01P_ESB *>(user);
+
+        self->taskNotifyFromISR();
     };
 
     // Enable Enhanced ShockBurst™
-    uint8_t feature = readShortRegister(Register_FEATURE);
-    setBit_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK);
-    setBit_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY);
-    setBit_eq<uint8_t>(feature, FEATURE_EN_DPL);
+    uint8_t feature = 0;
+    AND_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK_MASK);
+    AND_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY_MASK);
+    AND_eq<uint8_t>(feature, FEATURE_EN_DPL_MASK);
     writeShortRegister(Register_FEATURE, feature);
-
-    cmd_FLUSH_TX();
-    cmd_FLUSH_RX();
 
     // Clear interrupts
     uint8_t status = 0;
-    setBit_eq<uint8_t>(status, STATUS_MAX_RT);
-    setBit_eq<uint8_t>(status, STATUS_RX_DR);
-    setBit_eq<uint8_t>(status, STATUS_TX_DS);
+    AND_eq<uint8_t>(status, STATUS_MAX_RT_MASK);
+    AND_eq<uint8_t>(status, STATUS_RX_DR_MASK);
+    AND_eq<uint8_t>(status, STATUS_TX_DS_MASK);
     writeShortRegister(Register_STATUS, status);
+
+    cmd_FLUSH_TX();
+    cmd_FLUSH_RX();
 
     _irq.enableInterrupt(interruptFunction, this);
 }
 
 void nRF24L01P_ESB::loop() {
-    notifyTake(true);
+    taskNotifyTake(false);
 
-    uint8_t status = cmd_NOP();
+    int8_t status = cmd_NOP();
 
     if (readBit<uint8_t>(status, STATUS_RX_DR)) {
-        handle_RX_DR(status);
+        handle_RX_DR();
     }
 
     if (readBit<uint8_t>(status, STATUS_MAX_RT)) {
-        handle_MAX_RT(status);
+        handle_MAX_RT();
     }
 
     if (readBit<uint8_t>(status, STATUS_TX_DS)) {
-        handle_TX_DS(status);
+        handle_TX_DS();
+    }
+
+    if (not readBit<uint8_t>(status, STATUS_TX_FULL)) {
+        writeTxFifo();
     }
 }
 
@@ -84,47 +90,46 @@ static inline uint8_t extractPipeIndex(uint8_t status) {
     return (status);
 }
 
-uint8_t nRF24L01P_ESB::readRxFifo(uint8_t status) {
-    uint8_t rxNumBytes;
-    uint8_t pipeIndex;
-
-    pipeIndex = extractPipeIndex(status);
+int8_t nRF24L01P_ESB::readRxFifo() {
+    int8_t status     = cmd_NOP();
+    uint8_t pipeIndex = extractPipeIndex(status);
 
     if (pipeIndex > 5) {
-        return (EXIT_FAILURE);
+        return (-1);
     }
 
     if (_rxQueue[pipeIndex] == NULL) {
-        return (EXIT_FAILURE);
+        return (-1);
     }
 
-    cmd_R_RX_PL_WID(rxNumBytes);
+    uint8_t numBytes;
 
-    if (rxNumBytes > rxFifoSize) {
-        // TODO: Flush rx fifo?
-        return (EXIT_FAILURE);
+    cmd_R_RX_PL_WID(numBytes);
+
+    if (numBytes > rxFifoSize) {
+        return (-1);
     }
 
-    uint8_t rxBytes[rxNumBytes];
+    uint8_t bytes[numBytes];
 
-    cmd_R_RX_PAYLOAD(rxBytes, rxNumBytes);
+    cmd_R_RX_PAYLOAD(bytes, numBytes);
 
-    for (int i = 0; i < rxNumBytes; ++i) {
-        _rxQueue[pipeIndex]->enqueue(rxBytes[i], true);
+    for (int i = 0; i < numBytes; ++i) {
+        _rxQueue[pipeIndex]->enqueue(bytes[i]);
     }
 
-    return (EXIT_SUCCESS);
+    return (0);
 }
 
-uint8_t nRF24L01P_ESB::writeTxFifo(uint8_t status) {
+int8_t nRF24L01P_ESB::writeTxFifo() {
     if (_txQueue == NULL) {
-        return (EXIT_FAILURE);
+        return (-1);
     }
 
     UBaseType_t usedSlots = _txQueue->queueMessagesWaiting();
 
     if (usedSlots == 0) {
-        return (EXIT_FAILURE);
+        return (-1);
     }
 
     uint8_t numBytes = min(txFifoSize, usedSlots);
@@ -136,41 +141,41 @@ uint8_t nRF24L01P_ESB::writeTxFifo(uint8_t status) {
 
     cmd_W_TX_PAYLOAD(bytes, numBytes);
 
-    return (EXIT_SUCCESS);
+    return (0);
 }
 
-void nRF24L01P_ESB::handle_MAX_RT(uint8_t status) {
+void nRF24L01P_ESB::handle_MAX_RT() {
+    cmd_FLUSH_TX();
     writeShortRegister(Register_STATUS, STATUS_MAX_RT_MASK);
 }
 
-void nRF24L01P_ESB::handle_RX_DR(uint8_t status) {
+void nRF24L01P_ESB::handle_RX_DR() {
     uint8_t fifo_status;
 
     do {
-        uint8_t failure = readRxFifo(status);
+        int8_t rxStatus = readRxFifo();
 
-        if (failure) {
-            break;
+        if (rxStatus < 0) {
+            cmd_FLUSH_RX();
         }
 
+        writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
         fifo_status = readShortRegister(Register_FIFO_STATUS);
-    } while (readBit<uint8_t>(fifo_status, FIFO_STATUS_RX_EMPTY) == false);
-
-    writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
+    } while (not readBit<uint8_t>(fifo_status, FIFO_STATUS_RX_EMPTY));
 }
 
-void nRF24L01P_ESB::handle_TX_DS(uint8_t status) {
-    uint8_t fifo_status;
+void nRF24L01P_ESB::handle_TX_DS() {
+    // uint8_t fifo_status;
 
-    do {
-        uint8_t failure = writeTxFifo(status);
+    // do {
+    int8_t txStatus = writeTxFifo();
 
-        if (failure) {
-            break;
-        }
+    // if (txStatus < 0) {
+    //     break;
+    // }
 
-        fifo_status = readShortRegister(Register_FIFO_STATUS);
-    } while (readBit<uint8_t>(fifo_status, FIFO_STATUS_TX_FULL) == false);
+    // fifo_status = readShortRegister(Register_FIFO_STATUS);
+    // } while (readBit<uint8_t>(fifo_status, FIFO_STATUS_TX_FULL) == false);
 
     writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
 }
@@ -211,7 +216,7 @@ void nRF24L01P_ESB::enterTxMode() {
 
 void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     if (_operatingMode == operatingMode) {
-        return;
+        // return;
     }
 
     switch (operatingMode) {
