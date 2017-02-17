@@ -27,6 +27,10 @@ enum OperatingMode_t : uint8_t {
     OperatingMode_Tx
 };
 
+inline bool isPipeIndexValid(uint8_t pipeIndex) {
+    return (pipeIndex <= 5);
+}
+
 namespace xXx {
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {

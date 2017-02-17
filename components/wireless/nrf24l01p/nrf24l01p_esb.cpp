@@ -41,16 +41,16 @@ void nRF24L01P_ESB::setup() {
 
     // Enable Enhanced ShockBurst™
     uint8_t feature = 0;
-    AND_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK_MASK);
-    AND_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY_MASK);
-    AND_eq<uint8_t>(feature, FEATURE_EN_DPL_MASK);
+    OR_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK_MASK);
+    OR_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY_MASK);
+    OR_eq<uint8_t>(feature, FEATURE_EN_DPL_MASK);
     writeShortRegister(Register_FEATURE, feature);
 
     // Clear interrupts
     uint8_t status = 0;
-    AND_eq<uint8_t>(status, STATUS_MAX_RT_MASK);
-    AND_eq<uint8_t>(status, STATUS_RX_DR_MASK);
-    AND_eq<uint8_t>(status, STATUS_TX_DS_MASK);
+    OR_eq<uint8_t>(status, STATUS_MAX_RT_MASK);
+    OR_eq<uint8_t>(status, STATUS_RX_DR_MASK);
+    OR_eq<uint8_t>(status, STATUS_TX_DS_MASK);
     writeShortRegister(Register_STATUS, status);
 
     cmd_FLUSH_TX();

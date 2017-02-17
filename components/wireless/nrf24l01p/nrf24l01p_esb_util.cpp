@@ -9,14 +9,6 @@
 
 namespace xXx {
 
-static inline bool isPipeIndexValid(uint8_t pipeIndex) {
-    if (pipeIndex > 5) {
-        return (false);
-    } else {
-        return (true);
-    }
-}
-
 // ----- helper functions -----------------------------------------------------
 
 uint8_t nRF24L01P_ESB::readShortRegister(Register_t reg) {
