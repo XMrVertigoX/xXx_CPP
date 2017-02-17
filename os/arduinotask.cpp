@@ -7,8 +7,8 @@
 
 namespace xXx {
 
-ArduinoTask::ArduinoTask(uint16_t stackSize, uint8_t priority, char *friendlyName) : _handle(NULL) {
-    taskCreate(stackSize, priority, friendlyName);
+ArduinoTask::ArduinoTask(uint16_t stackSize, uint8_t priority) : _handle(NULL) {
+    taskCreate(stackSize, priority);
 }
 
 ArduinoTask::~ArduinoTask() {
@@ -28,8 +28,8 @@ void ArduinoTask::taskNotifyTake(bool clearCounter, TickType_t ticksToWait) {
     ulTaskNotifyTake(clearCounter, ticksToWait);
 }
 
-void ArduinoTask::taskCreate(uint16_t stackSize, uint8_t priority, char *friendlyName) {
-    xTaskCreate(taskFunction, friendlyName, stackSize, this, priority, &_handle);
+void ArduinoTask::taskCreate(uint16_t stackSize, uint8_t priority) {
+    xTaskCreate(taskFunction, NULL, stackSize, this, priority, &_handle);
 }
 
 void ArduinoTask::taskDelete() {
@@ -60,10 +60,6 @@ void ArduinoTask::taskResumeFromISR() {
 
 void ArduinoTask::taskSuspend() {
     vTaskSuspend(_handle);
-}
-
-char *ArduinoTask::getTaskName() {
-    return (pcTaskGetTaskName(_handle));
 }
 
 UBaseType_t ArduinoTask::getStackHighWaterMark() {
