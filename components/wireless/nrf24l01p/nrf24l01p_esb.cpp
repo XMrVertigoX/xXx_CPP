@@ -121,7 +121,7 @@ uint8_t nRF24L01P_ESB::writeTxFifo(uint8_t status) {
         return (EXIT_FAILURE);
     }
 
-    UBaseType_t usedSlots = _txQueue->usedSlots();
+    UBaseType_t usedSlots = _txQueue->queueMessagesWaiting();
 
     if (usedSlots == 0) {
         return (EXIT_FAILURE);

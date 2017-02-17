@@ -10,13 +10,16 @@ template <typename TYPE> class Queue {
   public:
     Queue(UBaseType_t size);
     ~Queue();
-    BaseType_t dequeue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY,
-                       bool isr = false);
-    BaseType_t enqueue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY,
-                       bool isr = false);
-
-    UBaseType_t freeSlots();
-    UBaseType_t usedSlots(bool isr = false);
+    BaseType_t dequeue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY);
+    BaseType_t dequeueFromISR(TYPE &element);
+    BaseType_t enqueue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY);
+    BaseType_t enqueueFromISR(TYPE &element);
+    UBaseType_t queueSpacesAvailable();
+    UBaseType_t queueSpacesAvailableFromISR();
+    BaseType_t queuePeek(TYPE &element, TickType_t ticksToWait = portMAX_DELAY);
+    BaseType_t queuePeekFromISR(TYPE &element);
+    UBaseType_t queueMessagesWaiting();
+    UBaseType_t queueMessagesWaitingFromISR();
 
   private:
     QueueHandle_t _queue;
@@ -30,35 +33,53 @@ template <typename TYPE> Queue<TYPE>::~Queue() {
     vQueueDelete(_queue);
 }
 
-template <typename TYPE>
-BaseType_t Queue<TYPE>::enqueue(TYPE &element, TickType_t ticksToWait,
-                                bool isr) {
-    if (isr) {
-        return (xQueueSendToBackFromISR(_queue, &element, pdFALSE));
-    } else {
-        return (xQueueSendToBack(_queue, &element, ticksToWait));
-    }
+template <typename TYPE> BaseType_t Queue<TYPE>::enqueue(TYPE &element, TickType_t ticksToWait) {
+    return (xQueueSendToBack(_queue, &element, ticksToWait));
 }
 
-template <typename TYPE>
-BaseType_t Queue<TYPE>::dequeue(TYPE &element, TickType_t ticksToWait,
-                                bool isr) {
-    if (isr) {
-        return (xQueueReceiveFromISR(_queue, &element, pdFALSE));
-    } else {
-        return (xQueueReceive(_queue, &element, ticksToWait));
-    }
+template <typename TYPE> BaseType_t Queue<TYPE>::enqueueFromISR(TYPE &element) {
+    BaseType_t higherPriorityTaskWoken, success;
+
+    success = xQueueSendToBackFromISR(_queue, &element, &higherPriorityTaskWoken);
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    return (success);
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::usedSlots(bool isr) {
-    if (isr) {
-        return (uxQueueMessagesWaitingFromISR(_queue));
-    } else {
-        return (uxQueueMessagesWaiting(_queue));
-    }
+template <typename TYPE> BaseType_t Queue<TYPE>::dequeue(TYPE &element, TickType_t ticksToWait) {
+    return (xQueueReceive(_queue, &element, ticksToWait));
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::freeSlots() {
+template <typename TYPE> BaseType_t Queue<TYPE>::dequeueFromISR(TYPE &element) {
+    BaseType_t higherPriorityTaskWoken, success;
+
+    success = xQueueReceiveFromISR(_queue, &element, &higherPriorityTaskWoken);
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    return (success);
+}
+
+template <typename TYPE> BaseType_t Queue<TYPE>::queuePeek(TYPE &element, TickType_t ticksToWait) {
+    return (xQueuePeek(_queue, &element, ticksToWait));
+}
+
+template <typename TYPE> BaseType_t Queue<TYPE>::queuePeekFromISR(TYPE &element) {
+    return (xQueuePeekFromISR(_queue, &element));
+}
+
+template <typename TYPE> UBaseType_t Queue<TYPE>::queueMessagesWaiting() {
+    return (uxQueueMessagesWaiting(_queue));
+}
+
+template <typename TYPE> UBaseType_t Queue<TYPE>::queueMessagesWaitingFromISR() {
+    return (uxQueueMessagesWaitingFromISR(_queue));
+}
+
+template <typename TYPE> UBaseType_t Queue<TYPE>::queueSpacesAvailable() {
+    return (uxQueueSpacesAvailable(_queue));
+}
+
+template <typename TYPE> UBaseType_t Queue<TYPE>::queueSpacesAvailableFromISR() {
     return (uxQueueSpacesAvailable(_queue));
 }
 
