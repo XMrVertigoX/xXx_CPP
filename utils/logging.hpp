@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #if defined(NDEBUG)
 #define BUFFER(...)
