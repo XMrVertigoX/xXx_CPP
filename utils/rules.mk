@@ -34,6 +34,7 @@ COMMON_CFLAGS += -fdata-sections
 COMMON_CFLAGS += -ffunction-sections
 COMMON_CFLAGS += -fno-builtin
 COMMON_CFLAGS += -fno-exceptions
+COMMON_CFLAGS += -fno-strict-aliasing
 COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -nostdlib
 
@@ -60,7 +61,7 @@ _LIBFLAGS = $(addprefix -l,$(LIBRARIES))
 
 # ----- Sources and objects ---------------------------------------------------
 
-_SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp %.s,$(SOURCE_FILES))))
+_SOURCE_FILES = $(sort $(realpath $(filter %.c %.cpp %.s %.S,$(SOURCE_FILES))))
 _OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(_SOURCE_FILES)))
 
 _DEPENDENCY_FILES = $(addsuffix .d,$(_OUTPUT_FILES))
@@ -87,6 +88,11 @@ $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(OBJCOPY) -O binary $< $@
 
 $(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@echo "$<"
+
+$(OUTPUT_DIR)/%.o: /%.S $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "$<"
