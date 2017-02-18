@@ -15,14 +15,16 @@ endif
 
 BINARY     = $(PROJECT_NAME).bin
 EXECUTABLE = $(PROJECT_NAME).elf
+HEXARY     = $(PROJECT_NAME).hex
 MAPFILE    = $(PROJECT_NAME).map
 
 ifndef OUTPUT_DIR
 OUTPUT_DIR = _out
 endif
 
-vpath %.elf $(OUTPUT_DIR)
 vpath %.bin $(OUTPUT_DIR)
+vpath %.elf $(OUTPUT_DIR)
+vpath %.hex $(OUTPUT_DIR)
 
 # ----- Flags -----------------------------------------------------------------
 
@@ -48,7 +50,7 @@ CPPFLAGS += -MP
 CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 
-ifneq ($(TOOLCHAIN_PREFIX), avr-)
+ifeq ($(TOOLCHAIN_PREFIX), arm-none-eabi-)
 LDFLAGS += --specs=nano.specs
 LDFLAGS += --specs=nosys.specs
 endif
@@ -71,7 +73,7 @@ _OBJECT_FILES     = $(addsuffix .o,$(_OUTPUT_FILES))
 
 .PHONY: all clean
 
-all: $(EXECUTABLE) $(BINARY)
+all: $(EXECUTABLE) $(BINARY) $(HEXARY)
 	@echo # New line for better reading
 	$(SIZE) $<
 	@echo # Another new line for even better reading
@@ -86,6 +88,10 @@ $(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
+	
+$(OUTPUT_DIR)/$(HEXARY): $(EXECUTABLE)
+	$(MKDIR) $(dir $@)
+	$(OBJCOPY) -O ihex $< $@
 
 $(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
