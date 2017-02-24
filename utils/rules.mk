@@ -29,6 +29,7 @@ vpath %.hex $(OUTPUT_DIR)
 # ----- Flags -----------------------------------------------------------------
 
 GCCFLAGS += -fdiagnostics-color=always
+GCCFLAGS += -flto
 
 ASMFLAGS +=
 
