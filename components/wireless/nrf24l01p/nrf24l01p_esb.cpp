@@ -12,16 +12,27 @@
 
 #include <nRF24L01_config.h>
 
-#define LAMBDA []
-
+#define LAMBDA(params) [](params)
+#define max(a, b) (a > b ? a : b)
 #define min(a, b) (a < b ? a : b)
 
 namespace xXx {
 
-const uint8_t txSettling = 130;
-const uint8_t rxSettling = 130;
-const uint8_t txFifoSize = 32;
-const uint8_t rxFifoSize = 32;
+static const uint8_t txSettling = 130;
+static const uint8_t rxSettling = 130;
+static const uint8_t txFifoSize = 32;
+static const uint8_t rxFifoSize = 32;
+
+static inline bool isPipeIndexValid(uint8_t pipeIndex) {
+    return (pipeIndex > 5 ? false : true);
+}
+
+static inline uint8_t extractPipeIndex(uint8_t status) {
+    AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
+    RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
+
+    return (status);
+}
 
 nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
     : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi) {}
@@ -79,15 +90,8 @@ void nRF24L01P_ESB::loop() {
     }
 }
 
-static inline uint8_t extractPipeIndex(uint8_t status) {
-    AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
-    RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
-
-    return (status);
-}
-
 int8_t nRF24L01P_ESB::readRxFifo() {
-    int8_t status     = cmd_NOP();
+    int8_t status = cmd_NOP();
     uint8_t pipeIndex = extractPipeIndex(status);
 
     if (pipeIndex > 5) {
@@ -218,7 +222,7 @@ void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
 }
 
 void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t rxAddress) {
-    assert(pipe <= 5);
+    assert(isPipeIndexValid(pipe));
 
     setRxAddress(pipe, rxAddress);
     enableDataPipe(pipe);
@@ -251,7 +255,7 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     _operatingMode = operatingMode;
 }
 
-int8_t nRF24L01P_ESB::transmit(Queue<uint8_t> &txQueue) {
+int8_t nRF24L01P_ESB::send(Queue<uint8_t> &txQueue) {
     int8_t txStatus;
 
     if (_txQueue != NULL) {

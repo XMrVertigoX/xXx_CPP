@@ -9,32 +9,40 @@
 #include <xXx/os/arduinotask.hpp>
 #include <xXx/templates/queue.hpp>
 
-enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
+enum DataRate_t : uint8_t
+{
+    DataRate_1MBPS,
+    DataRate_2MBPS,
+    DataRate_250KBPS
+};
 
-enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
+enum CRCConfig_t : uint8_t
+{
+    CRCConfig_DISABLED,
+    CRCConfig_1Byte,
+    CrcConfig_2Bytes
+};
 
-enum OutputPower_t : uint8_t {
+enum OutputPower_t : uint8_t
+{
     OutputPower_18dBm,
     OutputPower_12dBm,
     OutputPower_6dBm,
     OutputPower_0dBm
 };
 
-enum OperatingMode_t : uint8_t {
+enum OperatingMode_t : uint8_t
+{
     OperatingMode_Shutdown,
     OperatingMode_Standby,
     OperatingMode_Rx,
     OperatingMode_Tx
 };
 
-inline bool isPipeIndexValid(uint8_t pipeIndex) {
-    return (pipeIndex <= 5);
-}
-
 namespace xXx {
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
-  private:
+   private:
     OperatingMode_t _operatingMode      = OperatingMode_Shutdown;
     Queue_Handle_t<uint8_t> _txQueue    = NULL;
     Queue_Handle_t<uint8_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
@@ -68,7 +76,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     void enableDataPipe(uint8_t pipeIndex);
     void disableDataPipe(uint8_t pipeIndex);
 
-  public:
+   public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority);
     ~nRF24L01P_ESB();
 
@@ -76,7 +84,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
-    int8_t transmit(Queue<uint8_t> &txQueue);
+    int8_t send(Queue<uint8_t> &txQueue);
 
     int8_t getChannel();
     void setChannel(int8_t channel);
@@ -98,4 +106,4 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
 
 } /* namespace xXx */
 
-#endif // NRF24L01P_ESB_HPP_
+#endif  // NRF24L01P_ESB_HPP_
