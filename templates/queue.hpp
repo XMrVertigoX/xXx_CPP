@@ -8,7 +8,7 @@ namespace xXx {
 
 template <typename TYPE>
 class Queue {
-  public:
+   public:
     Queue(UBaseType_t size);
     ~Queue();
     BaseType_t dequeue(TYPE &element, TickType_t ticksToWait = portMAX_DELAY);
@@ -22,7 +22,7 @@ class Queue {
     UBaseType_t queueMessagesWaiting();
     UBaseType_t queueMessagesWaitingFromISR();
 
-  private:
+   private:
     QueueHandle_t _queue;
 };
 

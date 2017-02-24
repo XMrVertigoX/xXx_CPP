@@ -91,7 +91,7 @@ void nRF24L01P_ESB::loop() {
 }
 
 int8_t nRF24L01P_ESB::readRxFifo() {
-    int8_t status = cmd_NOP();
+    int8_t status     = cmd_NOP();
     uint8_t pipeIndex = extractPipeIndex(status);
 
     if (pipeIndex > 5) {
