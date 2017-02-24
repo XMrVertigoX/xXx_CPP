@@ -24,7 +24,7 @@ void ArduinoTask::taskDelay(TickType_t ticksToDelay) {
     vTaskDelay(ticksToDelay);
 }
 
-void ArduinoTask::taskNotifyTake(bool clearCounter, TickType_t ticksToWait) {
+void ArduinoTask::taskNotifyTake(BaseType_t clearCounter, TickType_t ticksToWait) {
     ulTaskNotifyTake(clearCounter, ticksToWait);
 }
 

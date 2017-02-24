@@ -60,7 +60,7 @@ void nRF24L01P_ESB::setup() {
 }
 
 void nRF24L01P_ESB::loop() {
-    taskNotifyTake(false);
+    taskNotifyTake(pdFALSE);
 
     int8_t status = cmd_NOP();
 
@@ -76,9 +76,9 @@ void nRF24L01P_ESB::loop() {
         handle_TX_DS();
     }
 
-    if (not readBit<uint8_t>(status, STATUS_TX_FULL)) {
-        writeTxFifo();
-    }
+    // if (not readBit<uint8_t>(status, STATUS_TX_FULL)) {
+    writeTxFifo();
+        // }
 }
 
 static inline uint8_t extractPipeIndex(uint8_t status) {
@@ -148,25 +148,26 @@ void nRF24L01P_ESB::handle_MAX_RT() {
 }
 
 void nRF24L01P_ESB::handle_RX_DR() {
-    uint8_t fifo_status;
+    // uint8_t fifo_status;
 
-    do {
-        int8_t rxStatus = readRxFifo();
+    // do {
+    int8_t rxStatus = readRxFifo();
 
-        if (rxStatus < 0) {
-            cmd_FLUSH_RX();
-        }
+    // if (rxStatus < 0) {
+    // cmd_FLUSH_RX();
+    // }
 
-        writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
-        fifo_status = readShortRegister(Register_FIFO_STATUS);
-    } while (not readBit<uint8_t>(fifo_status, FIFO_STATUS_RX_EMPTY));
+    // fifo_status = readShortRegister(Register_FIFO_STATUS);
+    // } while (not readBit<uint8_t>(fifo_status, FIFO_STATUS_RX_EMPTY));
+
+    writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
 }
 
 void nRF24L01P_ESB::handle_TX_DS() {
     // uint8_t fifo_status;
 
     // do {
-    int8_t txStatus = writeTxFifo();
+    // int8_t txStatus = writeTxFifo();
 
     // if (txStatus < 0) {
     //     break;

@@ -23,7 +23,7 @@ class ArduinoTask {
     virtual void loop()  = 0;
 
     void taskDelay(TickType_t ticksToDelay);
-    void taskNotifyTake(bool clearCounter = false, TickType_t ticksToWait = portMAX_DELAY);
+    void taskNotifyTake(BaseType_t clearCounter = pdTRUE, TickType_t ticksToWait = portMAX_DELAY);
 
   public:
     void taskCreate(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority);
