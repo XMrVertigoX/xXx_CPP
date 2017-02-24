@@ -26,7 +26,9 @@ const uint8_t rxFifoSize = 32;
 nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
     : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi) {}
 
-nRF24L01P_ESB::~nRF24L01P_ESB() {}
+nRF24L01P_ESB::~nRF24L01P_ESB() {
+    switchOperatingMode(OperatingMode_Shutdown);
+}
 
 void nRF24L01P_ESB::transmit_receive(Queue<uint8_t> &queue) {
     _spi.transmit_receive(queue);
@@ -226,7 +228,7 @@ void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint6
 
 void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     if (_operatingMode == operatingMode) {
-        // TODO: Check if early exit is useful or should be used to enter redefine state
+        // TODO: Check if early exit is useful or should be used to redefine state
         // return;
     }
 
@@ -249,14 +251,16 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     _operatingMode = operatingMode;
 }
 
-int8_t nRF24L01P_ESB::transfer(Queue<uint8_t> &txQueue) {
+int8_t nRF24L01P_ESB::transmit(Queue<uint8_t> &txQueue) {
+    int8_t txStatus;
+
     if (_txQueue != NULL) {
         return (-1);
     }
 
     _txQueue = &txQueue;
 
-    int8_t txStatus = writeTxFifo();
+    txStatus = writeTxFifo();
 
     if (txStatus < 0) {
         _txQueue = NULL;
