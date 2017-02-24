@@ -72,9 +72,11 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority);
     ~nRF24L01P_ESB();
 
-    void configureTxPipe(Queue<uint8_t> &txQueue, uint64_t address = 0);
-    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address = 0);
+    void configureTxPipe(uint64_t address);
+    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
+
+    int8_t transfer(Queue<uint8_t> &txQueue);
 
     int8_t getChannel();
     void setChannel(int8_t channel);
