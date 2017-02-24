@@ -6,7 +6,8 @@
 
 namespace xXx {
 
-template <typename TYPE> class Queue {
+template <typename TYPE>
+class Queue {
   public:
     Queue(UBaseType_t size);
     ~Queue();
@@ -25,19 +26,23 @@ template <typename TYPE> class Queue {
     QueueHandle_t _queue;
 };
 
-template <typename TYPE> Queue<TYPE>::Queue(UBaseType_t size) : _queue(NULL) {
+template <typename TYPE>
+Queue<TYPE>::Queue(UBaseType_t size) : _queue(NULL) {
     _queue = xQueueCreate(size, sizeof(TYPE));
 }
 
-template <typename TYPE> Queue<TYPE>::~Queue() {
+template <typename TYPE>
+Queue<TYPE>::~Queue() {
     vQueueDelete(_queue);
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::enqueue(TYPE &element, TickType_t ticksToWait) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::enqueue(TYPE &element, TickType_t ticksToWait) {
     return (xQueueSendToBack(_queue, &element, ticksToWait));
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::enqueueFromISR(TYPE &element) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::enqueueFromISR(TYPE &element) {
     BaseType_t higherPriorityTaskWoken, success;
 
     success = xQueueSendToBackFromISR(_queue, &element, &higherPriorityTaskWoken);
@@ -46,11 +51,13 @@ template <typename TYPE> BaseType_t Queue<TYPE>::enqueueFromISR(TYPE &element) {
     return (success);
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::dequeue(TYPE &element, TickType_t ticksToWait) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::dequeue(TYPE &element, TickType_t ticksToWait) {
     return (xQueueReceive(_queue, &element, ticksToWait));
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::dequeueFromISR(TYPE &element) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::dequeueFromISR(TYPE &element) {
     BaseType_t higherPriorityTaskWoken, success;
 
     success = xQueueReceiveFromISR(_queue, &element, &higherPriorityTaskWoken);
@@ -59,31 +66,38 @@ template <typename TYPE> BaseType_t Queue<TYPE>::dequeueFromISR(TYPE &element) {
     return (success);
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::queuePeek(TYPE &element, TickType_t ticksToWait) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::queuePeek(TYPE &element, TickType_t ticksToWait) {
     return (xQueuePeek(_queue, &element, ticksToWait));
 }
 
-template <typename TYPE> BaseType_t Queue<TYPE>::queuePeekFromISR(TYPE &element) {
+template <typename TYPE>
+BaseType_t Queue<TYPE>::queuePeekFromISR(TYPE &element) {
     return (xQueuePeekFromISR(_queue, &element));
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::queueMessagesWaiting() {
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::queueMessagesWaiting() {
     return (uxQueueMessagesWaiting(_queue));
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::queueMessagesWaitingFromISR() {
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::queueMessagesWaitingFromISR() {
     return (uxQueueMessagesWaitingFromISR(_queue));
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::queueSpacesAvailable() {
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::queueSpacesAvailable() {
     return (uxQueueSpacesAvailable(_queue));
 }
 
-template <typename TYPE> UBaseType_t Queue<TYPE>::queueSpacesAvailableFromISR() {
+template <typename TYPE>
+UBaseType_t Queue<TYPE>::queueSpacesAvailableFromISR() {
     return (uxQueueSpacesAvailable(_queue));
 }
 
-template <typename TYPE> using Queue_Handle_t = Queue<TYPE> *;
+template <typename TYPE>
+using Queue_Handle_t = Queue<TYPE> *;
 
 } /* namespace xXx */
 

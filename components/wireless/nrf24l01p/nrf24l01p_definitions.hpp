@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-enum Command_t : uint8_t {
+enum Command_t : uint8_t
+{
     Command_R_REGISTER         = 0b00000000,
     Command_W_REGISTER         = 0b00100000,
     Command_R_RX_PAYLOAD       = 0b01100001,
@@ -17,7 +18,8 @@ enum Command_t : uint8_t {
     Command_NOP                = 0b11111111,
 };
 
-enum Register_t : uint8_t {
+enum Register_t : uint8_t
+{
     Register_CONFIG      = 0x00,
     Register_EN_AA       = 0x01,
     Register_EN_RXADDR   = 0x02,
@@ -46,7 +48,8 @@ enum Register_t : uint8_t {
     Register_FEATURE     = 0x1D
 };
 
-enum CONFIG_t : uint8_t {
+enum CONFIG_t : uint8_t
+{
     CONFIG_PRIM_RX          = 0,
     CONFIG_PRIM_RX_MASK     = 0b00000001,
     CONFIG_PWR_UP           = 1,
@@ -63,36 +66,50 @@ enum CONFIG_t : uint8_t {
     CONFIG_MASK_RX_DR_MASK  = 0b01000000
 };
 
-enum EN_AA_t : uint8_t {
-    ENAA_P0 = 0,
-    ENAA_P1 = 1,
-    ENAA_P2 = 2,
-    ENAA_P3 = 3,
-    ENAA_P4 = 4,
-    ENAA_P5 = 5
+enum EN_AA_t : uint8_t
+{
+    ENAA_P0,
+    ENAA_P1,
+    ENAA_P2,
+    ENAA_P3,
+    ENAA_P4,
+    ENAA_P5
 };
 
-enum EN_RXADDR_t : uint8_t {
-    ERX_P0 = 0,
-    ERX_P1 = 1,
-    ERX_P2 = 2,
-    ERX_P3 = 3,
-    ERX_P4 = 4,
-    ERX_P5 = 5
+enum EN_RXADDR_t : uint8_t
+{
+    ERX_P0,
+    ERX_P1,
+    ERX_P2,
+    ERX_P3,
+    ERX_P4,
+    ERX_P5
 };
 
-enum SETUP_AW_t : uint8_t { SETUP_AW = 0, SETUP_AW_DEFAULT = 0b11, SETUP_AW_MASK = 0b00000011 };
+enum SETUP_AW_t : uint8_t
+{
+    SETUP_AW         = 0,
+    SETUP_AW_DEFAULT = 0b11,
+    SETUP_AW_MASK    = 0b00000011
+};
 
-enum SETUP_RETR_t : uint8_t {
+enum SETUP_RETR_t : uint8_t
+{
     SETUP_RETR_ARC      = 0,
     SETUP_RETR_ARC_MASK = 0b00001111,
     SETUP_RETR_ARD      = 4,
     SETUP_RETR_ARD_MASK = 0b11110000
 };
 
-enum RF_CH_t : uint8_t { RF_CH = 0, RF_CH_DEFAULT = 2, RF_CH_MASK = 0b01111111 };
+enum RF_CH_t : uint8_t
+{
+    RF_CH         = 0,
+    RF_CH_DEFAULT = 2,
+    RF_CH_MASK    = 0b01111111
+};
 
-enum RF_SETUP_t : uint8_t {
+enum RF_SETUP_t : uint8_t
+{
     RF_SETUP_RF_PWR          = 1,
     RF_SETUP_RF_PWR_MASK     = 0b00000110,
     RF_SETUP_RF_DR_HIGH      = 3,
@@ -105,7 +122,8 @@ enum RF_SETUP_t : uint8_t {
     RF_SETUP_CONT_WAVE_MASK  = 0b10000000
 };
 
-enum STATUS_t : uint8_t {
+enum STATUS_t : uint8_t
+{
     STATUS_TX_FULL      = 0,
     STATUS_TX_FULL_MASK = 0b00000001,
     STATUS_RX_P_NO      = 1,
@@ -118,42 +136,101 @@ enum STATUS_t : uint8_t {
     STATUS_RX_DR_MASK   = 0b01000000
 };
 
-enum OBSERVE_TX_t : uint8_t {
+enum OBSERVE_TX_t : uint8_t
+{
     OBSERVE_TX_ARC_CNT       = 0,
     OBSERVE_TX_ARC_CNT_MASK  = 0b00001111,
     OBSERVE_TX_PLOS_CNT      = 4,
     OBSERVE_TX_PLOS_CNT_MASK = 0b11110000
 };
 
-enum RPD_t : uint8_t { RPD_RPD = 0, RPD_RPD_DEFAULT = 0b0, RPD_RPD_MASK = 0b00000001 };
+enum RPD_t : uint8_t
+{
+    RPD_RPD         = 0,
+    RPD_RPD_DEFAULT = 0b0,
+    RPD_RPD_MASK    = 0b00000001
+};
 
-enum RX_ADDR_P0_t : uint64_t { RX_ADDR_P0_MASK = 0x000000FFFFFFFFFF, RX_ADDR_P0_LENGTH = 5 };
+enum RX_ADDR_P0_t : uint64_t
+{
+    RX_ADDR_P0_MASK   = 0x000000FFFFFFFFFF,
+    RX_ADDR_P0_LENGTH = 5
+};
 
-enum RX_ADDR_P1_t : uint64_t { RX_ADDR_P1_MASK = 0x000000FFFFFFFFFF, RX_ADDR_P1_LENGTH = 5 };
+enum RX_ADDR_P1_t : uint64_t
+{
+    RX_ADDR_P1_MASK   = 0x000000FFFFFFFFFF,
+    RX_ADDR_P1_LENGTH = 5
+};
 
-enum RX_ADDR_P2_t : uint64_t { RX_ADDR_P2_MASK = 0x00000000000000FF, RX_ADDR_P2_LENGTH = 1 };
+enum RX_ADDR_P2_t : uint64_t
+{
+    RX_ADDR_P2_MASK   = 0x00000000000000FF,
+    RX_ADDR_P2_LENGTH = 1
+};
 
-enum RX_ADDR_P3_t : uint64_t { RX_ADDR_P3_MASK = 0x00000000000000FF, RX_ADDR_P3_LENGTH = 1 };
+enum RX_ADDR_P3_t : uint64_t
+{
+    RX_ADDR_P3_MASK   = 0x00000000000000FF,
+    RX_ADDR_P3_LENGTH = 1
+};
 
-enum RX_ADDR_P4_t : uint64_t { RX_ADDR_P4_MASK = 0x00000000000000FF, RX_ADDR_P4_LENGTH = 1 };
+enum RX_ADDR_P4_t : uint64_t
+{
+    RX_ADDR_P4_MASK   = 0x00000000000000FF,
+    RX_ADDR_P4_LENGTH = 1
+};
 
-enum RX_ADDR_P5_t : uint64_t { RX_ADDR_P5_MASK = 0x00000000000000FF, RX_ADDR_P5_LENGTH = 1 };
+enum RX_ADDR_P5_t : uint64_t
+{
+    RX_ADDR_P5_MASK   = 0x00000000000000FF,
+    RX_ADDR_P5_LENGTH = 1
+};
 
-enum TX_ADDR_t : uint64_t { TX_ADDR_MASK = 0x000000FFFFFFFFFF, TX_ADDR_LENGTH = 5 };
+enum TX_ADDR_t : uint64_t
+{
+    TX_ADDR_MASK   = 0x000000FFFFFFFFFF,
+    TX_ADDR_LENGTH = 5
+};
 
-enum RX_PW_P0_t : uint8_t { RX_PW_P0_DEFAULT = 0, RX_PW_P0_MASK = 0b00011111 };
+enum RX_PW_P0_t : uint8_t
+{
+    RX_PW_P0_DEFAULT = 0,
+    RX_PW_P0_MASK    = 0b00011111
+};
 
-enum RX_PW_P1_t : uint8_t { RX_PW_P1_DEFAULT = 0, RX_PW_P1_MASK = 0b00011111 };
+enum RX_PW_P1_t : uint8_t
+{
+    RX_PW_P1_DEFAULT = 0,
+    RX_PW_P1_MASK    = 0b00011111
+};
 
-enum RX_PW_P2_t : uint8_t { RX_PW_P2_DEFAULT = 0, RX_PW_P2_MASK = 0b00011111 };
+enum RX_PW_P2_t : uint8_t
+{
+    RX_PW_P2_DEFAULT = 0,
+    RX_PW_P2_MASK    = 0b00011111
+};
 
-enum RX_PW_P3_t : uint8_t { RX_PW_P3_DEFAULT = 0, RX_PW_P3_MASK = 0b00011111 };
+enum RX_PW_P3_t : uint8_t
+{
+    RX_PW_P3_DEFAULT = 0,
+    RX_PW_P3_MASK    = 0b00011111
+};
 
-enum RX_PW_P4_t : uint8_t { RX_PW_P4_DEFAULT = 0, RX_PW_P4_MASK = 0b00011111 };
+enum RX_PW_P4_t : uint8_t
+{
+    RX_PW_P4_DEFAULT = 0,
+    RX_PW_P4_MASK    = 0b00011111
+};
 
-enum RX_PW_P5_t : uint8_t { RX_PW_P5_DEFAULT = 0, RX_PW_P5_MASK = 0b00011111 };
+enum RX_PW_P5_t : uint8_t
+{
+    RX_PW_P5_DEFAULT = 0,
+    RX_PW_P5_MASK    = 0b00011111
+};
 
-enum FIFO_STATUS_t : uint8_t {
+enum FIFO_STATUS_t : uint8_t
+{
     FIFO_STATUS_RX_EMPTY = 0,
     FIFO_STATUS_RX_FULL  = 1,
     FIFO_STATUS_TX_EMPTY = 4,
@@ -161,16 +238,18 @@ enum FIFO_STATUS_t : uint8_t {
     FIFO_STATUS_TX_REUSE = 6
 };
 
-enum DYNPD_t : uint8_t {
-    DYNPD_DPL_P0 = 0,
-    DYNPD_DPL_P1 = 1,
-    DYNPD_DPL_P2 = 2,
-    DYNPD_DPL_P3 = 3,
-    DYNPD_DPL_P4 = 4,
-    DYNPD_DPL_P5 = 5
+enum DYNPD_t : uint8_t
+{
+    DYNPD_DPL_P0,
+    DYNPD_DPL_P1,
+    DYNPD_DPL_P2,
+    DYNPD_DPL_P3,
+    DYNPD_DPL_P4,
+    DYNPD_DPL_P5
 };
 
-enum FEATURE_t : uint8_t {
+enum FEATURE_t : uint8_t
+{
     FEATURE_EN_DYN_ACK      = 0,
     FEATURE_EN_DYN_ACK_MASK = 0b00000001,
     FEATURE_EN_ACK_PAY      = 1,
@@ -179,4 +258,4 @@ enum FEATURE_t : uint8_t {
     FEATURE_EN_DPL_MASK     = 0b00000100
 };
 
-#endif // NRF24L01P_DEFINITIONS_HPP_
+#endif  // NRF24L01P_DEFINITIONS_HPP_
