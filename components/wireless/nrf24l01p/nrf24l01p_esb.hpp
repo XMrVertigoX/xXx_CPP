@@ -1,3 +1,4 @@
+
 #if not defined(NRF24L01P_ESB_HPP_)
 #define NRF24L01P_ESB_HPP_
 
@@ -6,33 +7,21 @@
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
-#include <xXx/os/arduinotask.hpp>
+#include <xXx/os/simpletask.hpp>
 #include <xXx/templates/queue.hpp>
 
-enum DataRate_t : uint8_t
-{
-    DataRate_1MBPS,
-    DataRate_2MBPS,
-    DataRate_250KBPS
-};
+enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
-enum CRCConfig_t : uint8_t
-{
-    CRCConfig_DISABLED,
-    CRCConfig_1Byte,
-    CrcConfig_2Bytes
-};
+enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
 
-enum OutputPower_t : uint8_t
-{
+enum OutputPower_t : uint8_t {
     OutputPower_18dBm,
     OutputPower_12dBm,
     OutputPower_6dBm,
     OutputPower_0dBm
 };
 
-enum OperatingMode_t : uint8_t
-{
+enum OperatingMode_t : uint8_t {
     OperatingMode_Shutdown,
     OperatingMode_Standby,
     OperatingMode_Rx,
@@ -41,7 +30,7 @@ enum OperatingMode_t : uint8_t
 
 namespace xXx {
 
-class nRF24L01P_ESB : public nRF24L01P_BASE, public ArduinoTask {
+class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
     OperatingMode_t _operatingMode      = OperatingMode_Shutdown;
     Queue_Handle_t<uint8_t> _txQueue    = NULL;

@@ -12,12 +12,7 @@ AllowShortLoopsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
 ColumnLimit: 100
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-IndentCaseLabels: true
 IndentWidth: 4
 ReflowComments: false
 SortIncludes: true
-
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterEnum: true
 ---
