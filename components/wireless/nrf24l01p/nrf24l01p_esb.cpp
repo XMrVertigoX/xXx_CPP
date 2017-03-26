@@ -35,7 +35,7 @@ static inline uint8_t extractPipeIndex(uint8_t status) {
 }
 
 nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
-    : ArduinoTask(256, priority), _ce(ce), _irq(irq), _spi(spi) {}
+    : _ce(ce), _irq(irq), _spi(spi) {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {
     switchOperatingMode(OperatingMode_Shutdown);

@@ -1,5 +1,5 @@
-#ifndef ARDUINOTASK_HPP_
-#define ARDUINOTASK_HPP_
+#ifndef SIMPLETASK_HPP_
+#define SIMPLETASK_HPP_
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -9,23 +9,22 @@ const uint8_t defaultPriority   = tskIDLE_PRIORITY + 1;
 
 namespace xXx {
 
-class ArduinoTask {
-  private:
-    static void taskFunction(void *self);
-
-  protected:
-    TaskHandle_t _handle;
-
-    ArduinoTask(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority);
-    virtual ~ArduinoTask();
+class SimpleTask {
+   private:
+    TaskHandle_t _handle = NULL;
+    uint8_t _priority    = defaultPriority;
+    uint16_t _stackSize  = defaultStackSize;
 
     virtual void setup() = 0;
     virtual void loop()  = 0;
 
+   protected:
+    virtual ~SimpleTask();
+
     void taskDelay(TickType_t ticksToDelay);
     void taskNotifyTake(BaseType_t clearCounter = pdTRUE, TickType_t ticksToWait = portMAX_DELAY);
 
-  public:
+   public:
     void taskCreate(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority);
     void taskDelete();
     void taskNotify(uint32_t value = 0, eNotifyAction action = eIncrement);
@@ -39,4 +38,4 @@ class ArduinoTask {
 
 } /* namespace xXx */
 
-#endif /* ARDUINOTASK_HPP_ */
+#endif /* SIMPLETASK_HPP_ */

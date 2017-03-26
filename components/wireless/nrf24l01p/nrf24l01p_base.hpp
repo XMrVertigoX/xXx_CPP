@@ -7,12 +7,12 @@
 namespace xXx {
 
 class nRF24L01P_BASE {
-  private:
+   private:
     int8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
 
     virtual void transmit_receive(Queue<uint8_t> &queue) = 0;
 
-  protected:
+   protected:
     int8_t cmd_R_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
     int8_t cmd_W_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
     int8_t cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes);
@@ -25,7 +25,7 @@ class nRF24L01P_BASE {
     int8_t cmd_W_TX_PAYLOAD_NOACK(uint8_t bytes[], size_t numBytes);
     int8_t cmd_NOP();
 
-  public:
+   public:
     nRF24L01P_BASE();
     virtual ~nRF24L01P_BASE();
 };
