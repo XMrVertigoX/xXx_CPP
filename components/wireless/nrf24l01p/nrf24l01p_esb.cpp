@@ -13,8 +13,6 @@
 #include <nRF24L01_config.h>
 
 #define LAMBDA(params) [](params)
-#define max(a, b) (a > b ? a : b)
-#define min(a, b) (a < b ? a : b)
 
 namespace xXx {
 
@@ -34,8 +32,7 @@ static inline uint8_t extractPipeIndex(uint8_t status) {
     return (status);
 }
 
-nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq, uint8_t priority)
-    : _ce(ce), _irq(irq), _spi(spi) {}
+nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq) : _spi(spi), _ce(ce), _irq(irq) {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {
     switchOperatingMode(OperatingMode_Shutdown);
@@ -132,7 +129,7 @@ int8_t nRF24L01P_ESB::writeTxFifo() {
         return (-1);
     }
 
-    uint8_t numBytes = min(txFifoSize, usedSlots);
+    uint8_t numBytes = (txFifoSize < usedSlots ? txFifoSize : usedSlots);
     uint8_t bytes[numBytes];
 
     for (int i = 0; i < numBytes; ++i) {
@@ -348,6 +345,8 @@ void nRF24L01P_ESB::setCrcConfig(CRCConfig_t crc) {
     }
 
     writeShortRegister(Register_CONFIG, config);
+
+    assert(crc == getCrcConfig());
 }
 
 int8_t nRF24L01P_ESB::getChannel() {
@@ -360,6 +359,8 @@ void nRF24L01P_ESB::setChannel(int8_t channel) {
     if (channel < 0) {
         writeShortRegister(Register_RF_CH, channel);
     }
+
+    assert(channel == getChannel());
 }
 
 DataRate_t nRF24L01P_ESB::getDataRate() {
@@ -395,6 +396,8 @@ void nRF24L01P_ESB::setDataRate(DataRate_t dataRate) {
     }
 
     writeShortRegister(Register_RF_SETUP, rfSetup);
+
+    assert(dataRate == getDataRate());
 }
 
 OutputPower_t nRF24L01P_ESB::getOutputPower() {
@@ -413,6 +416,8 @@ void nRF24L01P_ESB::setOutputPower(OutputPower_t level) {
     OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(level, RF_SETUP_RF_PWR));
 
     writeShortRegister(Register_RF_SETUP, rf_setup);
+
+    assert(level == getOutputPower());
 }
 
 uint8_t nRF24L01P_ESB::getRetryCount() {
@@ -542,6 +547,8 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t address) {
     uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(addressRegister, rx_addr, addressLength);
+
+    assert(address == getRxAddress(pipe));
 }
 
 uint64_t nRF24L01P_ESB::getTxAddress() {
@@ -557,6 +564,8 @@ void nRF24L01P_ESB::setTxAddress(uint64_t address) {
     uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
 
     cmd_W_REGISTER(Register_TX_ADDR, tx_addr, TX_ADDR_LENGTH);
+
+    assert(address == getTxAddress());
 }
 
 } /* namespace xXx */
