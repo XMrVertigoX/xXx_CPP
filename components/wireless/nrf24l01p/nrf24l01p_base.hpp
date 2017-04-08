@@ -10,7 +10,7 @@ class nRF24L01P_BASE {
    private:
     int8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
 
-    virtual void transmit_receive(Queue<uint8_t> &queue) = 0;
+    virtual void transmit_receive(uint8_t bytes[], uint32_t numBytes) = 0;
 
    protected:
     int8_t cmd_R_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);

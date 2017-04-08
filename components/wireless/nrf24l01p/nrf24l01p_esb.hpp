@@ -40,7 +40,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     IGpio &_irq;
     ISpi &_spi;
 
-    void transmit_receive(Queue<uint8_t> &queue);
+    void transmit_receive(uint8_t bytes[], uint32_t numBytes);
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);

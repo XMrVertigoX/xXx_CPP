@@ -17,29 +17,22 @@ static uint8_t dummyByte = 0xFF;
 int8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[],
                                 size_t numBytes) {
     uint8_t status;
+    uint8_t bytes[numBytes + 1];
 
-    Queue<uint8_t> queue(numBytes + 1);
-
-    queue.enqueue(command);
+    bytes[0] = command;
 
     if (txBytes) {
-        for (int i = 0; i < numBytes; i++) {
-            queue.enqueue(txBytes[i]);
-        }
+        memcpy(&bytes[1], txBytes, numBytes);
     } else {
-        for (int i = 0; i < numBytes; i++) {
-            queue.enqueue(dummyByte);
-        }
+        memset(&bytes[1], dummyByte, numBytes);
     }
 
-    transmit_receive(queue);
+    transmit_receive(bytes, numBytes + 1);
 
-    queue.dequeue(status);
+    status = bytes[0];
 
     if (rxBytes) {
-        for (int i = 0; i < numBytes; i++) {
-            queue.dequeue(rxBytes[i]);
-        }
+        memcpy(rxBytes, &bytes[1], numBytes);
     }
 
     return (status);

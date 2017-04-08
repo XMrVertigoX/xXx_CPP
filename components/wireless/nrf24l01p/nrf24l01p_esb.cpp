@@ -38,8 +38,8 @@ nRF24L01P_ESB::~nRF24L01P_ESB() {
     switchOperatingMode(OperatingMode_Shutdown);
 }
 
-void nRF24L01P_ESB::transmit_receive(Queue<uint8_t> &queue) {
-    _spi.transmit_receive(queue);
+void nRF24L01P_ESB::transmit_receive(uint8_t bytes[], uint32_t numBytes) {
+    _spi.transmit_receive(bytes, numBytes);
 }
 
 void nRF24L01P_ESB::setup() {
