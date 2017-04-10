@@ -226,11 +226,6 @@ void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint6
 }
 
 void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
-    if (_operatingMode == operatingMode) {
-        // TODO: Check if early exit is useful or should be used to redefine state
-        // return;
-    }
-
     switch (operatingMode) {
         case OperatingMode_Rx: {
             enterRxMode();
@@ -245,9 +240,6 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
             enterTxMode();
         } break;
     }
-
-    // TODO: Check if switch was successful
-    _operatingMode = operatingMode;
 }
 
 int8_t nRF24L01P_ESB::send(Queue<uint8_t> &txQueue) {
@@ -468,15 +460,15 @@ void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
     // TODO: Assert
 }
 
-int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
-    if (!isPipeIndexValid(pipe)) return (-1);
+int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
 
     Register_t rxAddressRegister;
     uint64_t rxAddressLength;
     uint64_t rxAddress       = 0;
     uint8_t *rxAddressBuffer = reinterpret_cast<uint8_t *>(&rxAddress);
 
-    switch (pipe) {
+    switch (pipeIndex) {
         case 0: {
             rxAddressRegister = Register_RX_ADDR_P0;
             rxAddressLength   = RX_ADDR_P0_LENGTH;
@@ -508,13 +500,13 @@ int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
     return (rxAddress);
 }
 
-void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t rxAddress) {
-    if (!isPipeIndexValid(pipe)) return;
+void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, uint64_t rxAddress) {
+    assert(isPipeIndexValid(pipeIndex));
 
     Register_t addressRegister;
     uint8_t addressLength;
 
-    switch (pipe) {
+    switch (pipeIndex) {
         case 0: {
             addressRegister = Register_RX_ADDR_P0;
             addressLength   = RX_ADDR_P0_LENGTH;
@@ -546,7 +538,7 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t rxAddress) {
 
     cmd_W_REGISTER(addressRegister, rxAddressBuffer, addressLength);
 
-    assert(rxAddress == getRxAddress(pipe));
+    assert(rxAddress == getRxAddress(pipeIndex));
 }
 
 int64_t nRF24L01P_ESB::getTxAddress() {

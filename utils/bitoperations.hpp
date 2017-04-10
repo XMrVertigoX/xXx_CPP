@@ -34,22 +34,22 @@ inline void XOR_eq(TYPE &byte, TYPE mask) {
 }
 
 template <typename TYPE>
-inline TYPE LEFT(TYPE byte, int amount) {
+inline TYPE LEFT(TYPE byte, char amount) {
     return (byte << amount);
 }
 
 template <typename TYPE>
-inline void LEFT_eq(TYPE &byte, int amount) {
+inline void LEFT_eq(TYPE &byte, char amount) {
     byte <<= amount;
 }
 
 template <typename TYPE>
-inline TYPE RIGHT(TYPE byte, int amount) {
+inline TYPE RIGHT(TYPE byte, char amount) {
     return (byte >> amount);
 }
 
 template <typename TYPE>
-inline void RIGHT_eq(TYPE &byte, int amount) {
+inline void RIGHT_eq(TYPE &byte, char amount) {
     byte >>= amount;
 }
 
