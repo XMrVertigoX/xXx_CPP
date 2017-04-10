@@ -34,7 +34,8 @@ static inline uint8_t extractPipeIndex(uint8_t status) {
 }
 
 nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq) {}
+    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq), _txQueue(NULL), _rxQueue{NULL, NULL, NULL,
+                                                                        NULL, NULL, NULL} {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {
     switchOperatingMode(OperatingMode_Shutdown);
@@ -47,18 +48,18 @@ void nRF24L01P_ESB::setup() {
         self->taskNotifyFromISR();
     };
 
-    // Enable Enhanced ShockBurst™
+    // Enable dynamic payload length only
     uint8_t feature = 0;
-    OR_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK_MASK);
-    OR_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY_MASK);
-    OR_eq<uint8_t>(feature, FEATURE_EN_DPL_MASK);
+    clearBit_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK);
+    clearBit_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY);
+    setBit_eq<uint8_t>(feature, FEATURE_EN_DPL);
     writeShortRegister(Register_FEATURE, feature);
 
     // Clear interrupts
     uint8_t status = 0;
-    OR_eq<uint8_t>(status, STATUS_MAX_RT_MASK);
-    OR_eq<uint8_t>(status, STATUS_RX_DR_MASK);
-    OR_eq<uint8_t>(status, STATUS_TX_DS_MASK);
+    setBit_eq<uint8_t>(status, STATUS_MAX_RT);
+    setBit_eq<uint8_t>(status, STATUS_RX_DR);
+    setBit_eq<uint8_t>(status, STATUS_TX_DS);
     writeShortRegister(Register_STATUS, status);
 
     cmd_FLUSH_TX();
@@ -432,7 +433,7 @@ void nRF24L01P_ESB::setRetryCount(uint8_t count) {
 
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
-    // TODO: Assert
+    assert(count == getRetryCount());
 }
 
 uint8_t nRF24L01P_ESB::getRetryDelay() {
@@ -457,7 +458,7 @@ void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
 
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
-    // TODO: Assert
+    assert(delay == getRetryDelay());
 }
 
 int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
@@ -500,7 +501,7 @@ int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
     return (rxAddress);
 }
 
-void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, uint64_t rxAddress) {
+void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
     assert(isPipeIndexValid(pipeIndex));
 
     Register_t addressRegister;
@@ -550,7 +551,7 @@ int64_t nRF24L01P_ESB::getTxAddress() {
     return (txAddress);
 }
 
-void nRF24L01P_ESB::setTxAddress(uint64_t txAddress) {
+void nRF24L01P_ESB::setTxAddress(int64_t txAddress) {
     uint8_t txAddressBuffer[TX_ADDR_LENGTH];
     memcpy(txAddressBuffer, &txAddress, TX_ADDR_LENGTH);
 

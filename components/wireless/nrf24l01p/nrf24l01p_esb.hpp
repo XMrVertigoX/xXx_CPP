@@ -1,4 +1,3 @@
-
 #if not defined(NRF24L01P_ESB_HPP_)
 #define NRF24L01P_ESB_HPP_
 
@@ -32,8 +31,8 @@ namespace xXx {
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
-    Queue_Handle_t<uint8_t> _txQueue    = NULL;
-    Queue_Handle_t<uint8_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    Queue_Handle_t<uint8_t> _txQueue;
+    Queue_Handle_t<uint8_t> _rxQueue[6];
 
     IGpio &_ce;
     IGpio &_irq;
@@ -84,9 +83,9 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     uint8_t getRetryDelay();
     void setRetryDelay(uint8_t delay);
     int64_t getRxAddress(uint8_t pipe);
-    void setRxAddress(uint8_t pipe, uint64_t address);
+    void setRxAddress(uint8_t pipe, int64_t address);
     int64_t getTxAddress();
-    void setTxAddress(uint64_t address);
+    void setTxAddress(int64_t address);
 };
 
 } /* namespace xXx */
