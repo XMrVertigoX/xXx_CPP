@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
@@ -32,14 +33,11 @@ static inline uint8_t extractPipeIndex(uint8_t status) {
     return (status);
 }
 
-nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq) : _spi(spi), _ce(ce), _irq(irq) {}
+nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
+    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq) {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {
     switchOperatingMode(OperatingMode_Shutdown);
-}
-
-void nRF24L01P_ESB::transmit_receive(uint8_t bytes[], uint32_t numBytes) {
-    _spi.transmit_receive(bytes, numBytes);
 }
 
 void nRF24L01P_ESB::setup() {
@@ -88,6 +86,8 @@ void nRF24L01P_ESB::loop() {
 }
 
 int8_t nRF24L01P_ESB::readRxFifo() {
+    uint8_t numBytes;
+
     int8_t status     = cmd_NOP();
     uint8_t pipeIndex = extractPipeIndex(status);
 
@@ -98,8 +98,6 @@ int8_t nRF24L01P_ESB::readRxFifo() {
     if (_rxQueue[pipeIndex] == NULL) {
         return (-1);
     }
-
-    uint8_t numBytes;
 
     cmd_R_RX_PL_WID(numBytes);
 
@@ -470,56 +468,51 @@ void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
     // TODO: Assert
 }
 
-uint64_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
-    if (pipe > 5) {
-        return (0);
-    }
+int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
+    if (!isPipeIndexValid(pipe)) return (-1);
 
-    Register_t addressRegister;
-    uint64_t addressLength;
+    Register_t rxAddressRegister;
+    uint64_t rxAddressLength;
+    uint64_t rxAddress       = 0;
+    uint8_t *rxAddressBuffer = reinterpret_cast<uint8_t *>(&rxAddress);
 
     switch (pipe) {
         case 0: {
-            addressRegister = Register_RX_ADDR_P0;
-            addressLength   = RX_ADDR_P0_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P0;
+            rxAddressLength   = RX_ADDR_P0_LENGTH;
         } break;
         case 1: {
-            addressRegister = Register_RX_ADDR_P1;
-            addressLength   = RX_ADDR_P1_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P1;
+            rxAddressLength   = RX_ADDR_P1_LENGTH;
         } break;
         case 2: {
-            addressRegister = Register_RX_ADDR_P2;
-            addressLength   = RX_ADDR_P2_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P2;
+            rxAddressLength   = RX_ADDR_P2_LENGTH;
         } break;
         case 3: {
-            addressRegister = Register_RX_ADDR_P3;
-            addressLength   = RX_ADDR_P3_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P3;
+            rxAddressLength   = RX_ADDR_P3_LENGTH;
         } break;
         case 4: {
-            addressRegister = Register_RX_ADDR_P4;
-            addressLength   = RX_ADDR_P4_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P4;
+            rxAddressLength   = RX_ADDR_P4_LENGTH;
         } break;
         case 5: {
-            addressRegister = Register_RX_ADDR_P5;
-            addressLength   = RX_ADDR_P5_LENGTH;
+            rxAddressRegister = Register_RX_ADDR_P5;
+            rxAddressLength   = RX_ADDR_P5_LENGTH;
         } break;
     }
 
-    uint64_t address = 0;
-    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&address);
+    cmd_R_REGISTER(rxAddressRegister, rxAddressBuffer, rxAddressLength);
 
-    cmd_R_REGISTER(addressRegister, rx_addr, addressLength);
-
-    return (address);
+    return (rxAddress);
 }
 
 void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t rxAddress) {
-    if (pipe > 5) {
-        return;
-    }
+    if (!isPipeIndexValid(pipe)) return;
 
     Register_t addressRegister;
-    uint64_t addressLength;
+    uint8_t addressLength;
 
     switch (pipe) {
         case 0: {
@@ -548,26 +541,28 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint64_t rxAddress) {
         } break;
     }
 
-    uint8_t *rx_addr = reinterpret_cast<uint8_t *>(&rxAddress);
+    uint8_t rxAddressBuffer[addressLength];
+    memcpy(rxAddressBuffer, &rxAddress, addressLength);
 
-    cmd_W_REGISTER(addressRegister, rx_addr, addressLength);
+    cmd_W_REGISTER(addressRegister, rxAddressBuffer, addressLength);
 
     assert(rxAddress == getRxAddress(pipe));
 }
 
-uint64_t nRF24L01P_ESB::getTxAddress() {
-    uint64_t address = 0;
-    uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&address);
+int64_t nRF24L01P_ESB::getTxAddress() {
+    uint64_t txAddress       = 0;
+    uint8_t *txAddressBuffer = reinterpret_cast<uint8_t *>(&txAddress);
 
-    cmd_R_REGISTER(Register_TX_ADDR, tx_addr, TX_ADDR_LENGTH);
+    cmd_R_REGISTER(Register_TX_ADDR, txAddressBuffer, TX_ADDR_LENGTH);
 
-    return (address);
+    return (txAddress);
 }
 
 void nRF24L01P_ESB::setTxAddress(uint64_t txAddress) {
-    uint8_t *tx_addr = reinterpret_cast<uint8_t *>(&txAddress);
+    uint8_t txAddressBuffer[TX_ADDR_LENGTH];
+    memcpy(txAddressBuffer, &txAddress, TX_ADDR_LENGTH);
 
-    cmd_W_REGISTER(Register_TX_ADDR, tx_addr, TX_ADDR_LENGTH);
+    cmd_W_REGISTER(Register_TX_ADDR, txAddressBuffer, TX_ADDR_LENGTH);
 
     assert(txAddress == getTxAddress());
 }

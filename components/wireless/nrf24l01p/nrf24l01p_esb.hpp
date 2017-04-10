@@ -38,9 +38,6 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
 
     IGpio &_ce;
     IGpio &_irq;
-    ISpi &_spi;
-
-    void transmit_receive(uint8_t bytes[], uint32_t numBytes);
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -87,9 +84,9 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void setRetryCount(uint8_t count);
     uint8_t getRetryDelay();
     void setRetryDelay(uint8_t delay);
-    uint64_t getRxAddress(uint8_t pipe);
+    int64_t getRxAddress(uint8_t pipe);
     void setRxAddress(uint8_t pipe, uint64_t address);
-    uint64_t getTxAddress();
+    int64_t getTxAddress();
     void setTxAddress(uint64_t address);
 };
 
