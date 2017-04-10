@@ -89,7 +89,7 @@ $(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 $(OUTPUT_DIR)/$(BINARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
-	
+
 $(OUTPUT_DIR)/$(HEXARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O ihex $< $@
@@ -97,21 +97,21 @@ $(OUTPUT_DIR)/$(HEXARY): $(EXECUTABLE)
 $(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$<"
+	@echo $(shell realpath --relative-to=".." "$<")
 
 $(OUTPUT_DIR)/%.o: /%.S $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$<"
+	@echo $(shell realpath --relative-to=".." "$<")
 
 $(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$<"
+	@echo $(shell realpath --relative-to=".." "$<")
 
 $(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-	@echo "$<"
+	@echo $(shell realpath --relative-to=".." "$<")
 
 -include $(_DEPENDENCY_FILES)
