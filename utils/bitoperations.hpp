@@ -67,27 +67,27 @@ inline void INVERT_eq(TYPE &byte) {
 
 template <typename TYPE>
 inline TYPE clearBit(TYPE byte, TYPE bit) {
-    return (byte bitand compl(LEFT<TYPE>(1, bit)));
+    return (AND<TYPE>(byte, INVERT<TYPE>(LEFT<TYPE>(1, bit))));
 }
 
 template <typename TYPE>
 inline void clearBit_eq(TYPE &byte, TYPE bit) {
-    byte bitand compl(LEFT<TYPE>(1, bit));
+    AND_eq<TYPE>(byte, INVERT<TYPE>(LEFT<TYPE>(1, bit)));
 }
 
 template <typename TYPE>
 inline TYPE setBit(TYPE byte, TYPE bit) {
-    return (byte bitor (LEFT<TYPE>(1, bit)));
+    return (OR<TYPE>(byte, (LEFT<TYPE>(1, bit))));
 }
 
 template <typename TYPE>
 inline void setBit_eq(TYPE &byte, TYPE bit) {
-    byte or_eq (LEFT<TYPE>(1, bit));
+    OR_eq<TYPE>(byte, (LEFT<TYPE>(1, bit)));
 }
 
 template <typename TYPE>
 inline bool readBit(TYPE byte, TYPE bit) {
-    return (byte bitand (LEFT<TYPE>(1, bit)));
+    return (AND<TYPE>(byte, (LEFT<TYPE>(1, bit))));
 }
 
 #endif /* BITOPERATIONS_HPP_ */

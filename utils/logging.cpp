@@ -1,5 +1,3 @@
-#include <assert.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,24 +22,26 @@ static inline uint32_t milliseconds(TickType_t ticks) {
 void printFormat(const char *format, ...) {
     TickType_t ticks = xTaskGetTickCount();
 
-    printf("%d.%03d ", seconds(ticks), milliseconds(ticks));
+    printf("%lu.%03lu ", seconds(ticks), milliseconds(ticks));
 
     va_list arguments;
     va_start(arguments, format);
     vprintf(format, arguments);
     va_end(arguments);
 
+    putchar('\r');
     putchar('\n');
 }
 
 void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
     TickType_t ticks = xTaskGetTickCount();
 
-    printf("%d.%03d %s", seconds(ticks), milliseconds(ticks), message);
+    printf("%lu.%03lu %s", seconds(ticks), milliseconds(ticks), message);
 
-    for (int i = 0; i < numBytes; ++i) {
+    for (size_t i = 0; i < numBytes; ++i) {
         printf(" %02x", bytes[i]);
     }
 
+    putchar('\r');
     putchar('\n');
 }

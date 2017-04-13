@@ -31,11 +31,10 @@ namespace xXx {
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
-    Queue_Handle_t<uint8_t> _txQueue;
-    Queue_Handle_t<uint8_t> _rxQueue[6];
-
     IGpio &_ce;
     IGpio &_irq;
+    Queue_Handle_t<uint8_t> _rxQueue[6];
+    Queue_Handle_t<uint8_t> _txQueue[1];
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
