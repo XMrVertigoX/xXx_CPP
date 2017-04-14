@@ -51,7 +51,10 @@ void SimpleTask::taskResumeFromISR() {
     BaseType_t higherPriorityTaskWoken;
 
     higherPriorityTaskWoken = xTaskResumeFromISR(_handle);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    if (higherPriorityTaskWoken) {
+        taskYIELD();
+    }
 }
 
 void SimpleTask::taskSuspend() {

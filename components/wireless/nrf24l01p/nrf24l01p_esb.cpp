@@ -24,8 +24,6 @@ union addressUnion_t {
 
 static const uint8_t txSettling = 130;
 static const uint8_t rxSettling = 130;
-static const uint8_t txFifoSize = 32;
-static const uint8_t rxFifoSize = 32;
 
 static bool isPipeIndexValid(uint8_t pipeIndex) {
     return (pipeIndex > 5 ? false : true);
@@ -87,32 +85,23 @@ void nRF24L01P_ESB::loop() {
 }
 
 int8_t nRF24L01P_ESB::readRxFifo() {
-    uint8_t numBytes;
-
     int8_t status     = cmd_NOP();
     uint8_t pipeIndex = extractPipeIndex(status);
 
-    if (pipeIndex > 5) {
-        return (-1);
-    }
+    if (pipeIndex > 5) return (-1);
 
-    if (_rxQueue[pipeIndex] == NULL) {
-        return (-1);
-    }
+    if (_rxQueue[pipeIndex] == NULL) return (-1);
 
-    cmd_R_RX_PL_WID(numBytes);
+    uint8_t rxNumBytes;
+    Package_t rxPackage;
 
-    if (numBytes > rxFifoSize) {
-        return (-1);
-    }
+    cmd_R_RX_PL_WID(rxNumBytes);
 
-    uint8_t bytes[numBytes];
+    if (rxNumBytes > rxFifoSize) return (-1);
 
-    cmd_R_RX_PAYLOAD(bytes, numBytes);
+    cmd_R_RX_PAYLOAD(rxPackage.bytes, rxNumBytes);
 
-    for (uint8_t i = 0; i < numBytes; ++i) {
-        _rxQueue[pipeIndex]->enqueue(bytes[i]);
-    }
+    _rxQueue[pipeIndex]->enqueue(rxPackage);
 
     return (0);
 }
@@ -189,7 +178,7 @@ void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
     enableDataPipe(0);
 }
 
-void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t rxAddress) {
+void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t rxAddress) {
     assert(isPipeIndexValid(pipe));
 
     setRxAddress(pipe, rxAddress);

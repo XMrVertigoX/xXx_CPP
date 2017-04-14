@@ -3,6 +3,7 @@
 
 #include <FreeRTOS.h>
 #include <queue.h>
+#include <task.h>
 
 namespace xXx {
 
@@ -46,7 +47,10 @@ BaseType_t Queue<TYPE>::enqueueFromISR(TYPE &element) {
     BaseType_t higherPriorityTaskWoken, success;
 
     success = xQueueSendToBackFromISR(_queue, &element, &higherPriorityTaskWoken);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    if (success) {
+        taskYIELD();
+    }
 
     return (success);
 }
@@ -61,7 +65,10 @@ BaseType_t Queue<TYPE>::dequeueFromISR(TYPE &element) {
     BaseType_t higherPriorityTaskWoken, success;
 
     success = xQueueReceiveFromISR(_queue, &element, &higherPriorityTaskWoken);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    if (success) {
+        taskYIELD();
+    }
 
     return (success);
 }

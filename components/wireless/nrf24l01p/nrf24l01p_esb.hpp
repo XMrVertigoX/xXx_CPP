@@ -9,6 +9,9 @@
 #include <xXx/os/simpletask.hpp>
 #include <xXx/templates/queue.hpp>
 
+static const uint8_t txFifoSize = 32;
+static const uint8_t rxFifoSize = 32;
+
 enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
 enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
@@ -27,9 +30,9 @@ enum OperatingMode_t : uint8_t {
     OperatingMode_Tx
 };
 
-struct package_t {
-    uint8_t bytes[32];
-    size_t numBytes;
+struct Package_t {
+    uint8_t bytes[rxFifoSize];
+    uint8_t numBytes;
 };
 
 namespace xXx {
@@ -41,7 +44,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     IGpio &_ce;
     IGpio &_irq;
 
-    Queue_Handle_t<uint8_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    Queue_Handle_t<Package_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     uint8_t *_txBytes        = NULL;
     size_t _txBytesStart     = 0;
@@ -77,7 +80,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     ~nRF24L01P_ESB();
 
     void configureTxPipe(uint64_t address);
-    void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address);
+    void configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
     int8_t send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
