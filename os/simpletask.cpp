@@ -40,7 +40,10 @@ void SimpleTask::taskNotifyFromISR(uint32_t value, eNotifyAction action) {
     BaseType_t higherPriorityTaskWoken;
 
     xTaskNotifyFromISR(_handle, value, action, &higherPriorityTaskWoken);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+
+    if (higherPriorityTaskWoken) {
+        taskYIELD();
+    }
 }
 
 void SimpleTask::taskResume() {
