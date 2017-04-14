@@ -21,21 +21,20 @@ int8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t bytes[], size_t numByte
     if (bytes == NULL && numBytes > 0) return (-1);
 
     int8_t status;
+    uint8_t buffer[numBytes + 1];
 
-    uint8_t newBytes[numBytes + 1];
-
-    newBytes[0] = command;
+    buffer[0] = command;
 
     if (bytes != NULL) {
-        memcpy(&newBytes[1], bytes, numBytes);
+        memcpy(&buffer[1], bytes, numBytes);
     }
 
-    _spi.transmit_receive(newBytes, numBytes + 1);
+    _spi.transmit_receive(buffer, numBytes + 1);
 
-    status = newBytes[0];
+    status = buffer[0];
 
     if (bytes != NULL) {
-        memcpy(bytes, &newBytes[1], numBytes);
+        memcpy(bytes, &buffer[1], numBytes);
     }
 
     return (status);

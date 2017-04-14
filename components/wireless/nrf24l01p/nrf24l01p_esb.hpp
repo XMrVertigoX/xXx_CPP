@@ -27,14 +27,27 @@ enum OperatingMode_t : uint8_t {
     OperatingMode_Tx
 };
 
+struct package_t {
+    uint8_t bytes[32];
+    size_t numBytes;
+};
+
 namespace xXx {
+
+typedef void (*txCallback_t)(int8_t status, void *user);
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
     IGpio &_ce;
     IGpio &_irq;
-    Queue_Handle_t<uint8_t> _rxQueue[6];
-    Queue_Handle_t<uint8_t> _txQueue[1];
+
+    Queue_Handle_t<uint8_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    uint8_t *_txBytes        = NULL;
+    size_t _txBytesStart     = 0;
+    size_t _txBytesEnd       = 0;
+    txCallback_t _txCallback = NULL;
+    void *_txUser            = NULL;
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -67,7 +80,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void configureRxPipe(uint8_t pipe, Queue<uint8_t> &rxQueue, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
-    int8_t send(Queue<uint8_t> &txQueue);
+    int8_t send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
 
     int8_t getChannel();
     void setChannel(int8_t channel);

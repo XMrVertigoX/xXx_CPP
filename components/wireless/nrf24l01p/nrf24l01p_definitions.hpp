@@ -67,7 +67,7 @@ enum EN_AA_t : uint8_t { ENAA_P0, ENAA_P1, ENAA_P2, ENAA_P3, ENAA_P4, ENAA_P5 };
 
 enum EN_RXADDR_t : uint8_t { ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5 };
 
-enum SETUP_AW_t : uint8_t { SETUP_AW = 0, SETUP_AW_DEFAULT = 0b11, SETUP_AW_MASK = 0b00000011 };
+enum SETUP_AW_t : uint8_t { SETUP_AW = 0, SETUP_AW_MASK = 0b00000011 };
 
 enum SETUP_RETR_t : uint8_t {
     SETUP_RETR_ARC      = 0,
@@ -76,7 +76,7 @@ enum SETUP_RETR_t : uint8_t {
     SETUP_RETR_ARD_MASK = 0b11110000
 };
 
-enum RF_CH_t : uint8_t { RF_CH = 0, RF_CH_DEFAULT = 2, RF_CH_MASK = 0b01111111 };
+enum RF_CH_t : uint8_t { RF_CH = 0, RF_CH_MASK = 0b01111111 };
 
 enum RF_SETUP_t : uint8_t {
     RF_SETUP_RF_PWR          = 1,
@@ -111,7 +111,7 @@ enum OBSERVE_TX_t : uint8_t {
     OBSERVE_TX_PLOS_CNT_MASK = 0b11110000
 };
 
-enum RPD_t : uint8_t { RPD_RPD = 0, RPD_RPD_DEFAULT = 0b0, RPD_RPD_MASK = 0b00000001 };
+enum RPD_t : uint8_t { RPD_RPD = 0, RPD_RPD_MASK = 0b00000001 };
 
 enum RX_ADDR_P0_t : uint64_t { RX_ADDR_P0_MASK = 0x000000FFFFFFFFFF, RX_ADDR_P0_LENGTH = 5 };
 
