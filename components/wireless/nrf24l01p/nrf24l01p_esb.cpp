@@ -14,6 +14,7 @@
 #include <nRF24L01_config.h>
 
 #define constrain(value, limit) (value > limit ? limit : value)
+#define isPipeIndexValid(pipeIndex) (pipeIndex > 5 ? false : true)
 
 namespace xXx {
 
@@ -24,10 +25,6 @@ union addressUnion_t {
 
 static const uint8_t txSettling = 130;
 static const uint8_t rxSettling = 130;
-
-static bool isPipeIndexValid(uint8_t pipeIndex) {
-    return (pipeIndex > 5 ? false : true);
-}
 
 static uint8_t extractPipeIndex(uint8_t status) {
     AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
@@ -98,6 +95,8 @@ int8_t nRF24L01P_ESB::readRxFifo() {
     cmd_R_RX_PL_WID(rxNumBytes);
 
     if (rxNumBytes > rxFifoSize) return (-1);
+
+    rxPackage.numBytes = rxNumBytes;
 
     cmd_R_RX_PAYLOAD(rxPackage.bytes, rxNumBytes);
 
@@ -422,7 +421,7 @@ int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
     assert(isPipeIndexValid(pipeIndex));
 
     addressUnion_t rxAddressUnion;
-    rxAddressUnion.s64 = -1;
+    rxAddressUnion.s64 = 0;
 
     switch (pipeIndex) {
         case 0: {
@@ -480,7 +479,7 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
 
 int64_t nRF24L01P_ESB::getTxAddress() {
     addressUnion_t txAddressUnion;
-    txAddressUnion.s64 = -1;
+    txAddressUnion.s64 = 0;
 
     cmd_R_REGISTER(Register_TX_ADDR, txAddressUnion.p8, TX_ADDR_LENGTH);
 
