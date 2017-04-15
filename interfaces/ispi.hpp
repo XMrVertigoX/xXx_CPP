@@ -8,7 +8,7 @@
 
 namespace xXx {
 
-typedef void (*ISpi_Callback_t)(void *user);
+// typedef void (*ISpi_Callback_t)(void *user);
 
 class ISpi {
    public:

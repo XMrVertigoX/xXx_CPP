@@ -23,7 +23,7 @@ union addressUnion_t {
     int64_t s64;
 };
 
-static uint8_t extractPipeIndex(uint8_t status) {
+static inline uint8_t extractPipeIndex(uint8_t status) {
     AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
     RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
 
@@ -126,13 +126,13 @@ void nRF24L01P_ESB::handle_RX_DR() {
 }
 
 void nRF24L01P_ESB::handle_TX_DS() {
-    if (_txBytesEnd != _txBytesStart) {
-        writeTxFifo();
-    }
-
     writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
 
-    // TODO: Check if callback is possible
+    if (_txBytesEnd > _txBytesStart) {
+        writeTxFifo();
+    } else if (_txCallback != NULL) {
+        _txCallback(_txUser);
+    }
 }
 
 void nRF24L01P_ESB::enterRxMode() {
@@ -177,8 +177,6 @@ void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
 }
 
 void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t rxAddress) {
-    assert(isPipeIndexValid(pipe));
-
     setRxAddress(pipe, rxAddress);
     enableDataPipe(pipe);
     enableDynamicPayloadLength(pipe);

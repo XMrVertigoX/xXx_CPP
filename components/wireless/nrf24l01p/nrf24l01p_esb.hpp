@@ -34,7 +34,7 @@ struct Package_t {
 
 namespace xXx {
 
-typedef void (*txCallback_t)(int8_t status, void *user);
+typedef void (*txCallback_t)(void *user);
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
