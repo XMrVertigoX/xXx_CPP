@@ -10,7 +10,7 @@ class nRF24L01P_BASE {
    private:
     ISpi &_spi;
 
-    int8_t transmit(uint8_t command, uint8_t bytes[] = NULL, size_t numBytes = 0);
+    int8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
 
    protected:
     nRF24L01P_BASE(ISpi &spi);
