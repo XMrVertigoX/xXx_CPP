@@ -23,9 +23,6 @@ union addressUnion_t {
     int64_t s64;
 };
 
-static const uint8_t txSettling = 130;
-static const uint8_t rxSettling = 130;
-
 static uint8_t extractPipeIndex(uint8_t status) {
     AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
     RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
@@ -82,15 +79,14 @@ void nRF24L01P_ESB::loop() {
 }
 
 int8_t nRF24L01P_ESB::readRxFifo() {
+    uint8_t rxNumBytes;
+    Package_t rxPackage;
+
     int8_t status     = cmd_NOP();
     uint8_t pipeIndex = extractPipeIndex(status);
 
     if (pipeIndex > 5) return (-1);
-
     if (_rxQueue[pipeIndex] == NULL) return (-1);
-
-    uint8_t rxNumBytes;
-    Package_t rxPackage;
 
     cmd_R_RX_PL_WID(rxNumBytes);
 
@@ -106,9 +102,11 @@ int8_t nRF24L01P_ESB::readRxFifo() {
 }
 
 int8_t nRF24L01P_ESB::writeTxFifo() {
+    uint8_t txNumBytes;
+
     if (_txBytesEnd == _txBytesStart) return (-1);
 
-    uint8_t txNumBytes = constrain(_txBytesEnd - _txBytesStart, txFifoSize);
+    txNumBytes = constrain(_txBytesEnd - _txBytesStart, txFifoSize);
 
     cmd_W_TX_PAYLOAD(&_txBytes[_txBytesStart], txNumBytes);
 
@@ -175,6 +173,7 @@ void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
     setTxAddress(txAddress);
     setRxAddress(0, txAddress);
     enableDataPipe(0);
+    enableDynamicPayloadLength(0);
 }
 
 void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t rxAddress) {
@@ -182,6 +181,7 @@ void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uin
 
     setRxAddress(pipe, rxAddress);
     enableDataPipe(pipe);
+    enableDynamicPayloadLength(pipe);
 
     _rxQueue[pipe] = &rxQueue;
 }
@@ -219,20 +219,6 @@ int8_t nRF24L01P_ESB::send(uint8_t bytes[], size_t numBytes, txCallback_t callba
 
 // ----- helper functions -----------------------------------------------------
 
-void nRF24L01P_ESB::enableDataPipe(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-
-    setSingleBit(Register_EN_RXADDR, pipeIndex);
-    setSingleBit(Register_DYNPD, pipeIndex);
-}
-
-void nRF24L01P_ESB::disableDataPipe(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-
-    clearSingleBit(Register_EN_RXADDR, pipeIndex);
-    clearSingleBit(Register_DYNPD, pipeIndex);
-}
-
 uint8_t nRF24L01P_ESB::readShortRegister(Register_t reg) {
     uint8_t result;
 
@@ -258,6 +244,26 @@ void nRF24L01P_ESB::setSingleBit(Register_t reg, uint8_t bitIndex) {
 }
 
 // ----- getters and setters --------------------------------------------------
+
+void nRF24L01P_ESB::enableDataPipe(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
+    setSingleBit(Register_EN_RXADDR, pipeIndex);
+}
+
+void nRF24L01P_ESB::disableDataPipe(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
+    clearSingleBit(Register_EN_RXADDR, pipeIndex);
+}
+
+void nRF24L01P_ESB::enableDynamicPayloadLength(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
+    setSingleBit(Register_DYNPD, pipeIndex);
+}
+
+void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipeIndex) {
+    assert(isPipeIndexValid(pipeIndex));
+    clearSingleBit(Register_DYNPD, pipeIndex);
+}
 
 CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
     uint8_t config = readShortRegister(Register_CONFIG);
@@ -493,6 +499,24 @@ void nRF24L01P_ESB::setTxAddress(int64_t txAddress) {
     cmd_W_REGISTER(Register_TX_ADDR, txAddressUnion.p8, TX_ADDR_LENGTH);
 
     assert(txAddress == getTxAddress());
+}
+
+int8_t nRF24L01P_ESB::getPackageLossCounter() {
+    uint8_t observe_tx = readShortRegister(Register_OBSERVE_TX);
+
+    AND_eq<uint8_t>(observe_tx, OBSERVE_TX_PLOS_CNT_MASK);
+    RIGHT_eq<uint8_t>(observe_tx, OBSERVE_TX_PLOS_CNT);
+
+    return (observe_tx);
+}
+
+int8_t nRF24L01P_ESB::getRetransmitCounter() {
+    uint8_t observe_tx = readShortRegister(Register_OBSERVE_TX);
+
+    AND_eq<uint8_t>(observe_tx, OBSERVE_TX_ARC_CNT_MASK);
+    RIGHT_eq<uint8_t>(observe_tx, OBSERVE_TX_ARC_CNT);
+
+    return (observe_tx);
 }
 
 } /* namespace xXx */

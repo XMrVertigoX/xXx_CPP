@@ -9,9 +9,6 @@
 #include <xXx/os/simpletask.hpp>
 #include <xXx/templates/queue.hpp>
 
-static const uint8_t txFifoSize = 32;
-static const uint8_t rxFifoSize = 32;
-
 enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
 enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
@@ -74,6 +71,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
 
     void enableDataPipe(uint8_t pipeIndex);
     void disableDataPipe(uint8_t pipeIndex);
+    void enableDynamicPayloadLength(uint8_t pipeIndex);
+    void disableDynamicPayloadLength(uint8_t pipeIndex);
 
    public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -101,6 +100,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void setRxAddress(uint8_t pipe, int64_t address);
     int64_t getTxAddress();
     void setTxAddress(int64_t address);
+    int8_t getPackageLossCounter();
+    int8_t getRetransmitCounter();
 };
 
 } /* namespace xXx */

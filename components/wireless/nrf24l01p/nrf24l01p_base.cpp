@@ -9,10 +9,6 @@
 
 namespace xXx {
 
-static inline void prepareBuffer(uint8_t bytes[], size_t numBytes) {
-    memset(bytes, 0xff, numBytes);
-}
-
 nRF24L01P_BASE::nRF24L01P_BASE(ISpi &spi) : _spi(spi) {}
 
 nRF24L01P_BASE::~nRF24L01P_BASE() {}
@@ -26,6 +22,8 @@ int8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t inBytes[], uint8_t outB
 
     if (inBytes != NULL) {
         memcpy(&buffer[1], inBytes, numBytes);
+    } else {
+        memset(&buffer[1], 0xff, numBytes);
     }
 
     _spi.transmit_receive(buffer, buffer, numBytes + 1);
@@ -42,8 +40,6 @@ int8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t inBytes[], uint8_t outB
 int8_t nRF24L01P_BASE::cmd_R_REGISTER(Register_t address, uint8_t bytes[], size_t numBytes) {
     uint8_t command;
     int8_t status;
-
-    prepareBuffer(bytes, numBytes);
 
     command = OR<uint8_t>(Command_R_REGISTER, address);
     status  = transmit(command, NULL, bytes, numBytes);
@@ -74,8 +70,6 @@ int8_t nRF24L01P_BASE::cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
 int8_t nRF24L01P_BASE::cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
     uint8_t command;
     int8_t status;
-
-    prepareBuffer(bytes, numBytes);
 
     command = Command_R_RX_PAYLOAD;
     status  = transmit(command, NULL, bytes, numBytes);
@@ -116,8 +110,6 @@ int8_t nRF24L01P_BASE::cmd_REUSE_TX_PL() {
 int8_t nRF24L01P_BASE::cmd_R_RX_PL_WID(uint8_t &payloadLength) {
     uint8_t command;
     int8_t status;
-
-    prepareBuffer(&payloadLength, 1);
 
     command = Command_R_RX_PL_WID;
     status  = transmit(command, NULL, &payloadLength, 1);

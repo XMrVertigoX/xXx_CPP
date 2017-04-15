@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+static const uint8_t txFifoSize = 32;
+static const uint8_t rxFifoSize = 32;
+static const uint8_t txSettling = 130;
+static const uint8_t rxSettling = 130;
+
 enum Command_t : uint8_t {
     Command_R_REGISTER         = 0b00000000,
     Command_W_REGISTER         = 0b00100000,
