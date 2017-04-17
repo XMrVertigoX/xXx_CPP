@@ -14,9 +14,9 @@ enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 enum CRCConfig_t : uint8_t { CRCConfig_DISABLED, CRCConfig_1Byte, CrcConfig_2Bytes };
 
 enum OutputPower_t : uint8_t {
-    OutputPower_18dBm,
-    OutputPower_12dBm,
-    OutputPower_6dBm,
+    OutputPower_m18dBm,
+    OutputPower_m12dBm,
+    OutputPower_m6dBm,
     OutputPower_0dBm
 };
 
