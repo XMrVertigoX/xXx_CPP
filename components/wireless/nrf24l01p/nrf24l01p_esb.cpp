@@ -23,7 +23,7 @@ union addressUnion_t {
     int64_t s64;
 };
 
-static inline uint8_t extractPipeIndex(uint8_t status) {
+static inline uint8_t extractPipe(uint8_t status) {
     AND_eq<uint8_t>(status, STATUS_RX_P_NO_MASK);
     RIGHT_eq<uint8_t>(status, STATUS_RX_P_NO);
 
@@ -68,71 +68,76 @@ void nRF24L01P_ESB::loop() {
     int8_t status = cmd_NOP();
 
     if (readBit<uint8_t>(status, STATUS_RX_DR)) {
-        handle_RX_DR();
+        handle_RX_DR(status);
     } else if (readBit<uint8_t>(status, STATUS_MAX_RT)) {
-        handle_MAX_RT();
+        handle_MAX_RT(status);
     } else if (readBit<uint8_t>(status, STATUS_TX_DS)) {
-        handle_TX_DS();
+        handle_TX_DS(status);
     } else {
-        writeTxFifo();
+        writeTxFifo(status);
     }
 }
 
-int8_t nRF24L01P_ESB::readRxFifo() {
-    uint8_t rxNumBytes;
-    Package_t rxPackage;
+void nRF24L01P_ESB::readRxFifo(int8_t status) {
+    uint8_t bytes[rxFifoSize];
+    uint8_t numBytes;
 
-    int8_t status     = cmd_NOP();
-    uint8_t pipeIndex = extractPipeIndex(status);
+    uint8_t pipe = extractPipe(status);
 
-    if (pipeIndex > 5) return (-1);
-    if (_rxQueue[pipeIndex] == NULL) return (-1);
+    if (pipe > 5) return;
 
-    cmd_R_RX_PL_WID(rxNumBytes);
+    cmd_R_RX_PL_WID(numBytes);
 
-    if (rxNumBytes > rxFifoSize) return (-1);
+    if (numBytes > rxFifoSize) {
+        cmd_FLUSH_RX();
 
-    rxPackage.numBytes = rxNumBytes;
+        if (_rxCallback[pipe]) {
+            _rxCallback[pipe](NULL, 0, _rxUser[pipe]);
+        }
 
-    cmd_R_RX_PAYLOAD(rxPackage.bytes, rxNumBytes);
+        return;
+    }
 
-    _rxQueue[pipeIndex]->enqueue(rxPackage);
+    cmd_R_RX_PAYLOAD(bytes, numBytes);
 
-    return (0);
+    if (_rxCallback[pipe]) {
+        _rxCallback[pipe](bytes, numBytes, _rxUser[pipe]);
+    }
 }
 
-int8_t nRF24L01P_ESB::writeTxFifo() {
-    uint8_t txNumBytes;
+void nRF24L01P_ESB::writeTxFifo(int8_t status) {
+    if (readBit<int8_t>(status, STATUS_TX_FULL)) return;
 
-    if (_txBytesEnd == _txBytesStart) return (-1);
+    uint8_t numBytes = constrain(_txBytesEnd - _txBytesStart, txFifoSize);
 
-    txNumBytes = constrain(_txBytesEnd - _txBytesStart, txFifoSize);
+    cmd_W_TX_PAYLOAD(&_txBytes[_txBytesStart], numBytes);
 
-    cmd_W_TX_PAYLOAD(&_txBytes[_txBytesStart], txNumBytes);
-
-    _txBytesStart += txNumBytes;
-
-    return (0);
+    _txBytesStart += numBytes;
 }
 
-void nRF24L01P_ESB::handle_MAX_RT() {
+void nRF24L01P_ESB::handle_MAX_RT(int8_t status) {
     cmd_FLUSH_TX();
+
+    if (_txCallback) {
+        _txCallback(NULL, 0, _txUser);
+    }
+
     writeShortRegister(Register_STATUS, STATUS_MAX_RT_MASK);
 }
 
-void nRF24L01P_ESB::handle_RX_DR() {
-    readRxFifo();
+void nRF24L01P_ESB::handle_RX_DR(int8_t status) {
+    readRxFifo(status);
     writeShortRegister(Register_STATUS, STATUS_RX_DR_MASK);
 }
 
-void nRF24L01P_ESB::handle_TX_DS() {
-    writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
-
+void nRF24L01P_ESB::handle_TX_DS(int8_t status) {
     if (_txBytesEnd > _txBytesStart) {
-        writeTxFifo();
-    } else if (_txCallback != NULL) {
+        writeTxFifo(status);
+    } else if (_txCallback) {
         _txCallback(_txBytes, _txBytesEnd, _txUser);
     }
+
+    writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
 }
 
 void nRF24L01P_ESB::enterRxMode() {
@@ -171,17 +176,15 @@ void nRF24L01P_ESB::enterTxMode() {
 
 void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
     setTxAddress(txAddress);
-    setRxAddress(0, txAddress);
+    configureRxPipe(0, txAddress);
+
+    // TODO
     enableDataPipe(0);
-    enableDynamicPayloadLength(0);
 }
 
-void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t rxAddress) {
+void nRF24L01P_ESB::configureRxPipe(uint8_t pipe, uint64_t rxAddress) {
     setRxAddress(pipe, rxAddress);
-    enableDataPipe(pipe);
     enableDynamicPayloadLength(pipe);
-
-    _rxQueue[pipe] = &rxQueue;
 }
 
 void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
@@ -211,6 +214,30 @@ int8_t nRF24L01P_ESB::send(uint8_t bytes[], size_t numBytes, txCallback_t callba
     _txUser       = user;
 
     taskNotify();
+
+    return (0);
+}
+
+int8_t nRF24L01P_ESB::startListening(uint8_t pipe, rxCallback_t callback, void *user) {
+    assert(isPipeIndexValid(pipe));
+
+    if (_rxCallback[pipe] != NULL) return (-1);
+
+    _rxCallback[pipe] = callback;
+    _rxUser[pipe]     = user;
+
+    enableDataPipe(pipe);
+
+    return (0);
+}
+
+int8_t nRF24L01P_ESB::stopListening(uint8_t pipe) {
+    assert(isPipeIndexValid(pipe));
+
+    disableDataPipe(pipe);
+
+    _rxCallback[pipe] = NULL;
+    _rxUser[pipe]     = NULL;
 
     return (0);
 }

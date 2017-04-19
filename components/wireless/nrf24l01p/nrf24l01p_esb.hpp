@@ -27,11 +27,6 @@ enum OperatingMode_t : uint8_t {
     OperatingMode_Tx
 };
 
-struct Package_t {
-    uint8_t bytes[rxFifoSize];
-    uint8_t numBytes;
-};
-
 namespace xXx {
 
 typedef void (*rxCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
@@ -42,10 +37,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     IGpio &_ce;
     IGpio &_irq;
 
-    Queue_Handle_t<Package_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-
-    // rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    // void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
+    rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     uint8_t *_txBytes        = NULL;
     size_t _txBytesStart     = 0;
@@ -66,12 +59,12 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void enterStandbyMode();
     void enterTxMode();
 
-    void handle_MAX_RT();
-    void handle_RX_DR();
-    void handle_TX_DS();
+    void handle_MAX_RT(int8_t status);
+    void handle_RX_DR(int8_t status);
+    void handle_TX_DS(int8_t status);
 
-    int8_t readRxFifo();
-    int8_t writeTxFifo();
+    void readRxFifo(int8_t status);
+    void writeTxFifo(int8_t status);
 
     void enableDataPipe(uint8_t pipeIndex);
     void disableDataPipe(uint8_t pipeIndex);
@@ -83,11 +76,12 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     ~nRF24L01P_ESB();
 
     void configureTxPipe(uint64_t address);
-    void configureRxPipe(uint8_t pipe, Queue<Package_t> &rxQueue, uint64_t address);
+    void configureRxPipe(uint8_t pipe, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
     int8_t send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
-    int8_t listen(rxCallback_t callback, void *user);
+    int8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
+    int8_t stopListening(uint8_t pipe);
 
     int8_t getChannel();
     void setChannel(int8_t channel);
