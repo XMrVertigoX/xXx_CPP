@@ -10,7 +10,7 @@ RM      = rm -rf
 # ----- Directories and files -------------------------------------------------
 
 ifndef PROJECT_NAME
-PROJECT_NAME = project_name_not_set
+PROJECT_NAME = PROJECT_NAME_not_set
 endif
 
 BINARY     = $(PROJECT_NAME).bin
@@ -84,6 +84,8 @@ all: $(EXECUTABLE) $(BINARY) $(HEXARY)
 clean:
 	$(RM) $(OUTPUT_DIR)
 
+# Output
+
 $(OUTPUT_DIR)/$(EXECUTABLE): $(_OBJECT_FILES)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(LDFLAGS) $^ $(_LIBFLAGS) -o $@
@@ -96,6 +98,8 @@ $(OUTPUT_DIR)/$(HEXARY): $(EXECUTABLE)
 	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O ihex $< $@
 
+# Assembler
+
 $(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
@@ -106,10 +110,14 @@ $(OUTPUT_DIR)/%.o: /%.S $(MAKEFILE_LIST)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo $(shell realpath --relative-to=".." "$<")
 
+# C
+
 $(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(COMMON_CFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo $(shell realpath --relative-to=".." "$<")
+
+# C++
 
 $(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
 	$(MKDIR) $(dir $@)

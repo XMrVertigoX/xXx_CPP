@@ -131,7 +131,7 @@ void nRF24L01P_ESB::handle_TX_DS() {
     if (_txBytesEnd > _txBytesStart) {
         writeTxFifo();
     } else if (_txCallback != NULL) {
-        _txCallback(_txUser);
+        _txCallback(_txBytes, _txBytesEnd, _txUser);
     }
 }
 

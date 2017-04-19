@@ -34,7 +34,8 @@ struct Package_t {
 
 namespace xXx {
 
-typedef void (*txCallback_t)(void *user);
+typedef void (*rxCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
+typedef void (*txCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
@@ -42,6 +43,9 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     IGpio &_irq;
 
     Queue_Handle_t<Package_t> _rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    // rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    // void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     uint8_t *_txBytes        = NULL;
     size_t _txBytesStart     = 0;
@@ -83,6 +87,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void switchOperatingMode(OperatingMode_t mode);
 
     int8_t send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
+    int8_t listen(rxCallback_t callback, void *user);
 
     int8_t getChannel();
     void setChannel(int8_t channel);
