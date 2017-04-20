@@ -35,7 +35,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE {
     IGpio &_ce;
     IGpio &_irq;
 
-    size_t _notificationCounter = 0;
+    uint8_t _notificationCounter = 0;
 
     rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};

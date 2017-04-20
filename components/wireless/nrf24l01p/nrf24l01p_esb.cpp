@@ -40,8 +40,7 @@ nRF24L01P_ESB::~nRF24L01P_ESB() {
 void nRF24L01P_ESB::setup() {
     auto interruptFunction = [](void *user) {
         nRF24L01P_ESB *self = static_cast<nRF24L01P_ESB *>(user);
-        int8_t error        = self->notifyGive();
-        assert(error == 0);
+        self->notifyGive();
     };
 
     // Enable dynamic payload length only
@@ -83,7 +82,7 @@ void nRF24L01P_ESB::loop() {
 }
 
 int8_t nRF24L01P_ESB::notifyGive() {
-    // TODO: if (_notificationCounter == SIZE_T_MAX) return (-1);
+    if (_notificationCounter == UINT8_MAX) return (-1);
 
     _notificationCounter++;
 
