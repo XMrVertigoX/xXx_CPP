@@ -19,8 +19,8 @@
 namespace xXx {
 
 union addressUnion_t {
-    uint8_t p8[sizeof(int64_t)];
-    int64_t s64;
+    int64_t m64;
+    uint8_t m8[sizeof(int64_t)];
 };
 
 static inline uint8_t extractPipe(uint8_t status) {
@@ -39,7 +39,9 @@ nRF24L01P_ESB::~nRF24L01P_ESB() {
 
 void nRF24L01P_ESB::setup() {
     auto interruptFunction = [](void *user) {
-        static_cast<nRF24L01P_ESB *>(user)->taskNotifyFromISR();
+        nRF24L01P_ESB *self = static_cast<nRF24L01P_ESB *>(user);
+        int8_t error        = self->notifyGive();
+        assert(error == 0);
     };
 
     // Enable dynamic payload length only
@@ -63,7 +65,9 @@ void nRF24L01P_ESB::setup() {
 }
 
 void nRF24L01P_ESB::loop() {
-    taskNotifyTake(pdFALSE);
+    if (notifyTake()) {
+        return;
+    }
 
     int8_t status = cmd_NOP();
 
@@ -76,6 +80,22 @@ void nRF24L01P_ESB::loop() {
     } else {
         writeTxFifo(status);
     }
+}
+
+int8_t nRF24L01P_ESB::notifyGive() {
+    // TODO: if (_notificationCounter == SIZE_T_MAX) return (-1);
+
+    _notificationCounter++;
+
+    return (0);
+}
+
+int8_t nRF24L01P_ESB::notifyTake() {
+    if (_notificationCounter == 0) return (-1);
+
+    _notificationCounter--;
+
+    return (0);
 }
 
 void nRF24L01P_ESB::readRxFifo(int8_t status) {
@@ -213,7 +233,7 @@ int8_t nRF24L01P_ESB::send(uint8_t bytes[], size_t numBytes, txCallback_t callba
     _txCallback   = callback;
     _txUser       = user;
 
-    taskNotify();
+    notifyGive();
 
     return (0);
 }
@@ -452,56 +472,56 @@ int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
     assert(isPipeIndexValid(pipeIndex));
 
     addressUnion_t rxAddressUnion;
-    rxAddressUnion.s64 = 0;
+    rxAddressUnion.m64 = 0;
 
     switch (pipeIndex) {
         case 0: {
-            cmd_R_REGISTER(Register_RX_ADDR_P0, rxAddressUnion.p8, RX_ADDR_P0_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P0, rxAddressUnion.m8, RX_ADDR_P0_LENGTH);
         } break;
         case 1: {
-            cmd_R_REGISTER(Register_RX_ADDR_P1, rxAddressUnion.p8, RX_ADDR_P1_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P1, rxAddressUnion.m8, RX_ADDR_P1_LENGTH);
         } break;
         case 2: {
-            cmd_R_REGISTER(Register_RX_ADDR_P2, rxAddressUnion.p8, RX_ADDR_P2_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P2, rxAddressUnion.m8, RX_ADDR_P2_LENGTH);
         } break;
         case 3: {
-            cmd_R_REGISTER(Register_RX_ADDR_P3, rxAddressUnion.p8, RX_ADDR_P3_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P3, rxAddressUnion.m8, RX_ADDR_P3_LENGTH);
         } break;
         case 4: {
-            cmd_R_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.p8, RX_ADDR_P4_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.m8, RX_ADDR_P4_LENGTH);
         } break;
         case 5: {
-            cmd_R_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.p8, RX_ADDR_P5_LENGTH);
+            cmd_R_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.m8, RX_ADDR_P5_LENGTH);
         } break;
     }
 
-    return (rxAddressUnion.s64);
+    return (rxAddressUnion.m64);
 }
 
 void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
     assert(isPipeIndexValid(pipeIndex));
 
     addressUnion_t rxAddressUnion;
-    rxAddressUnion.s64 = rxAddress;
+    rxAddressUnion.m64 = rxAddress;
 
     switch (pipeIndex) {
         case 0: {
-            cmd_W_REGISTER(Register_RX_ADDR_P0, rxAddressUnion.p8, RX_ADDR_P0_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P0, rxAddressUnion.m8, RX_ADDR_P0_LENGTH);
         } break;
         case 1: {
-            cmd_W_REGISTER(Register_RX_ADDR_P1, rxAddressUnion.p8, RX_ADDR_P1_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P1, rxAddressUnion.m8, RX_ADDR_P1_LENGTH);
         } break;
         case 2: {
-            cmd_W_REGISTER(Register_RX_ADDR_P2, rxAddressUnion.p8, RX_ADDR_P2_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P2, rxAddressUnion.m8, RX_ADDR_P2_LENGTH);
         } break;
         case 3: {
-            cmd_W_REGISTER(Register_RX_ADDR_P3, rxAddressUnion.p8, RX_ADDR_P3_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P3, rxAddressUnion.m8, RX_ADDR_P3_LENGTH);
         } break;
         case 4: {
-            cmd_W_REGISTER(Register_RX_ADDR_P4, rxAddressUnion.p8, RX_ADDR_P4_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P4, rxAddressUnion.m8, RX_ADDR_P4_LENGTH);
         } break;
         case 5: {
-            cmd_W_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.p8, RX_ADDR_P5_LENGTH);
+            cmd_W_REGISTER(Register_RX_ADDR_P5, rxAddressUnion.m8, RX_ADDR_P5_LENGTH);
         } break;
     }
 
@@ -510,18 +530,18 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
 
 int64_t nRF24L01P_ESB::getTxAddress() {
     addressUnion_t txAddressUnion;
-    txAddressUnion.s64 = 0;
+    txAddressUnion.m64 = 0;
 
-    cmd_R_REGISTER(Register_TX_ADDR, txAddressUnion.p8, TX_ADDR_LENGTH);
+    cmd_R_REGISTER(Register_TX_ADDR, txAddressUnion.m8, TX_ADDR_LENGTH);
 
-    return (txAddressUnion.s64);
+    return (txAddressUnion.m64);
 }
 
 void nRF24L01P_ESB::setTxAddress(int64_t txAddress) {
     addressUnion_t txAddressUnion;
-    txAddressUnion.s64 = txAddress;
+    txAddressUnion.m64 = txAddress;
 
-    cmd_W_REGISTER(Register_TX_ADDR, txAddressUnion.p8, TX_ADDR_LENGTH);
+    cmd_W_REGISTER(Register_TX_ADDR, txAddressUnion.m8, TX_ADDR_LENGTH);
 
     assert(txAddress == getTxAddress());
 }

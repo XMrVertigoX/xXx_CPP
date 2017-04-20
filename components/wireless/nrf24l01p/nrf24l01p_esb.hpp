@@ -6,8 +6,6 @@
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
-#include <xXx/os/simpletask.hpp>
-#include <xXx/templates/queue.hpp>
 
 enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
@@ -32,10 +30,12 @@ namespace xXx {
 typedef void (*rxCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
 typedef void (*txCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
 
-class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
+class nRF24L01P_ESB : public nRF24L01P_BASE {
    private:
     IGpio &_ce;
     IGpio &_irq;
+
+    size_t _notificationCounter = 0;
 
     rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
@@ -46,13 +46,13 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     txCallback_t _txCallback = NULL;
     void *_txUser            = NULL;
 
+    int8_t notifyGive();
+    int8_t notifyTake();
+
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
     void clearSingleBit(Register_t reg, uint8_t bitIndex);
     void setSingleBit(Register_t reg, uint8_t bitIndex);
-
-    void setup();
-    void loop();
 
     void enterRxMode();
     void enterShutdownMode();
@@ -74,6 +74,9 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
     ~nRF24L01P_ESB();
+
+    void setup();
+    void loop();
 
     void configureTxPipe(uint64_t address);
     void configureRxPipe(uint8_t pipe, uint64_t address);
