@@ -6,6 +6,7 @@
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
+#include <xXx/os/simpletask.hpp>
 
 enum DataRate_t : uint8_t { DataRate_1MBPS, DataRate_2MBPS, DataRate_250KBPS };
 
@@ -28,26 +29,27 @@ enum OperatingMode_t : uint8_t {
 namespace xXx {
 
 typedef void (*rxCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
-typedef void (*txCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
+typedef void (*txCallback_t)(void *user);
 
-class nRF24L01P_ESB : public nRF24L01P_BASE {
+class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
     IGpio &_ce;
     IGpio &_irq;
-
-    uint8_t _notificationCounter = 0;
 
     rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     uint8_t *_txBytes        = NULL;
     size_t _txBytesStart     = 0;
-    size_t _txBytesEnd       = 0;
+    size_t _txNumBytes       = 0;
     txCallback_t _txCallback = NULL;
     void *_txUser            = NULL;
 
-    int8_t notifyGive();
-    int8_t notifyTake();
+    struct {
+        uint8_t *bytes  = NULL;
+        size_t start    = 0;
+        size_t numBytes = 0;
+    } txBuffer;
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -82,7 +84,7 @@ class nRF24L01P_ESB : public nRF24L01P_BASE {
     void configureRxPipe(uint8_t pipe, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
-    int8_t send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
+    int8_t queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
     int8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
     int8_t stopListening(uint8_t pipe);
 

@@ -38,9 +38,11 @@ nRF24L01P_ESB::~nRF24L01P_ESB() {
 }
 
 void nRF24L01P_ESB::setup() {
+    LOG("%p: %s", this, __PRETTY_FUNCTION__);
+
     auto interruptFunction = [](void *user) {
         nRF24L01P_ESB *self = static_cast<nRF24L01P_ESB *>(user);
-        self->notifyGive();
+        self->notifyFromISR();
     };
 
     // Enable dynamic payload length only
@@ -64,9 +66,7 @@ void nRF24L01P_ESB::setup() {
 }
 
 void nRF24L01P_ESB::loop() {
-    if (notifyTake()) {
-        return;
-    }
+    notifyTake(pdFALSE);
 
     int8_t status = cmd_NOP();
 
@@ -79,22 +79,6 @@ void nRF24L01P_ESB::loop() {
     } else {
         writeTxFifo(status);
     }
-}
-
-int8_t nRF24L01P_ESB::notifyGive() {
-    if (_notificationCounter == UINT8_MAX) return (-1);
-
-    _notificationCounter++;
-
-    return (0);
-}
-
-int8_t nRF24L01P_ESB::notifyTake() {
-    if (_notificationCounter == 0) return (-1);
-
-    _notificationCounter--;
-
-    return (0);
 }
 
 void nRF24L01P_ESB::readRxFifo(int8_t status) {
@@ -127,7 +111,7 @@ void nRF24L01P_ESB::readRxFifo(int8_t status) {
 void nRF24L01P_ESB::writeTxFifo(int8_t status) {
     if (readBit<int8_t>(status, STATUS_TX_FULL)) return;
 
-    uint8_t numBytes = constrain(_txBytesEnd - _txBytesStart, txFifoSize);
+    uint8_t numBytes = constrain(_txNumBytes - _txBytesStart, txFifoSize);
 
     cmd_W_TX_PAYLOAD(&_txBytes[_txBytesStart], numBytes);
 
@@ -138,7 +122,7 @@ void nRF24L01P_ESB::handle_MAX_RT(int8_t status) {
     cmd_FLUSH_TX();
 
     if (_txCallback) {
-        _txCallback(NULL, 0, _txUser);
+        _txCallback(_txUser);
     }
 
     writeShortRegister(Register_STATUS, STATUS_MAX_RT_MASK);
@@ -150,10 +134,10 @@ void nRF24L01P_ESB::handle_RX_DR(int8_t status) {
 }
 
 void nRF24L01P_ESB::handle_TX_DS(int8_t status) {
-    if (_txBytesEnd > _txBytesStart) {
+    if (_txNumBytes > _txBytesStart) {
         writeTxFifo(status);
     } else if (_txCallback) {
-        _txCallback(_txBytes, _txBytesEnd, _txUser);
+        _txCallback(_txUser);
     }
 
     writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
@@ -196,8 +180,6 @@ void nRF24L01P_ESB::enterTxMode() {
 void nRF24L01P_ESB::configureTxPipe(uint64_t txAddress) {
     setTxAddress(txAddress);
     configureRxPipe(0, txAddress);
-
-    // TODO
     enableDataPipe(0);
 }
 
@@ -223,16 +205,15 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
     }
 }
 
-int8_t nRF24L01P_ESB::send(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user) {
-    if (_txBytesStart != _txBytesEnd) return (-1);
+int8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback,
+                                        void *user) {
+    if (_txBytesStart != _txNumBytes) return (-1);
 
     _txBytes      = bytes;
     _txBytesStart = 0;
-    _txBytesEnd   = numBytes;
+    _txNumBytes   = numBytes;
     _txCallback   = callback;
     _txUser       = user;
-
-    notifyGive();
 
     return (0);
 }
@@ -265,9 +246,7 @@ int8_t nRF24L01P_ESB::stopListening(uint8_t pipe) {
 
 uint8_t nRF24L01P_ESB::readShortRegister(Register_t reg) {
     uint8_t result;
-
     cmd_R_REGISTER(reg, &result, 1);
-
     return (result);
 }
 
@@ -402,7 +381,9 @@ OutputPower_t nRF24L01P_ESB::getOutputPower() {
     AND_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
     RIGHT_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR);
 
-    // TODO: Get rid of this cast
+    // Make sure that the following cast is save;
+    assert(rf_setup < 4);
+
     return (static_cast<OutputPower_t>(rf_setup));
 }
 

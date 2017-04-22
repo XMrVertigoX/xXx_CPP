@@ -4,16 +4,20 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-const uint16_t defaultStackSize = configMINIMAL_STACK_SIZE;
-const uint8_t defaultPriority   = tskIDLE_PRIORITY + 1;
+enum Task_Priority_t {
+    Task_Priority_IDLE = tskIDLE_PRIORITY,
+    Task_Priority_LOW,
+    Task_Priority_MID,
+    Task_Priority_HIGH
+};
 
 namespace xXx {
 
 class SimpleTask {
    private:
     TaskHandle_t _handle = NULL;
-    uint8_t _priority    = defaultPriority;
-    uint16_t _stackSize  = defaultStackSize;
+    uint8_t _priority    = Task_Priority_MID;
+    uint16_t _stackSize  = configMINIMAL_STACK_SIZE;
 
     virtual void setup() = 0;
     virtual void loop()  = 0;
@@ -21,17 +25,18 @@ class SimpleTask {
    protected:
     virtual ~SimpleTask();
 
-    void taskDelay(TickType_t ticksToDelay);
-    void taskNotifyTake(BaseType_t clearCounter = pdTRUE, TickType_t ticksToWait = portMAX_DELAY);
+    void delay(TickType_t ticksToDelay);
+    void notifyTake(BaseType_t clearCounter = pdTRUE, TickType_t ticksToWait = portMAX_DELAY);
 
    public:
-    void taskCreate(uint16_t stackSize = defaultStackSize, uint8_t priority = defaultPriority);
-    void taskDelete();
-    void taskNotify(uint32_t value = 0, eNotifyAction action = eIncrement);
-    void taskNotifyFromISR(uint32_t value = 0, eNotifyAction action = eIncrement);
-    void taskResume();
-    void taskResumeFromISR();
-    void taskSuspend();
+    void create(uint16_t stackSize = configMINIMAL_STACK_SIZE,
+                uint8_t priority   = Task_Priority_MID);
+    void destroy();
+    void notify();
+    void notifyFromISR();
+    void resume();
+    void resumeFromISR();
+    void suspend();
 
     UBaseType_t getStackHighWaterMark();
 };

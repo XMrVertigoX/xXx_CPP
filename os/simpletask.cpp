@@ -1,56 +1,60 @@
+#include <assert.h>
 #include <stdlib.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include <xXx/os/simpletask.hpp>
+#include "simpletask.hpp"
+
+#define __INFINITE_LOOP for (;;)
 
 namespace xXx {
 
 SimpleTask::~SimpleTask() {
-    taskDelete();
+    destroy();
 }
 
-void SimpleTask::taskDelay(TickType_t ticksToDelay) {
+void SimpleTask::delay(TickType_t ticksToDelay) {
     vTaskDelay(ticksToDelay);
 }
 
-void SimpleTask::taskNotifyTake(BaseType_t clearCounter, TickType_t ticksToWait) {
+void SimpleTask::notifyTake(BaseType_t clearCounter, TickType_t ticksToWait) {
     ulTaskNotifyTake(clearCounter, ticksToWait);
 }
 
-void SimpleTask::taskCreate(uint16_t stackSize, uint8_t priority) {
+void SimpleTask::create(uint16_t stackSize, uint8_t priority) {
     auto taskFunction = [](void *simpleTask) {
         static_cast<SimpleTask *>(simpleTask)->setup();
-        for (;;) static_cast<SimpleTask *>(simpleTask)->loop();
+        __INFINITE_LOOP static_cast<SimpleTask *>(simpleTask)->loop();
     };
 
-    xTaskCreate(taskFunction, NULL, stackSize, this, priority, &_handle);
+    BaseType_t error = xTaskCreate(taskFunction, NULL, stackSize, this, priority, &_handle);
+    assert(error == pdPASS);
 }
 
-void SimpleTask::taskDelete() {
+void SimpleTask::destroy() {
     vTaskDelete(_handle);
 }
 
-void SimpleTask::taskNotify(uint32_t value, eNotifyAction action) {
-    xTaskNotify(_handle, value, action);
+void SimpleTask::notify() {
+    xTaskNotifyGive(_handle);
 }
 
-void SimpleTask::taskNotifyFromISR(uint32_t value, eNotifyAction action) {
+void SimpleTask::notifyFromISR() {
     BaseType_t higherPriorityTaskWoken;
 
-    xTaskNotifyFromISR(_handle, value, action, &higherPriorityTaskWoken);
+    vTaskNotifyGiveFromISR(_handle, &higherPriorityTaskWoken);
 
     if (higherPriorityTaskWoken) {
         taskYIELD();
     }
 }
 
-void SimpleTask::taskResume() {
+void SimpleTask::resume() {
     vTaskResume(_handle);
 }
 
-void SimpleTask::taskResumeFromISR() {
+void SimpleTask::resumeFromISR() {
     BaseType_t higherPriorityTaskWoken;
 
     higherPriorityTaskWoken = xTaskResumeFromISR(_handle);
@@ -60,7 +64,7 @@ void SimpleTask::taskResumeFromISR() {
     }
 }
 
-void SimpleTask::taskSuspend() {
+void SimpleTask::suspend() {
     vTaskSuspend(_handle);
 }
 
