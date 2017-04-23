@@ -69,6 +69,17 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void enableDynamicPayloadLength(uint8_t pipeIndex);
     void disableDynamicPayloadLength(uint8_t pipeIndex);
 
+    int8_t getChannel();
+    CRCConfig_t getCrcConfig();
+    DataRate_t getDataRate();
+    OutputPower_t getOutputPower();
+    int8_t getRetryCount();
+    int8_t getRetryDelay();
+    int64_t getRxAddress(uint8_t pipe);
+    int64_t getTxAddress();
+    int8_t getPackageLossCounter();
+    int8_t getRetransmissionCounter();
+
    public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
     ~nRF24L01P_ESB();
@@ -84,24 +95,14 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     int8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
     int8_t stopListening(uint8_t pipe);
 
-    int8_t getChannel();
-    void setChannel(int8_t channel);
-    CRCConfig_t getCrcConfig();
-    void setCrcConfig(CRCConfig_t crc);
-    void setDataRate(DataRate_t dataRate);
-    DataRate_t getDataRate();
-    OutputPower_t getOutputPower();
-    void setOutputPower(OutputPower_t level);
-    int8_t getRetryCount();
-    void setRetryCount(uint8_t count);
-    int8_t getRetryDelay();
-    void setRetryDelay(uint8_t delay);
-    int64_t getRxAddress(uint8_t pipe);
-    void setRxAddress(uint8_t pipe, int64_t address);
-    int64_t getTxAddress();
-    void setTxAddress(int64_t address);
-    int8_t getPackageLossCounter();
-    int8_t getRetransmitCounter();
+    int8_t setChannel(int8_t channel);
+    int8_t setCrcConfig(CRCConfig_t crc);
+    int8_t setDataRate(DataRate_t dataRate);
+    int8_t setOutputPower(OutputPower_t level);
+    int8_t setRetryCount(uint8_t count);
+    int8_t setRetryDelay(uint8_t delay);
+    int8_t setRxAddress(uint8_t pipe, int64_t address);
+    int8_t setTxAddress(int64_t address);
 };
 
 } /* namespace xXx */

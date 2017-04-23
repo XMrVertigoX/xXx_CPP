@@ -138,7 +138,7 @@ void nRF24L01P_ESB::txCallback() {
     assert(_txBufferStart == _txBufferEnd);
 
     if (_txCallback) {
-        _txCallback(getRetransmitCounter(), _txUser);
+        _txCallback(getRetransmissionCounter(), _txUser);
     }
 
     _txCallback = NULL;
@@ -146,10 +146,10 @@ void nRF24L01P_ESB::txCallback() {
 }
 
 void nRF24L01P_ESB::enterRxMode() {
-    switchOperatingMode(OperatingMode_Standby);
-
-    // Enter PRX mode
-    setSingleBit(Register_CONFIG, CONFIG_PRIM_RX);
+    uint8_t config = readShortRegister(Register_CONFIG);
+    setBit_eq<uint8_t>(config, CONFIG_PWR_UP);
+    setBit_eq<uint8_t>(config, CONFIG_PRIM_RX);
+    writeShortRegister(Register_CONFIG, config);
 
     _ce.set();
 
@@ -169,10 +169,10 @@ void nRF24L01P_ESB::enterStandbyMode() {
 }
 
 void nRF24L01P_ESB::enterTxMode() {
-    switchOperatingMode(OperatingMode_Standby);
-
-    // Enter PTX mode
-    clearSingleBit(Register_CONFIG, CONFIG_PRIM_RX);
+    uint8_t config = readShortRegister(Register_CONFIG);
+    setBit_eq<uint8_t>(config, CONFIG_PWR_UP);
+    clearBit_eq<uint8_t>(config, CONFIG_PRIM_RX);
+    writeShortRegister(Register_CONFIG, config);
 
     _ce.set();
 
@@ -209,7 +209,7 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
 
 int8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback,
                                         void *user) {
-    //if (_txCallback != NULL) return (-1);
+    if (_txBufferStart < _txBufferEnd) return (-1);
 
     _txBuffer      = bytes;
     _txBufferStart = 0;
@@ -270,30 +270,30 @@ void nRF24L01P_ESB::setSingleBit(Register_t reg, uint8_t bitIndex) {
 
 // ----- getters and setters --------------------------------------------------
 
-void nRF24L01P_ESB::enableDataPipe(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-    setSingleBit(Register_EN_RXADDR, pipeIndex);
+void nRF24L01P_ESB::enableDataPipe(uint8_t pipe) {
+    assert(isPipeIndexValid(pipe));
+    setSingleBit(Register_EN_RXADDR, pipe);
 }
 
-void nRF24L01P_ESB::disableDataPipe(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-    clearSingleBit(Register_EN_RXADDR, pipeIndex);
+void nRF24L01P_ESB::disableDataPipe(uint8_t pipe) {
+    assert(isPipeIndexValid(pipe));
+    clearSingleBit(Register_EN_RXADDR, pipe);
 }
 
-void nRF24L01P_ESB::enableDynamicPayloadLength(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-    setSingleBit(Register_DYNPD, pipeIndex);
+void nRF24L01P_ESB::enableDynamicPayloadLength(uint8_t pipe) {
+    assert(isPipeIndexValid(pipe));
+    setSingleBit(Register_DYNPD, pipe);
 }
 
-void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipeIndex) {
-    assert(isPipeIndexValid(pipeIndex));
-    clearSingleBit(Register_DYNPD, pipeIndex);
+void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipe) {
+    assert(isPipeIndexValid(pipe));
+    clearSingleBit(Register_DYNPD, pipe);
 }
 
 CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
     uint8_t config = readShortRegister(Register_CONFIG);
 
-    if (not readBit<uint8_t>(config, CONFIG_EN_CRC)) {
+    if (readBit<uint8_t>(config, CONFIG_EN_CRC) == false) {
         return (CRCConfig_DISABLED);
     }
 
@@ -304,7 +304,7 @@ CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
     }
 }
 
-void nRF24L01P_ESB::setCrcConfig(CRCConfig_t crcConfig) {
+int8_t nRF24L01P_ESB::setCrcConfig(CRCConfig_t crcConfig) {
     uint8_t config = readShortRegister(Register_CONFIG);
 
     switch (crcConfig) {
@@ -324,6 +324,8 @@ void nRF24L01P_ESB::setCrcConfig(CRCConfig_t crcConfig) {
     writeShortRegister(Register_CONFIG, config);
 
     assert(crcConfig == getCrcConfig());
+
+    return (0);
 }
 
 int8_t nRF24L01P_ESB::getChannel() {
@@ -332,49 +334,53 @@ int8_t nRF24L01P_ESB::getChannel() {
     return (channel);
 }
 
-void nRF24L01P_ESB::setChannel(int8_t channel) {
+int8_t nRF24L01P_ESB::setChannel(int8_t channel) {
     if (channel < 0) {
         writeShortRegister(Register_RF_CH, channel);
     }
 
     assert(channel == getChannel());
+
+    return (0);
 }
 
 DataRate_t nRF24L01P_ESB::getDataRate() {
-    uint8_t rfSetup = readShortRegister(Register_RF_SETUP);
+    uint8_t rf_setup = readShortRegister(Register_RF_SETUP);
 
-    if (readBit<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW)) {
+    if (readBit<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW)) {
         return (DataRate_250KBPS);
     }
 
-    if (readBit<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH)) {
+    if (readBit<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH)) {
         return (DataRate_2MBPS);
     }
 
     return (DataRate_1MBPS);
 }
 
-void nRF24L01P_ESB::setDataRate(DataRate_t dataRate) {
-    uint8_t rfSetup = readShortRegister(Register_RF_SETUP);
+int8_t nRF24L01P_ESB::setDataRate(DataRate_t dataRate) {
+    uint8_t rf_setup = readShortRegister(Register_RF_SETUP);
 
     switch (dataRate) {
         case (DataRate_1MBPS): {
-            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
-            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
+            clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
+            clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
         case DataRate_2MBPS: {
-            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
-            setBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
+            clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
+            setBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
         case DataRate_250KBPS: {
-            setBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_LOW);
-            clearBit_eq<uint8_t>(rfSetup, RF_SETUP_RF_DR_HIGH);
+            setBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
+            clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
     }
 
-    writeShortRegister(Register_RF_SETUP, rfSetup);
+    writeShortRegister(Register_RF_SETUP, rf_setup);
 
     assert(dataRate == getDataRate());
+
+    return (0);
 }
 
 OutputPower_t nRF24L01P_ESB::getOutputPower() {
@@ -383,13 +389,13 @@ OutputPower_t nRF24L01P_ESB::getOutputPower() {
     AND_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
     RIGHT_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR);
 
-    // Make sure that the following cast is save;
+    // TODO: Make sure that the following cast is save;
     assert(rf_setup < 4);
 
     return (static_cast<OutputPower_t>(rf_setup));
 }
 
-void nRF24L01P_ESB::setOutputPower(OutputPower_t outputPower) {
+int8_t nRF24L01P_ESB::setOutputPower(OutputPower_t outputPower) {
     uint8_t rf_setup = readShortRegister(Register_RF_SETUP);
 
     AND_eq(rf_setup, INVERT<uint8_t>(RF_SETUP_RF_PWR_MASK));
@@ -398,6 +404,8 @@ void nRF24L01P_ESB::setOutputPower(OutputPower_t outputPower) {
     writeShortRegister(Register_RF_SETUP, rf_setup);
 
     assert(outputPower == getOutputPower());
+
+    return (0);
 }
 
 int8_t nRF24L01P_ESB::getRetryCount() {
@@ -409,7 +417,7 @@ int8_t nRF24L01P_ESB::getRetryCount() {
     return (setup_retr);
 }
 
-void nRF24L01P_ESB::setRetryCount(uint8_t count) {
+int8_t nRF24L01P_ESB::setRetryCount(uint8_t count) {
     assert(count <= 0xF);
 
     uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
@@ -417,6 +425,8 @@ void nRF24L01P_ESB::setRetryCount(uint8_t count) {
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
     assert(count == getRetryCount());
+
+    return (0);
 }
 
 int8_t nRF24L01P_ESB::getRetryDelay() {
@@ -428,7 +438,7 @@ int8_t nRF24L01P_ESB::getRetryDelay() {
     return (setup_retr);
 }
 
-void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
+int8_t nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
     assert(delay <= 0xF);
 
     uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
@@ -436,6 +446,8 @@ void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
     assert(delay == getRetryDelay());
+
+    return (0);
 }
 
 int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
@@ -468,7 +480,7 @@ int64_t nRF24L01P_ESB::getRxAddress(uint8_t pipeIndex) {
     return (rxAddressUnion.m64);
 }
 
-void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
+int8_t nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
     assert(isPipeIndexValid(pipeIndex));
 
     addressUnion_t rxAddressUnion;
@@ -496,6 +508,8 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipeIndex, int64_t rxAddress) {
     }
 
     assert(rxAddress == getRxAddress(pipeIndex));
+
+    return (0);
 }
 
 int64_t nRF24L01P_ESB::getTxAddress() {
@@ -507,13 +521,15 @@ int64_t nRF24L01P_ESB::getTxAddress() {
     return (txAddressUnion.m64);
 }
 
-void nRF24L01P_ESB::setTxAddress(int64_t txAddress) {
+int8_t nRF24L01P_ESB::setTxAddress(int64_t txAddress) {
     addressUnion_t txAddressUnion;
     txAddressUnion.m64 = txAddress;
 
     cmd_W_REGISTER(Register_TX_ADDR, txAddressUnion.m8, TX_ADDR_LENGTH);
 
     assert(txAddress == getTxAddress());
+
+    return (0);
 }
 
 int8_t nRF24L01P_ESB::getPackageLossCounter() {
@@ -525,7 +541,7 @@ int8_t nRF24L01P_ESB::getPackageLossCounter() {
     return (observe_tx);
 }
 
-int8_t nRF24L01P_ESB::getRetransmitCounter() {
+int8_t nRF24L01P_ESB::getRetransmissionCounter() {
     uint8_t observe_tx = readShortRegister(Register_OBSERVE_TX);
 
     AND_eq<uint8_t>(observe_tx, OBSERVE_TX_ARC_CNT_MASK);
