@@ -66,7 +66,7 @@ void nRF24L01P_ESB::setup() {
 }
 
 void nRF24L01P_ESB::loop() {
-    notifyTake(pdFALSE);
+    notifyTake();
 
     int8_t status = cmd_NOP();
 
@@ -93,11 +93,6 @@ void nRF24L01P_ESB::readRxFifo(int8_t status) {
 
     if (numBytes > rxFifoSize) {
         cmd_FLUSH_RX();
-
-        if (_rxCallback[pipe]) {
-            _rxCallback[pipe](NULL, 0, _rxUser[pipe]);
-        }
-
         return;
     }
 
@@ -111,20 +106,16 @@ void nRF24L01P_ESB::readRxFifo(int8_t status) {
 void nRF24L01P_ESB::writeTxFifo(int8_t status) {
     if (readBit<int8_t>(status, STATUS_TX_FULL)) return;
 
-    uint8_t numBytes = constrain(_txNumBytes - _txBytesStart, txFifoSize);
+    uint8_t numBytes = constrain(_txBufferEnd - _txBufferStart, txFifoSize);
 
-    cmd_W_TX_PAYLOAD(&_txBytes[_txBytesStart], numBytes);
+    cmd_W_TX_PAYLOAD(&_txBuffer[_txBufferStart], numBytes);
 
-    _txBytesStart += numBytes;
+    _txBufferStart += numBytes;
 }
 
 void nRF24L01P_ESB::handle_MAX_RT(int8_t status) {
     cmd_FLUSH_TX();
-
-    if (_txCallback) {
-        _txCallback(_txUser);
-    }
-
+    txCallback();
     writeShortRegister(Register_STATUS, STATUS_MAX_RT_MASK);
 }
 
@@ -134,13 +125,24 @@ void nRF24L01P_ESB::handle_RX_DR(int8_t status) {
 }
 
 void nRF24L01P_ESB::handle_TX_DS(int8_t status) {
-    if (_txNumBytes > _txBytesStart) {
+    if (_txBufferEnd > _txBufferStart) {
         writeTxFifo(status);
-    } else if (_txCallback) {
-        _txCallback(_txUser);
+    } else {
+        txCallback();
     }
 
     writeShortRegister(Register_STATUS, STATUS_TX_DS_MASK);
+}
+
+void nRF24L01P_ESB::txCallback() {
+    assert(_txBufferStart == _txBufferEnd);
+
+    if (_txCallback) {
+        _txCallback(getRetransmitCounter(), _txUser);
+    }
+
+    _txCallback = NULL;
+    _txUser     = NULL;
 }
 
 void nRF24L01P_ESB::enterRxMode() {
@@ -207,13 +209,13 @@ void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
 
 int8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback,
                                         void *user) {
-    if (_txBytesStart != _txNumBytes) return (-1);
+    //if (_txCallback != NULL) return (-1);
 
-    _txBytes      = bytes;
-    _txBytesStart = 0;
-    _txNumBytes   = numBytes;
-    _txCallback   = callback;
-    _txUser       = user;
+    _txBuffer      = bytes;
+    _txBufferStart = 0;
+    _txBufferEnd   = numBytes;
+    _txCallback    = callback;
+    _txUser        = user;
 
     return (0);
 }
@@ -398,7 +400,7 @@ void nRF24L01P_ESB::setOutputPower(OutputPower_t outputPower) {
     assert(outputPower == getOutputPower());
 }
 
-uint8_t nRF24L01P_ESB::getRetryCount() {
+int8_t nRF24L01P_ESB::getRetryCount() {
     uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
 
     AND_eq<uint8_t>(setup_retr, SETUP_RETR_ARC_MASK);
@@ -410,20 +412,14 @@ uint8_t nRF24L01P_ESB::getRetryCount() {
 void nRF24L01P_ESB::setRetryCount(uint8_t count) {
     assert(count <= 0xF);
 
-    uint8_t setup_retr;
-
-    setup_retr = readShortRegister(Register_SETUP_RETR);
-
-    LEFT_eq<uint8_t>(count, SETUP_RETR_ARC);
-    AND_eq<uint8_t>(setup_retr, INVERT<uint8_t>(SETUP_RETR_ARC_MASK));
-    OR_eq<uint8_t>(setup_retr, count);
-
+    uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(count, SETUP_RETR_ARC));
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
     assert(count == getRetryCount());
 }
 
-uint8_t nRF24L01P_ESB::getRetryDelay() {
+int8_t nRF24L01P_ESB::getRetryDelay() {
     uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
 
     AND_eq<uint8_t>(setup_retr, SETUP_RETR_ARD_MASK);
@@ -435,14 +431,8 @@ uint8_t nRF24L01P_ESB::getRetryDelay() {
 void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
     assert(delay <= 0xF);
 
-    uint8_t setup_retr;
-
-    setup_retr = readShortRegister(Register_SETUP_RETR);
-
-    LEFT_eq<uint8_t>(delay, SETUP_RETR_ARD);
-    AND_eq<uint8_t>(setup_retr, INVERT<uint8_t>(SETUP_RETR_ARD_MASK));
-    OR_eq<uint8_t>(setup_retr, delay);
-
+    uint8_t setup_retr = readShortRegister(Register_SETUP_RETR);
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(delay, SETUP_RETR_ARD));
     writeShortRegister(Register_SETUP_RETR, setup_retr);
 
     assert(delay == getRetryDelay());

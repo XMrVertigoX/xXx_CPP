@@ -29,7 +29,7 @@ enum OperatingMode_t : uint8_t {
 namespace xXx {
 
 typedef void (*rxCallback_t)(uint8_t bytes[], size_t numBytes, void *user);
-typedef void (*txCallback_t)(void *user);
+typedef void (*txCallback_t)(int8_t numRetries, void *user);
 
 class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
@@ -39,17 +39,11 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     rxCallback_t _rxCallback[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     void *_rxUser[6]            = {NULL, NULL, NULL, NULL, NULL, NULL};
 
-    uint8_t *_txBytes        = NULL;
-    size_t _txBytesStart     = 0;
-    size_t _txNumBytes       = 0;
+    uint8_t *_txBuffer       = NULL;
+    size_t _txBufferStart    = 0;
+    size_t _txBufferEnd      = 0;
     txCallback_t _txCallback = NULL;
     void *_txUser            = NULL;
-
-    struct {
-        uint8_t *bytes  = NULL;
-        size_t start    = 0;
-        size_t numBytes = 0;
-    } txBuffer;
 
     uint8_t readShortRegister(Register_t reg);
     void writeShortRegister(Register_t reg, uint8_t regValue);
@@ -64,6 +58,8 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void handle_MAX_RT(int8_t status);
     void handle_RX_DR(int8_t status);
     void handle_TX_DS(int8_t status);
+
+    void txCallback();
 
     void readRxFifo(int8_t status);
     void writeTxFifo(int8_t status);
@@ -96,9 +92,9 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     DataRate_t getDataRate();
     OutputPower_t getOutputPower();
     void setOutputPower(OutputPower_t level);
-    uint8_t getRetryCount();
+    int8_t getRetryCount();
     void setRetryCount(uint8_t count);
-    uint8_t getRetryDelay();
+    int8_t getRetryDelay();
     void setRetryDelay(uint8_t delay);
     int64_t getRxAddress(uint8_t pipe);
     void setRxAddress(uint8_t pipe, int64_t address);
