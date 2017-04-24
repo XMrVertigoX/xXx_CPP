@@ -10,23 +10,23 @@ class nRF24L01P_BASE {
    private:
     ISpi &_spi;
 
-    int8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
+    uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
 
    protected:
     nRF24L01P_BASE(ISpi &spi);
     virtual ~nRF24L01P_BASE();
 
-    int8_t cmd_R_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
-    int8_t cmd_W_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
-    int8_t cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes);
-    int8_t cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes);
-    int8_t cmd_FLUSH_TX();
-    int8_t cmd_FLUSH_RX();
-    int8_t cmd_REUSE_TX_PL();
-    int8_t cmd_R_RX_PL_WID(uint8_t &payloadLength);
-    int8_t cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes);
-    int8_t cmd_W_TX_PAYLOAD_NOACK(uint8_t bytes[], size_t numBytes);
-    int8_t cmd_NOP();
+    uint8_t cmd_R_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_W_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_FLUSH_TX();
+    uint8_t cmd_FLUSH_RX();
+    uint8_t cmd_REUSE_TX_PL();
+    uint8_t cmd_R_RX_PL_WID(uint8_t &payloadLength);
+    uint8_t cmd_W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_W_TX_PAYLOAD_NOACK(uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_NOP();
 };
 
 } /* namespace xXx */

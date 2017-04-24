@@ -45,40 +45,35 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     txCallback_t _txCallback = NULL;
     void *_txUser            = NULL;
 
-    uint8_t readShortRegister(Register_t reg);
-    void writeShortRegister(Register_t reg, uint8_t regValue);
-    void clearSingleBit(Register_t reg, uint8_t bitIndex);
-    void setSingleBit(Register_t reg, uint8_t bitIndex);
-
     void enterRxMode();
     void enterShutdownMode();
     void enterStandbyMode();
     void enterTxMode();
 
-    void handle_MAX_RT(int8_t status);
-    void handle_RX_DR(int8_t status);
-    void handle_TX_DS(int8_t status);
+    void handle_MAX_RT(uint8_t status);
+    void handle_RX_DR(uint8_t status);
+    void handle_TX_DS(uint8_t status);
 
     void txCallback();
 
-    void readRxFifo(int8_t status);
-    void writeTxFifo(int8_t status);
+    void readRxFifo(uint8_t status);
+    void writeTxFifo(uint8_t status);
 
     void enableDataPipe(uint8_t pipeIndex);
     void disableDataPipe(uint8_t pipeIndex);
     void enableDynamicPayloadLength(uint8_t pipeIndex);
     void disableDynamicPayloadLength(uint8_t pipeIndex);
 
-    int8_t getChannel();
+    uint8_t getChannel();
     CRCConfig_t getCrcConfig();
     DataRate_t getDataRate();
     OutputPower_t getOutputPower();
-    int8_t getRetryCount();
-    int8_t getRetryDelay();
-    int64_t getRxAddress(uint8_t pipe);
-    int64_t getTxAddress();
-    int8_t getPackageLossCounter();
-    int8_t getRetransmissionCounter();
+    uint8_t getRetryCount();
+    uint8_t getRetryDelay();
+    uint64_t getRxAddress(uint8_t pipe);
+    uint64_t getTxAddress();
+    uint8_t getPackageLossCounter();
+    uint8_t getRetransmissionCounter();
 
    public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -91,18 +86,18 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void configureRxPipe(uint8_t pipe, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
-    int8_t queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
-    int8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
-    int8_t stopListening(uint8_t pipe);
+    uint8_t queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
+    uint8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
+    uint8_t stopListening(uint8_t pipe);
 
-    int8_t setChannel(int8_t channel);
-    int8_t setCrcConfig(CRCConfig_t crc);
-    int8_t setDataRate(DataRate_t dataRate);
-    int8_t setOutputPower(OutputPower_t level);
-    int8_t setRetryCount(uint8_t count);
-    int8_t setRetryDelay(uint8_t delay);
-    int8_t setRxAddress(uint8_t pipe, int64_t address);
-    int8_t setTxAddress(int64_t address);
+    uint8_t setChannel(uint8_t channel);
+    uint8_t setCrcConfig(CRCConfig_t crc);
+    uint8_t setDataRate(DataRate_t dataRate);
+    uint8_t setOutputPower(OutputPower_t level);
+    uint8_t setRetryCount(uint8_t count);
+    uint8_t setRetryDelay(uint8_t delay);
+    uint8_t setRxAddress(uint8_t pipe, uint64_t address);
+    uint8_t setTxAddress(uint64_t address);
 };
 
 } /* namespace xXx */
