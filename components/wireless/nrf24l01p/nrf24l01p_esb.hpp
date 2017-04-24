@@ -59,10 +59,18 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void readRxFifo(uint8_t status);
     void writeTxFifo(uint8_t status);
 
+    uint8_t getRetransmissionCounter();
+
     void enableDataPipe(uint8_t pipeIndex);
     void disableDataPipe(uint8_t pipeIndex);
     void enableDynamicPayloadLength(uint8_t pipeIndex);
     void disableDynamicPayloadLength(uint8_t pipeIndex);
+
+    uint32_t getRxBaseAddress_0();
+    uint32_t getRxBaseAddress_1();
+    uint8_t getRxAddressPrefix(uint8_t pipe);
+    uint32_t getTxBaseAddress();
+    uint8_t getTxAddressPrefix();
 
     uint8_t getChannel();
     CRCConfig_t getCrcConfig();
@@ -70,10 +78,6 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     OutputPower_t getOutputPower();
     uint8_t getRetryCount();
     uint8_t getRetryDelay();
-    uint64_t getRxAddress(uint8_t pipe);
-    uint64_t getTxAddress();
-    uint8_t getPackageLossCounter();
-    uint8_t getRetransmissionCounter();
 
    public:
     nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -82,22 +86,26 @@ class nRF24L01P_ESB : public nRF24L01P_BASE, public SimpleTask {
     void setup();
     void loop();
 
-    void configureTxPipe(uint64_t address);
-    void configureRxPipe(uint8_t pipe, uint64_t address);
     void switchOperatingMode(OperatingMode_t mode);
 
     uint8_t queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
-    uint8_t startListening(uint8_t pipe, rxCallback_t callback, void *user);
-    uint8_t stopListening(uint8_t pipe);
+    void startListening(uint8_t pipe, rxCallback_t callback, void *user);
+    void stopListening(uint8_t pipe);
 
-    uint8_t setChannel(uint8_t channel);
-    uint8_t setCrcConfig(CRCConfig_t crc);
-    uint8_t setDataRate(DataRate_t dataRate);
-    uint8_t setOutputPower(OutputPower_t level);
-    uint8_t setRetryCount(uint8_t count);
-    uint8_t setRetryDelay(uint8_t delay);
-    uint8_t setRxAddress(uint8_t pipe, uint64_t address);
-    uint8_t setTxAddress(uint64_t address);
+    uint8_t getPackageLossCounter();
+
+    void setRxBaseAddress_0(uint32_t baseAddress);
+    void setRxBaseAddress_1(uint32_t baseAddress);
+    void setRxAddressPrefix(uint8_t pipe, uint8_t addressPrefix);
+    void setTxBaseAddress(uint32_t baseAddress);
+    void setTxAddressPrefix(uint8_t addressPrefix);
+
+    void setChannel(uint8_t channel);
+    void setCrcConfig(CRCConfig_t crc);
+    void setDataRate(DataRate_t dataRate);
+    void setOutputPower(OutputPower_t level);
+    void setRetryCount(uint8_t count);
+    void setRetryDelay(uint8_t delay);
 };
 
 } /* namespace xXx */
