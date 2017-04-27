@@ -32,7 +32,7 @@ nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
     : nRF24L01P_BASE(spi), _ce(ce), _irq(irq) {}
 
 nRF24L01P_ESB::~nRF24L01P_ESB() {
-    switchOperatingMode(OperatingMode_Shutdown);
+    switchOperatingMode(RF24_OperatingMode_Shutdown);
 }
 
 void nRF24L01P_ESB::setup() {
@@ -80,24 +80,24 @@ void nRF24L01P_ESB::loop() {
 }
 
 void nRF24L01P_ESB::readRxFifo(uint8_t status) {
-    uint8_t bytes[rxFifoSize];
-    uint8_t numBytes;
+    RF24_Package_t package;
 
     uint8_t pipe = extractPipe(status);
 
     if (pipe > 5) return;
 
-    cmd_R_RX_PL_WID(numBytes);
+    cmd_R_RX_PL_WID(package.numBytes);
 
-    if (numBytes > rxFifoSize) {
+    if (package.numBytes > rxFifoSize) {
         cmd_FLUSH_RX();
         return;
     }
 
-    cmd_R_RX_PAYLOAD(bytes, numBytes);
+    cmd_R_RX_PAYLOAD(package.bytes, package.numBytes);
 
-    if (_rxCallback[pipe]) {
-        _rxCallback[pipe](bytes, numBytes, _rxUser[pipe]);
+    if (_rxQueue[pipe] != NULL) {
+        // TODO: Timeout
+        _rxQueue[pipe]->enqueue(package);
     }
 }
 
@@ -196,18 +196,18 @@ void nRF24L01P_ESB::enterTxMode() {
     delayUs(txSettling);
 }
 
-void nRF24L01P_ESB::switchOperatingMode(OperatingMode_t operatingMode) {
+void nRF24L01P_ESB::switchOperatingMode(RF24_OperatingMode_t operatingMode) {
     switch (operatingMode) {
-        case OperatingMode_Rx: {
+        case RF24_OperatingMode_Rx: {
             enterRxMode();
         } break;
-        case OperatingMode_Shutdown: {
+        case RF24_OperatingMode_Shutdown: {
             enterShutdownMode();
         } break;
-        case OperatingMode_Standby: {
+        case RF24_OperatingMode_Standby: {
             enterStandbyMode();
         } break;
-        case OperatingMode_Tx: {
+        case RF24_OperatingMode_Tx: {
             enterTxMode();
         } break;
     }
@@ -228,22 +228,16 @@ uint8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCal
     return (0);
 }
 
-void nRF24L01P_ESB::startListening(uint8_t pipe, rxCallback_t callback, void *user) {
+void nRF24L01P_ESB::startListening(uint8_t pipe, Queue_Handle_t<RF24_Package_t> rxQueue) {
     __MAKE_SURE(pipe < 6);
-
-    _rxCallback[pipe] = callback;
-    _rxUser[pipe]     = user;
-
+    _rxQueue[pipe] = rxQueue;
     enableDataPipe(pipe);
 }
 
 void nRF24L01P_ESB::stopListening(uint8_t pipe) {
     __MAKE_SURE(pipe < 6);
-
     disableDataPipe(pipe);
-
-    _rxCallback[pipe] = NULL;
-    _rxUser[pipe]     = NULL;
+    _rxQueue[pipe] = NULL;
 }
 
 // ----- getters and setters --------------------------------------------------
@@ -318,36 +312,36 @@ void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipe) {
     // TODO: __MAKE_SURE();
 }
 
-CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
+RF24_CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
 
     if (readBit<uint8_t>(config, CONFIG_EN_CRC) == false) {
-        return (CRCConfig_DISABLED);
+        return (RF24_CRCConfig_DISABLED);
     }
 
     if (readBit<uint8_t>(config, CONFIG_CRCO)) {
-        return (CrcConfig_2Bytes);
+        return (RF24_CrcConfig_2Bytes);
     } else {
-        return (CRCConfig_1Byte);
+        return (RF24_CRCConfig_1Byte);
     }
 }
 
-void nRF24L01P_ESB::setCrcConfig(CRCConfig_t crcConfig) {
+void nRF24L01P_ESB::setCrcConfig(RF24_CRCConfig_t crcConfig) {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
 
     switch (crcConfig) {
-        case CRCConfig_DISABLED: {
+        case RF24_CRCConfig_DISABLED: {
             clearBit_eq<uint8_t>(config, CONFIG_EN_CRC);
         } break;
-        case CRCConfig_1Byte: {
+        case RF24_CRCConfig_1Byte: {
             setBit_eq<uint8_t>(config, CONFIG_EN_CRC);
             clearBit_eq<uint8_t>(config, CONFIG_CRCO);
         } break;
-        case CrcConfig_2Bytes: {
+        case RF24_CrcConfig_2Bytes: {
             setBit_eq<uint8_t>(config, CONFIG_EN_CRC);
             setBit_eq<uint8_t>(config, CONFIG_CRCO);
         } break;
@@ -374,37 +368,37 @@ void nRF24L01P_ESB::setChannel(uint8_t channel) {
     __MAKE_SURE(channel == getChannel());
 }
 
-DataRate_t nRF24L01P_ESB::getDataRate() {
+RF24_DataRate_t nRF24L01P_ESB::getDataRate() {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
 
     if (readBit<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW)) {
-        return (DataRate_250KBPS);
+        return (RF24_DataRate_250KBPS);
     }
 
     if (readBit<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH)) {
-        return (DataRate_2MBPS);
+        return (RF24_DataRate_2MBPS);
     }
 
-    return (DataRate_1MBPS);
+    return (RF24_DataRate_1MBPS);
 }
 
-void nRF24L01P_ESB::setDataRate(DataRate_t dataRate) {
+void nRF24L01P_ESB::setDataRate(RF24_DataRate_t dataRate) {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
 
     switch (dataRate) {
-        case (DataRate_1MBPS): {
+        case (RF24_DataRate_1MBPS): {
             clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
             clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
-        case DataRate_2MBPS: {
+        case RF24_DataRate_2MBPS: {
             clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
             setBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
-        case DataRate_250KBPS: {
+        case RF24_DataRate_250KBPS: {
             setBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_LOW);
             clearBit_eq<uint8_t>(rf_setup, RF_SETUP_RF_DR_HIGH);
         } break;
@@ -415,28 +409,25 @@ void nRF24L01P_ESB::setDataRate(DataRate_t dataRate) {
     __MAKE_SURE(dataRate == getDataRate());
 }
 
-OutputPower_t nRF24L01P_ESB::getOutputPower() {
+RF24_OutputPower_t nRF24L01P_ESB::getOutputPower() {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
-
     AND_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
     RIGHT_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR);
 
     // TODO: Make sure that the following cast is save;
     assert(rf_setup < 4);
 
-    return (static_cast<OutputPower_t>(rf_setup));
+    return (static_cast<RF24_OutputPower_t>(rf_setup));
 }
 
-void nRF24L01P_ESB::setOutputPower(OutputPower_t outputPower) {
+void nRF24L01P_ESB::setOutputPower(RF24_OutputPower_t outputPower) {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
-
     AND_eq(rf_setup, INVERT<uint8_t>(RF_SETUP_RF_PWR_MASK));
     OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(outputPower, RF_SETUP_RF_PWR));
-
     cmd_W_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
 
     __MAKE_SURE(outputPower == getOutputPower());
@@ -446,7 +437,6 @@ uint8_t nRF24L01P_ESB::getRetryCount() {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
-
     AND_eq<uint8_t>(setup_retr, SETUP_RETR_ARC_MASK);
     RIGHT_eq<uint8_t>(setup_retr, SETUP_RETR_ARC);
 
@@ -457,9 +447,7 @@ void nRF24L01P_ESB::setRetryCount(uint8_t count) {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
-
     OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__MAX(count, 0xF), SETUP_RETR_ARC));
-
     cmd_W_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
 
     __MAKE_SURE(count == getRetryCount());
@@ -469,7 +457,6 @@ uint8_t nRF24L01P_ESB::getRetryDelay() {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
-
     AND_eq<uint8_t>(setup_retr, SETUP_RETR_ARD_MASK);
     RIGHT_eq<uint8_t>(setup_retr, SETUP_RETR_ARD);
 
@@ -506,7 +493,7 @@ void nRF24L01P_ESB::setTxBaseAddress(uint32_t baseAddress) {
     setRxBaseAddress_0(baseAddress);
 }
 
-uint8_t nRF24L01P_ESB::getTxAddressPrefix() {
+uint8_t nRF24L01P_ESB::getTxAddress() {
     uint8_t addressPrefix;
 
     cmd_R_REGISTER(Register_TX_ADDR, &addressPrefix, 1);
@@ -514,12 +501,12 @@ uint8_t nRF24L01P_ESB::getTxAddressPrefix() {
     return (addressPrefix);
 }
 
-void nRF24L01P_ESB::setTxAddressPrefix(uint8_t addressPrefix) {
+void nRF24L01P_ESB::setTxAddress(uint8_t addressPrefix) {
     cmd_W_REGISTER(Register_TX_ADDR, &addressPrefix, 1);
 
-    __MAKE_SURE(addressPrefix == getTxAddressPrefix());
+    __MAKE_SURE(addressPrefix == getTxAddress());
 
-    setRxAddressPrefix(0, addressPrefix);
+    setRxAddress(0, addressPrefix);
 }
 
 uint32_t nRF24L01P_ESB::getRxBaseAddress_0() {
@@ -558,62 +545,62 @@ void nRF24L01P_ESB::setRxBaseAddress_1(uint32_t baseAddress) {
     __MAKE_SURE(baseAddress == getRxBaseAddress_1());
 }
 
-uint8_t nRF24L01P_ESB::getRxAddressPrefix(uint8_t pipe) {
+uint8_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
     __MAKE_SURE(pipe < 6);
 
-    uint8_t addressPrefix;
+    uint8_t address;
 
     switch (pipe) {
         case 0: {
-            cmd_R_REGISTER(Register_RX_ADDR_P0, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P0, &address, 1);
         } break;
         case 1: {
-            cmd_R_REGISTER(Register_RX_ADDR_P1, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P1, &address, 1);
         } break;
         case 2: {
-            cmd_R_REGISTER(Register_RX_ADDR_P2, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P2, &address, 1);
         } break;
         case 3: {
-            cmd_R_REGISTER(Register_RX_ADDR_P3, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P3, &address, 1);
         } break;
         case 4: {
-            cmd_R_REGISTER(Register_RX_ADDR_P4, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P4, &address, 1);
         } break;
         case 5: {
-            cmd_R_REGISTER(Register_RX_ADDR_P5, &addressPrefix, 1);
+            cmd_R_REGISTER(Register_RX_ADDR_P5, &address, 1);
         } break;
     }
 
-    return (addressPrefix);
+    return (address);
 }
 
-void nRF24L01P_ESB::setRxAddressPrefix(uint8_t pipe, uint8_t addressPrefix) {
+void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint8_t address) {
     __MAKE_SURE(pipe < 6);
 
     enableDynamicPayloadLength(pipe);
 
     switch (pipe) {
         case 0: {
-            cmd_W_REGISTER(Register_RX_ADDR_P0, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P0, &address, 1);
         } break;
         case 1: {
-            cmd_W_REGISTER(Register_RX_ADDR_P1, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P1, &address, 1);
         } break;
         case 2: {
-            cmd_W_REGISTER(Register_RX_ADDR_P2, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P2, &address, 1);
         } break;
         case 3: {
-            cmd_W_REGISTER(Register_RX_ADDR_P3, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P3, &address, 1);
         } break;
         case 4: {
-            cmd_W_REGISTER(Register_RX_ADDR_P4, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P4, &address, 1);
         } break;
         case 5: {
-            cmd_W_REGISTER(Register_RX_ADDR_P5, &addressPrefix, 1);
+            cmd_W_REGISTER(Register_RX_ADDR_P5, &address, 1);
         } break;
     }
 
-    __MAKE_SURE(addressPrefix == getRxAddressPrefix(pipe));
+    __MAKE_SURE(address == getRxAddress(pipe));
 }
 
 } /* namespace xXx */
