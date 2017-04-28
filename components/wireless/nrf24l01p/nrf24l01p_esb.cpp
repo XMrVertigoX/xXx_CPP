@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
 #include <xXx/components/wireless/nrf24l01p/nrf24l01p_esb.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
@@ -13,11 +11,11 @@
 
 #include <nRF24L01_config.h>
 
-// TODO: Implement better indicators
-#define __MAKE_SURE(expression) assert(expression)
-
 #define __MAX(value, limit) (value > limit ? limit : value)
 #define __MIN(value, limit) (value > limit ? limit : value)
+
+#define __BOUNCE(expression, statement) \
+    if (!(expression)) return (statement)
 
 namespace xXx {
 
@@ -28,18 +26,17 @@ static inline uint8_t extractPipe(uint8_t status) {
     return (status);
 }
 
-nRF24L01P_ESB::nRF24L01P_ESB(ISpi &spi, IGpio &ce, IGpio &irq)
-    : nRF24L01P_BASE(spi), _ce(ce), _irq(irq) {}
+RF24_ESB::RF24_ESB(ISpi &spi, IGpio &ce, IGpio &irq) : nRF24L01P_BASE(spi), ce(ce), irq(irq) {}
 
-nRF24L01P_ESB::~nRF24L01P_ESB() {
-    switchOperatingMode(RF24_OperatingMode_Shutdown);
+RF24_ESB::~RF24_ESB() {
+    enterShutdownMode();
 }
 
-void nRF24L01P_ESB::setup() {
+void RF24_ESB::setup() {
     LOG("%p: %s", this, __PRETTY_FUNCTION__);
 
     auto interruptFunction = [](void *user) {
-        nRF24L01P_ESB *self = static_cast<nRF24L01P_ESB *>(user);
+        RF24_ESB *self = static_cast<RF24_ESB *>(user);
         self->notifyFromISR();
     };
 
@@ -60,10 +57,10 @@ void nRF24L01P_ESB::setup() {
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
 
-    _irq.enableInterrupt(interruptFunction, this);
+    irq.enableInterrupt(interruptFunction, this);
 }
 
-void nRF24L01P_ESB::loop() {
+void RF24_ESB::loop() {
     notifyTake();
 
     uint8_t status = cmd_NOP();
@@ -79,39 +76,46 @@ void nRF24L01P_ESB::loop() {
     }
 }
 
-void nRF24L01P_ESB::readRxFifo(uint8_t status) {
+uint8_t RF24_ESB::readRxFifo(uint8_t status) {
     RF24_Package_t package;
 
     uint8_t pipe = extractPipe(status);
 
-    if (pipe > 5) return;
+    if (pipe > 5) {
+        return (RF24_Failure);
+    }
 
     cmd_R_RX_PL_WID(package.numBytes);
 
     if (package.numBytes > rxFifoSize) {
         cmd_FLUSH_RX();
-        return;
+        return (RF24_Failure);
     }
 
     cmd_R_RX_PAYLOAD(package.bytes, package.numBytes);
 
-    if (_rxQueue[pipe] != NULL) {
-        // TODO: Timeout
-        _rxQueue[pipe]->enqueue(package);
+    if (this->rxQueue[pipe] != NULL) {
+        this->rxQueue[pipe]->enqueue(package);  // TODO: Timeout?
     }
+
+    return (RF24_Success);
 }
 
-void nRF24L01P_ESB::writeTxFifo(uint8_t status) {
-    if (readBit<uint8_t>(status, STATUS_TX_FULL)) return;
+uint8_t RF24_ESB::writeTxFifo(uint8_t status) {
+    if (readBit<uint8_t>(status, STATUS_TX_FULL)) {
+        return (RF24_Failure);
+    }
 
     uint8_t numBytes = __MAX(_txBufferEnd - _txBufferStart, txFifoSize);
 
     cmd_W_TX_PAYLOAD(&_txBuffer[_txBufferStart], numBytes);
 
     _txBufferStart += numBytes;
+
+    return (RF24_Success);
 }
 
-void nRF24L01P_ESB::handle_MAX_RT(uint8_t status) {
+void RF24_ESB::handle_MAX_RT(uint8_t status) {
     cmd_FLUSH_TX();
 
     // TODO
@@ -121,14 +125,14 @@ void nRF24L01P_ESB::handle_MAX_RT(uint8_t status) {
     cmd_W_REGISTER(Register_STATUS, &status, sizeof(status));
 }
 
-void nRF24L01P_ESB::handle_RX_DR(uint8_t status) {
+void RF24_ESB::handle_RX_DR(uint8_t status) {
     readRxFifo(status);
 
     setBit_eq<uint8_t>(status, STATUS_RX_DR);
     cmd_W_REGISTER(Register_STATUS, &status, sizeof(status));
 }
 
-void nRF24L01P_ESB::handle_TX_DS(uint8_t status) {
+void RF24_ESB::handle_TX_DS(uint8_t status) {
     if (_txBufferEnd > _txBufferStart) {
         writeTxFifo(status);
     } else {
@@ -139,7 +143,7 @@ void nRF24L01P_ESB::handle_TX_DS(uint8_t status) {
     cmd_W_REGISTER(Register_STATUS, &status, sizeof(status));
 }
 
-void nRF24L01P_ESB::txCallback() {
+void RF24_ESB::txCallback() {
     assert(_txBufferStart == _txBufferEnd);
 
     if (_txCallback) {
@@ -150,7 +154,7 @@ void nRF24L01P_ESB::txCallback() {
     _txUser     = NULL;
 }
 
-void nRF24L01P_ESB::enterRxMode() {
+void RF24_ESB::enterRxMode() {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
@@ -158,32 +162,32 @@ void nRF24L01P_ESB::enterRxMode() {
     setBit_eq<uint8_t>(config, CONFIG_PRIM_RX);
     cmd_W_REGISTER(Register_CONFIG, &config, sizeof(config));
 
-    _ce.set();
+    ce.set();
 
     delayUs(rxSettling);
 }
 
-void nRF24L01P_ESB::enterShutdownMode() {
+void RF24_ESB::enterShutdownMode() {
     uint8_t config;
 
-    _ce.clear();
+    ce.clear();
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
     clearBit_eq<uint8_t>(config, CONFIG_PWR_UP);
     cmd_W_REGISTER(Register_CONFIG, &config, sizeof(config));
 }
 
-void nRF24L01P_ESB::enterStandbyMode() {
+void RF24_ESB::enterStandbyMode() {
     uint8_t config;
 
-    _ce.clear();
+    ce.clear();
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
     setBit_eq<uint8_t>(config, CONFIG_PWR_UP);
     cmd_W_REGISTER(Register_CONFIG, &config, sizeof(config));
 }
 
-void nRF24L01P_ESB::enterTxMode() {
+void RF24_ESB::enterTxMode() {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
@@ -191,30 +195,13 @@ void nRF24L01P_ESB::enterTxMode() {
     clearBit_eq<uint8_t>(config, CONFIG_PRIM_RX);
     cmd_W_REGISTER(Register_CONFIG, &config, sizeof(config));
 
-    _ce.set();
+    ce.set();
 
     delayUs(txSettling);
 }
 
-void nRF24L01P_ESB::switchOperatingMode(RF24_OperatingMode_t operatingMode) {
-    switch (operatingMode) {
-        case RF24_OperatingMode_Rx: {
-            enterRxMode();
-        } break;
-        case RF24_OperatingMode_Shutdown: {
-            enterShutdownMode();
-        } break;
-        case RF24_OperatingMode_Standby: {
-            enterStandbyMode();
-        } break;
-        case RF24_OperatingMode_Tx: {
-            enterTxMode();
-        } break;
-    }
-}
-
-uint8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCallback_t callback,
-                                         void *user) {
+uint8_t RF24_ESB::queuePackage(uint8_t bytes[], size_t numBytes, txCallback_t callback,
+                               void *user) {
     if (_txBufferStart < _txBufferEnd) return (1);
 
     _txBuffer      = bytes;
@@ -228,21 +215,37 @@ uint8_t nRF24L01P_ESB::queueTransmission(uint8_t bytes[], size_t numBytes, txCal
     return (0);
 }
 
-void nRF24L01P_ESB::startListening(uint8_t pipe, Queue_Handle_t<RF24_Package_t> rxQueue) {
-    __MAKE_SURE(pipe < 6);
-    _rxQueue[pipe] = rxQueue;
-    enableDataPipe(pipe);
+uint8_t RF24_ESB::queuePackage2(RF24_Package_t package) {
+    uint8_t status = cmd_NOP();
+
+    if (readBit<uint8_t>(status, STATUS_TX_FULL)) return (1);
+
+    cmd_W_TX_PAYLOAD(package.bytes, package.numBytes);
+
+    return (0);
 }
 
-void nRF24L01P_ESB::stopListening(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::startListening(uint8_t pipe, Queue<RF24_Package_t> &rxQueue) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
+
+    this->rxQueue[pipe] = &rxQueue;
+    enableDataPipe(pipe);
+
+    return (RF24_Success);
+}
+
+RF24_Status_t RF24_ESB::stopListening(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
+
     disableDataPipe(pipe);
-    _rxQueue[pipe] = NULL;
+    this->rxQueue[pipe] = NULL;
+
+    return (RF24_Success);
 }
 
 // ----- getters and setters --------------------------------------------------
 
-uint8_t nRF24L01P_ESB::getPackageLossCounter() {
+uint8_t RF24_ESB::getPackageLossCounter() {
     uint8_t observe_tx;
 
     cmd_R_REGISTER(Register_OBSERVE_TX, &observe_tx, sizeof(observe_tx));
@@ -253,7 +256,7 @@ uint8_t nRF24L01P_ESB::getPackageLossCounter() {
     return (observe_tx);
 }
 
-uint8_t nRF24L01P_ESB::getRetransmissionCounter() {
+uint8_t RF24_ESB::getRetransmissionCounter() {
     uint8_t observe_tx;
 
     cmd_R_REGISTER(Register_OBSERVE_TX, &observe_tx, sizeof(observe_tx));
@@ -264,8 +267,8 @@ uint8_t nRF24L01P_ESB::getRetransmissionCounter() {
     return (observe_tx);
 }
 
-void nRF24L01P_ESB::enableDataPipe(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::enableDataPipe(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     uint8_t en_rxaddr;
 
@@ -274,10 +277,12 @@ void nRF24L01P_ESB::enableDataPipe(uint8_t pipe) {
     cmd_W_REGISTER(Register_EN_RXADDR, &en_rxaddr, sizeof(en_rxaddr));
 
     // TODO: __MAKE_SURE();
+
+    return (RF24_Success);
 }
 
-void nRF24L01P_ESB::disableDataPipe(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::disableDataPipe(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     uint8_t en_rxaddr;
 
@@ -286,10 +291,12 @@ void nRF24L01P_ESB::disableDataPipe(uint8_t pipe) {
     cmd_W_REGISTER(Register_EN_RXADDR, &en_rxaddr, sizeof(en_rxaddr));
 
     // TODO: __MAKE_SURE();
+
+    return (RF24_Success);
 }
 
-void nRF24L01P_ESB::enableDynamicPayloadLength(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::enableDynamicPayloadLength(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     uint8_t dynpd;
 
@@ -298,10 +305,12 @@ void nRF24L01P_ESB::enableDynamicPayloadLength(uint8_t pipe) {
     cmd_W_REGISTER(Register_DYNPD, &dynpd, sizeof(dynpd));
 
     // TODO: __MAKE_SURE();
+
+    return (RF24_Success);
 }
 
-void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::disableDynamicPayloadLength(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     uint8_t dynpd;
 
@@ -310,9 +319,11 @@ void nRF24L01P_ESB::disableDynamicPayloadLength(uint8_t pipe) {
     cmd_W_REGISTER(Register_DYNPD, &dynpd, sizeof(dynpd));
 
     // TODO: __MAKE_SURE();
+
+    return (RF24_Success);
 }
 
-RF24_CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
+RF24_CRCConfig_t RF24_ESB::getCrcConfig() {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
@@ -328,7 +339,7 @@ RF24_CRCConfig_t nRF24L01P_ESB::getCrcConfig() {
     }
 }
 
-void nRF24L01P_ESB::setCrcConfig(RF24_CRCConfig_t crcConfig) {
+RF24_Status_t RF24_ESB::setCrcConfig(RF24_CRCConfig_t crcConfig) {
     uint8_t config;
 
     cmd_R_REGISTER(Register_CONFIG, &config, sizeof(config));
@@ -349,10 +360,12 @@ void nRF24L01P_ESB::setCrcConfig(RF24_CRCConfig_t crcConfig) {
 
     cmd_W_REGISTER(Register_CONFIG, &config, sizeof(config));
 
-    __MAKE_SURE(crcConfig == getCrcConfig());
+    __BOUNCE(crcConfig == getCrcConfig(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint8_t nRF24L01P_ESB::getChannel() {
+uint8_t RF24_ESB::getChannel() {
     uint8_t channel;
 
     cmd_R_REGISTER(Register_RF_CH, &channel, sizeof(channel));
@@ -360,15 +373,17 @@ uint8_t nRF24L01P_ESB::getChannel() {
     return (channel);
 }
 
-void nRF24L01P_ESB::setChannel(uint8_t channel) {
-    __MAKE_SURE(channel < 0x80);
+RF24_Status_t RF24_ESB::setChannel(uint8_t channel) {
+    __BOUNCE(channel < 0x80, RF24_UnknownChannelIndex);
 
     cmd_W_REGISTER(Register_RF_CH, &channel, sizeof(channel));
 
-    __MAKE_SURE(channel == getChannel());
+    __BOUNCE(channel == getChannel(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-RF24_DataRate_t nRF24L01P_ESB::getDataRate() {
+RF24_DataRate_t RF24_ESB::getDataRate() {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
@@ -384,7 +399,7 @@ RF24_DataRate_t nRF24L01P_ESB::getDataRate() {
     return (RF24_DataRate_1MBPS);
 }
 
-void nRF24L01P_ESB::setDataRate(RF24_DataRate_t dataRate) {
+RF24_Status_t RF24_ESB::setDataRate(RF24_DataRate_t dataRate) {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
@@ -406,10 +421,12 @@ void nRF24L01P_ESB::setDataRate(RF24_DataRate_t dataRate) {
 
     cmd_W_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
 
-    __MAKE_SURE(dataRate == getDataRate());
+    __BOUNCE(dataRate == getDataRate(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-RF24_OutputPower_t nRF24L01P_ESB::getOutputPower() {
+RF24_OutputPower_t RF24_ESB::getOutputPower() {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
@@ -422,7 +439,7 @@ RF24_OutputPower_t nRF24L01P_ESB::getOutputPower() {
     return (static_cast<RF24_OutputPower_t>(rf_setup));
 }
 
-void nRF24L01P_ESB::setOutputPower(RF24_OutputPower_t outputPower) {
+RF24_Status_t RF24_ESB::setOutputPower(RF24_OutputPower_t outputPower) {
     uint8_t rf_setup;
 
     cmd_R_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
@@ -430,10 +447,12 @@ void nRF24L01P_ESB::setOutputPower(RF24_OutputPower_t outputPower) {
     OR_eq<uint8_t>(rf_setup, LEFT<uint8_t>(outputPower, RF_SETUP_RF_PWR));
     cmd_W_REGISTER(Register_RF_SETUP, &rf_setup, sizeof(rf_setup));
 
-    __MAKE_SURE(outputPower == getOutputPower());
+    __BOUNCE(outputPower == getOutputPower(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint8_t nRF24L01P_ESB::getRetryCount() {
+uint8_t RF24_ESB::getRetryCount() {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
@@ -443,17 +462,19 @@ uint8_t nRF24L01P_ESB::getRetryCount() {
     return (setup_retr);
 }
 
-void nRF24L01P_ESB::setRetryCount(uint8_t count) {
+RF24_Status_t RF24_ESB::setRetryCount(uint8_t count) {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
     OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__MAX(count, 0xF), SETUP_RETR_ARC));
     cmd_W_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
 
-    __MAKE_SURE(count == getRetryCount());
+    __BOUNCE(count == getRetryCount(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint8_t nRF24L01P_ESB::getRetryDelay() {
+uint8_t RF24_ESB::getRetryDelay() {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
@@ -463,17 +484,19 @@ uint8_t nRF24L01P_ESB::getRetryDelay() {
     return (setup_retr);
 }
 
-void nRF24L01P_ESB::setRetryDelay(uint8_t delay) {
+RF24_Status_t RF24_ESB::setRetryDelay(uint8_t delay) {
     uint8_t setup_retr;
 
     cmd_R_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
     OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__MAX(delay, 0xF), SETUP_RETR_ARD));
     cmd_W_REGISTER(Register_SETUP_RETR, &setup_retr, sizeof(setup_retr));
 
-    __MAKE_SURE(delay == getRetryDelay());
+    __BOUNCE(delay == getRetryDelay(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint32_t nRF24L01P_ESB::getTxBaseAddress() {
+uint32_t RF24_ESB::getTxBaseAddress() {
     uint8_t address[TX_ADDR_LENGTH];
 
     cmd_R_REGISTER(Register_TX_ADDR, address, TX_ADDR_LENGTH);
@@ -481,19 +504,21 @@ uint32_t nRF24L01P_ESB::getTxBaseAddress() {
     return (*reinterpret_cast<uint32_t *>(&address[1]));
 }
 
-void nRF24L01P_ESB::setTxBaseAddress(uint32_t baseAddress) {
+RF24_Status_t RF24_ESB::setTxBaseAddress(uint32_t baseAddress) {
     uint8_t address[TX_ADDR_LENGTH];
 
     cmd_R_REGISTER(Register_TX_ADDR, address, TX_ADDR_LENGTH);
     memcpy(&address[1], &baseAddress, sizeof(baseAddress));
     cmd_W_REGISTER(Register_TX_ADDR, address, TX_ADDR_LENGTH);
 
-    __MAKE_SURE(baseAddress == getTxBaseAddress());
+    __BOUNCE(baseAddress == getTxBaseAddress(), RF24_Failure);
 
     setRxBaseAddress_0(baseAddress);
+
+    return (RF24_Success);
 }
 
-uint8_t nRF24L01P_ESB::getTxAddress() {
+uint8_t RF24_ESB::getTxAddress() {
     uint8_t addressPrefix;
 
     cmd_R_REGISTER(Register_TX_ADDR, &addressPrefix, 1);
@@ -501,15 +526,17 @@ uint8_t nRF24L01P_ESB::getTxAddress() {
     return (addressPrefix);
 }
 
-void nRF24L01P_ESB::setTxAddress(uint8_t addressPrefix) {
+RF24_Status_t RF24_ESB::setTxAddress(uint8_t addressPrefix) {
     cmd_W_REGISTER(Register_TX_ADDR, &addressPrefix, 1);
 
-    __MAKE_SURE(addressPrefix == getTxAddress());
-
     setRxAddress(0, addressPrefix);
+
+    __BOUNCE(addressPrefix == getTxAddress(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint32_t nRF24L01P_ESB::getRxBaseAddress_0() {
+uint32_t RF24_ESB::getRxBaseAddress_0() {
     uint8_t address[RX_ADDR_P0_LENGTH];
 
     cmd_R_REGISTER(Register_RX_ADDR_P0, address, RX_ADDR_P0_LENGTH);
@@ -517,17 +544,19 @@ uint32_t nRF24L01P_ESB::getRxBaseAddress_0() {
     return (*reinterpret_cast<uint32_t *>(&address[1]));
 }
 
-void nRF24L01P_ESB::setRxBaseAddress_0(uint32_t baseAddress) {
+RF24_Status_t RF24_ESB::setRxBaseAddress_0(uint32_t baseAddress) {
     uint8_t address[RX_ADDR_P0_LENGTH];
 
     cmd_R_REGISTER(Register_RX_ADDR_P0, address, RX_ADDR_P0_LENGTH);
     memcpy(&address[1], &baseAddress, sizeof(baseAddress));
     cmd_W_REGISTER(Register_RX_ADDR_P0, address, RX_ADDR_P0_LENGTH);
 
-    __MAKE_SURE(baseAddress == getRxBaseAddress_0());
+    __BOUNCE(baseAddress == getRxBaseAddress_0(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint32_t nRF24L01P_ESB::getRxBaseAddress_1() {
+uint32_t RF24_ESB::getRxBaseAddress_1() {
     uint8_t address[RX_ADDR_P0_LENGTH];
 
     cmd_R_REGISTER(Register_RX_ADDR_P1, address, RX_ADDR_P0_LENGTH);
@@ -535,18 +564,20 @@ uint32_t nRF24L01P_ESB::getRxBaseAddress_1() {
     return (*reinterpret_cast<uint32_t *>(&address[1]));
 }
 
-void nRF24L01P_ESB::setRxBaseAddress_1(uint32_t baseAddress) {
+RF24_Status_t RF24_ESB::setRxBaseAddress_1(uint32_t baseAddress) {
     uint8_t address[RX_ADDR_P1_LENGTH];
 
     cmd_R_REGISTER(Register_RX_ADDR_P1, address, RX_ADDR_P1_LENGTH);
     memcpy(&address[1], &baseAddress, sizeof(baseAddress));
     cmd_W_REGISTER(Register_RX_ADDR_P1, address, RX_ADDR_P1_LENGTH);
 
-    __MAKE_SURE(baseAddress == getRxBaseAddress_1());
+    __BOUNCE(baseAddress == getRxBaseAddress_1(), RF24_Failure);
+
+    return (RF24_Success);
 }
 
-uint8_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
-    __MAKE_SURE(pipe < 6);
+uint8_t RF24_ESB::getRxAddress(uint8_t pipe) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     uint8_t address;
 
@@ -574,8 +605,8 @@ uint8_t nRF24L01P_ESB::getRxAddress(uint8_t pipe) {
     return (address);
 }
 
-void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint8_t address) {
-    __MAKE_SURE(pipe < 6);
+RF24_Status_t RF24_ESB::setRxAddress(uint8_t pipe, uint8_t address) {
+    __BOUNCE(pipe < 6, RF24_UnknownPipeIndex);
 
     enableDynamicPayloadLength(pipe);
 
@@ -600,7 +631,9 @@ void nRF24L01P_ESB::setRxAddress(uint8_t pipe, uint8_t address) {
         } break;
     }
 
-    __MAKE_SURE(address == getRxAddress(pipe));
+    __BOUNCE(address == getRxAddress(pipe), RF24_Failure);
+
+    return (RF24_Success);
 }
 
 } /* namespace xXx */

@@ -1,5 +1,5 @@
-#if not defined(NRF24L01P_DEFINITIONS_HPP_)
-#define NRF24L01P_DEFINITIONS_HPP_
+#ifndef NRF24L01P_TYPES_HPP_
+#define NRF24L01P_TYPES_HPP_
 
 #include <stdint.h>
 
@@ -15,6 +15,32 @@ const uint8_t RX_ADDR_P3_LENGTH = 1;
 const uint8_t RX_ADDR_P4_LENGTH = 1;
 const uint8_t RX_ADDR_P5_LENGTH = 1;
 const uint8_t TX_ADDR_LENGTH    = 5;
+
+enum RF24_Status_t { RF24_Success, RF24_Failure, RF24_UnknownPipeIndex, RF24_UnknownChannelIndex };
+
+struct RF24_Package_t {
+    uint8_t bytes[32];
+    uint8_t numBytes;
+};
+
+enum RF24_DataRate_t : uint8_t {
+    RF24_DataRate_1MBPS,
+    RF24_DataRate_2MBPS,
+    RF24_DataRate_250KBPS,
+};
+
+enum RF24_CRCConfig_t : uint8_t {
+    RF24_CRCConfig_DISABLED,
+    RF24_CRCConfig_1Byte,
+    RF24_CrcConfig_2Bytes,
+};
+
+enum RF24_OutputPower_t : uint8_t {
+    RF24_OutputPower_m18dBm,
+    RF24_OutputPower_m12dBm,
+    RF24_OutputPower_m6dBm,
+    RF24_OutputPower_0dBm,
+};
 
 enum Command_t : uint8_t {
     Command_R_REGISTER         = 0b00000000,
@@ -141,4 +167,4 @@ enum FEATURE_t : uint8_t {
     FEATURE_EN_DPL_MASK     = 0b00000100,
 };
 
-#endif  // NRF24L01P_DEFINITIONS_HPP_
+#endif  // NRF24L01P_TYPES_HPP_

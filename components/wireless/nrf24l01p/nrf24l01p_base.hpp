@@ -1,7 +1,8 @@
+
 #if not defined(NRF24L01P_BASE_HPP_)
 #define NRF24L01P_BASE_HPP_
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_definitions.hpp>
+#include <xXx/components/wireless/nrf24l01p/nrf24l01p_types.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
 namespace xXx {
