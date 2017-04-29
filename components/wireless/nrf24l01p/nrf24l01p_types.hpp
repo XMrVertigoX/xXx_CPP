@@ -26,7 +26,7 @@ union RF24_Address_t {
 
 enum RF24_Status_t {
     RF24_Status_Success,
-    RF24_Status_GeneralFailure,
+    RF24_Status_Failure,
     RF24_Status_UnknownPipeIndex,
     RF24_Status_UnknownChannelIndex,
     RF24_Status_VerificationFailed,

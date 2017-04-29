@@ -76,7 +76,7 @@ void RF24_ESB::loop() {
         handle_TX_DS(status);
     }
 
-    if (!(readBit<uint8_t>(status, STATUS_TX_FULL))) {
+    if (this->txQueue) {
         writeTxFifo(status);
     }
 }
@@ -88,7 +88,7 @@ RF24_Status_t RF24_ESB::readRxFifo(uint8_t status) {
     __BOUNCE(pipe > 5, RF24_Status_UnknownPipeIndex);
 
     cmd_R_RX_PL_WID(package.numBytes);
-    __BOUNCE(package.numBytes > rxFifoSize, RF24_Status_GeneralFailure);
+    __BOUNCE(package.numBytes > rxFifoSize, RF24_Status_Failure);
 
     cmd_R_RX_PAYLOAD(package.bytes, package.numBytes);
     __BOUNCE(this->rxQueue[pipe] == NULL, RF24_Status_NoRxQueueSet);
@@ -100,7 +100,7 @@ RF24_Status_t RF24_ESB::readRxFifo(uint8_t status) {
 }
 
 RF24_Status_t RF24_ESB::writeTxFifo(uint8_t status) {
-    __BOUNCE(this->txQueue == NULL, RF24_Status_NoTxQueueSet);
+    __BOUNCE(readBit<uint8_t>(status, STATUS_TX_FULL), RF24_Status_Failure);
 
     RF24_Package_t package;
     this->txQueue->dequeue(package);
@@ -127,7 +127,7 @@ void RF24_ESB::handle_RX_DR(uint8_t status) {
 }
 
 void RF24_ESB::handle_TX_DS(uint8_t status) {
-    // Do something?
+    // FUTURE: If buffer longer than 32 bytes, transfer next chunk from here
 
     setBit_eq<uint8_t>(status, STATUS_TX_DS);
     cmd_W_REGISTER(Register_STATUS, &status, sizeof(status));
