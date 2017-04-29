@@ -46,16 +46,13 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     RF24_Status_t enableDynamicPayloadLength(uint8_t pipeIndex);
     RF24_Status_t disableDynamicPayloadLength(uint8_t pipeIndex);
 
-    uint32_t getRxBaseAddress_0();
-    uint32_t getRxBaseAddress_1();
-    uint8_t getRxAddress(uint8_t pipe);
-    uint32_t getTxBaseAddress();
-    uint8_t getTxAddress();
+    RF24_Address_t getRxAddress(uint8_t pipe);
+    RF24_Address_t getTxAddress();
 
     uint8_t getChannel();
-    RF24_CRCConfig_t getCrcConfig();
-    RF24_DataRate_t getDataRate();
-    RF24_OutputPower_t getOutputPower();
+    RF24_CRCConfig getCrcConfig();
+    RF24_DataRate getDataRate();
+    RF24_OutputPower getOutputPower();
     uint8_t getRetryCount();
     uint8_t getRetryDelay();
 
@@ -76,16 +73,13 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
 
     uint8_t getPackageLossCounter();
 
-    RF24_Status_t setRxBaseAddress_0(uint32_t baseAddress);
-    RF24_Status_t setRxBaseAddress_1(uint32_t baseAddress);
-    RF24_Status_t setRxAddress(uint8_t pipe, uint8_t address);
-    RF24_Status_t setTxBaseAddress(uint32_t baseAddress);
-    RF24_Status_t setTxAddress(uint8_t address);
+    RF24_Status_t setRxAddress(uint8_t pipe, RF24_Address_t address);
+    RF24_Status_t setTxAddress(RF24_Address_t address);
 
     RF24_Status_t setChannel(uint8_t channel);
-    RF24_Status_t setCrcConfig(RF24_CRCConfig_t crc);
-    RF24_Status_t setDataRate(RF24_DataRate_t dataRate);
-    RF24_Status_t setOutputPower(RF24_OutputPower_t level);
+    RF24_Status_t setCrcConfig(RF24_CRCConfig crc);
+    RF24_Status_t setDataRate(RF24_DataRate dataRate);
+    RF24_Status_t setOutputPower(RF24_OutputPower level);
     RF24_Status_t setRetryCount(uint8_t count);
     RF24_Status_t setRetryDelay(uint8_t delay);
 };

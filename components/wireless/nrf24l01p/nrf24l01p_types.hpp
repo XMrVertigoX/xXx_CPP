@@ -3,44 +3,55 @@
 
 #include <stdint.h>
 
-const uint8_t txFifoSize = 32;
-const uint8_t rxFifoSize = 32;
-const uint8_t txSettling = 130;
-const uint8_t rxSettling = 130;
+// clang-format off
 
-const uint8_t RX_ADDR_P0_LENGTH = 5;
-const uint8_t RX_ADDR_P1_LENGTH = 5;
-const uint8_t RX_ADDR_P2_LENGTH = 1;
-const uint8_t RX_ADDR_P3_LENGTH = 1;
-const uint8_t RX_ADDR_P4_LENGTH = 1;
-const uint8_t RX_ADDR_P5_LENGTH = 1;
-const uint8_t TX_ADDR_LENGTH    = 5;
+// clang-format on
 
-enum RF24_Status_t { RF24_Success, RF24_Failure, RF24_UnknownPipeIndex, RF24_UnknownChannelIndex };
+static const uint8_t txFifoSize = 32;
+static const uint8_t rxFifoSize = 32;
+static const uint8_t txSettling = 130;
+static const uint8_t rxSettling = 130;
 
 struct RF24_Package_t {
     uint8_t bytes[32];
     uint8_t numBytes;
 };
 
-enum RF24_DataRate_t : uint8_t {
-    RF24_DataRate_1MBPS,
-    RF24_DataRate_2MBPS,
-    RF24_DataRate_250KBPS,
+struct RF24_AddressComponents_t {
+    uint8_t offset;
+    uint32_t base;
 };
 
-enum RF24_CRCConfig_t : uint8_t {
-    RF24_CRCConfig_DISABLED,
-    RF24_CRCConfig_1Byte,
-    RF24_CrcConfig_2Bytes,
+union RF24_Address_t {
+    RF24_AddressComponents_t components;
+    uint8_t array[sizeof(RF24_AddressComponents_t)];
 };
 
-enum RF24_OutputPower_t : uint8_t {
-    RF24_OutputPower_m18dBm,
-    RF24_OutputPower_m12dBm,
-    RF24_OutputPower_m6dBm,
-    RF24_OutputPower_0dBm,
+enum RF24_Status_t {
+    RF24_Status_Success,
+    RF24_Status_GeneralFailure,
+    RF24_Status_UnknownPipeIndex,
+    RF24_Status_UnknownChannelIndex,
+    RF24_Status_VerificationFailed,
+    RF24_Status_RxAddressVerificationFailed,
+    RF24_Status_TxAddressVerificationFailed,
 };
+
+enum AddressRegisterLength_t : uint8_t {
+    RX_ADDR_P0_LENGTH = 5,
+    RX_ADDR_P1_LENGTH = 5,
+    RX_ADDR_P2_LENGTH = 1,
+    RX_ADDR_P3_LENGTH = 1,
+    RX_ADDR_P4_LENGTH = 1,
+    RX_ADDR_P5_LENGTH = 1,
+    TX_ADDR_LENGTH    = 5
+};
+
+enum class RF24_DataRate : uint8_t { Low_250KBPS, Mid_1MBPS, High_2MBPS };
+
+enum class RF24_CRCConfig : uint8_t { DISABLED, CRC_8, CRC_16 };
+
+enum class RF24_OutputPower : uint8_t { Power_m18dBm, Power_m12dBm, Power_m6dBm, Power_0dBm };
 
 enum Command_t : uint8_t {
     Command_R_REGISTER         = 0b00000000,
