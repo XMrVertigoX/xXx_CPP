@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 // clang-format off
-
 // clang-format on
 
 static const uint8_t txFifoSize = 32;
@@ -13,18 +12,16 @@ static const uint8_t txSettling = 130;
 static const uint8_t rxSettling = 130;
 
 struct RF24_Package_t {
-    uint8_t bytes[32];
     uint8_t numBytes;
-};
-
-struct RF24_AddressComponents_t {
-    uint8_t offset;
-    uint32_t base;
+    uint8_t bytes[32];
 };
 
 union RF24_Address_t {
-    RF24_AddressComponents_t components;
-    uint8_t array[sizeof(RF24_AddressComponents_t)];
+    struct {
+        uint8_t offset;
+        uint32_t base;
+    } components;
+    uint8_t array[sizeof(components)];
 };
 
 enum RF24_Status_t {
@@ -35,6 +32,9 @@ enum RF24_Status_t {
     RF24_Status_VerificationFailed,
     RF24_Status_RxAddressVerificationFailed,
     RF24_Status_TxAddressVerificationFailed,
+    RF24_Status_TxFifoFull,
+    RF24_Status_NoRxQueueSet,
+    RF24_Status_NoTxQueueSet,
 };
 
 enum AddressRegisterLength_t : uint8_t {

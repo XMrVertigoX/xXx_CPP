@@ -4,6 +4,7 @@ Language: Cpp
 BasedOnStyle: Google
 
 AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Empty

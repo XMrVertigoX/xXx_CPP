@@ -11,8 +11,6 @@
 
 namespace xXx {
 
-typedef void (*txCallback_t)(int8_t numRetries, void *user);
-
 class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
    private:
     IGpio &ce;
@@ -21,12 +19,6 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     Queue_Handle_t<RF24_Package_t> rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     Queue_Handle_t<RF24_Package_t> txQueue    = NULL;
 
-    uint8_t *_txBuffer       = NULL;
-    size_t _txBufferStart    = 0;
-    size_t _txBufferEnd      = 0;
-    txCallback_t _txCallback = NULL;
-    void *_txUser            = NULL;
-
     void setup();
     void loop();
 
@@ -34,27 +26,12 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     void handle_RX_DR(uint8_t status);
     void handle_TX_DS(uint8_t status);
 
-    void txCallback();
-
-    uint8_t readRxFifo(uint8_t status);
-    uint8_t writeTxFifo(uint8_t status);
+    RF24_Status_t readRxFifo(uint8_t status);
+    RF24_Status_t writeTxFifo(uint8_t status);
+    RF24_Status_t enableDynamicPayloadLength(uint8_t pipe);
+    RF24_Status_t disableDynamicPayloadLength(uint8_t pipe);
 
     uint8_t getRetransmissionCounter();
-
-    RF24_Status_t enableDataPipe(uint8_t pipeIndex);
-    RF24_Status_t disableDataPipe(uint8_t pipeIndex);
-    RF24_Status_t enableDynamicPayloadLength(uint8_t pipeIndex);
-    RF24_Status_t disableDynamicPayloadLength(uint8_t pipeIndex);
-
-    RF24_Address_t getRxAddress(uint8_t pipe);
-    RF24_Address_t getTxAddress();
-
-    uint8_t getChannel();
-    RF24_CRCConfig getCrcConfig();
-    RF24_DataRate getDataRate();
-    RF24_OutputPower getOutputPower();
-    uint8_t getRetryCount();
-    uint8_t getRetryDelay();
 
    public:
     RF24_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -65,23 +42,30 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     void enterStandbyMode();
     void enterTxMode();
 
-    uint8_t queuePackage(uint8_t bytes[], size_t numBytes, txCallback_t callback, void *user);
-    uint8_t queuePackage2(RF24_Package_t package);
+    RF24_Status_t enableRxDataPipe(uint8_t pipe, Queue<RF24_Package_t> &rxQueue);
+    RF24_Status_t disableRxDataPipe(uint8_t pipe);
+    RF24_Status_t enableTxDataPipe(Queue<RF24_Package_t> &txQueue);
+    RF24_Status_t disableTxDataPipe();
 
-    RF24_Status_t startListening(uint8_t pipe, Queue<RF24_Package_t> &rxQueue);
-    RF24_Status_t stopListening(uint8_t pipe);
-
-    uint8_t getPackageLossCounter();
-
+    RF24_Address_t getRxAddress(uint8_t pipe);
     RF24_Status_t setRxAddress(uint8_t pipe, RF24_Address_t address);
+    RF24_Address_t getTxAddress();
     RF24_Status_t setTxAddress(RF24_Address_t address);
 
+    uint8_t getChannel();
     RF24_Status_t setChannel(uint8_t channel);
+    RF24_CRCConfig getCrcConfig();
     RF24_Status_t setCrcConfig(RF24_CRCConfig crc);
+    RF24_DataRate getDataRate();
     RF24_Status_t setDataRate(RF24_DataRate dataRate);
+    RF24_OutputPower getOutputPower();
     RF24_Status_t setOutputPower(RF24_OutputPower level);
+    uint8_t getRetryCount();
     RF24_Status_t setRetryCount(uint8_t count);
+    uint8_t getRetryDelay();
     RF24_Status_t setRetryDelay(uint8_t delay);
+
+    uint8_t getPackageLossCounter();
 };
 
 } /* namespace xXx */
