@@ -4,12 +4,13 @@
 #include <stdint.h>
 
 // clang-format off
-// clang-format on
 
-static const uint8_t txFifoSize = 32;
-static const uint8_t rxFifoSize = 32;
-static const uint8_t txSettling = 130;
-static const uint8_t rxSettling = 130;
+#define txFifoSize  32
+#define rxFifoSize  32
+#define txSettling  130
+#define rxSettling  130
+
+// clang-format on
 
 struct RF24_Package_t {
     uint8_t numBytes;

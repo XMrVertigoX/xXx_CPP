@@ -27,17 +27,12 @@ static inline uint8_t extractPipe(uint8_t status) {
 
 RF24_ESB::RF24_ESB(ISpi &spi, IGpio &ce, IGpio &irq) : nRF24L01P_BASE(spi), ce(ce), irq(irq) {}
 
-RF24_ESB::~RF24_ESB() {
-    enterShutdownMode();
-}
+RF24_ESB::~RF24_ESB() {}
 
 void RF24_ESB::setup() {
     LOG("%p: %s", this, __PRETTY_FUNCTION__);
 
-    auto interruptFunction = [](void *user) {
-        RF24_ESB *self = static_cast<RF24_ESB *>(user);
-        self->notifyFromISR();
-    };
+    auto interruptFunction = [](void *user) { static_cast<RF24_ESB *>(user)->notifyFromISR(); };
 
     // Enable dynamic payload length only
     uint8_t feature = 0;
