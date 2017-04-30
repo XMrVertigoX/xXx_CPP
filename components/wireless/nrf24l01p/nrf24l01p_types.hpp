@@ -3,27 +3,23 @@
 
 #include <stdint.h>
 
-// clang-format off
-
-#define txFifoSize  32
-#define rxFifoSize  32
-#define txSettling  130
-#define rxSettling  130
-
-// clang-format on
+#define txFifoSize (32)
+#define rxFifoSize (32)
+#define txSettling (130)
+#define rxSettling (130)
 
 struct RF24_Package_t {
     uint8_t numBytes;
     uint8_t bytes[32];
 };
 
-union RF24_Address_t {
-    struct {
-        uint8_t offset;
-        uint32_t base;
-    } components;
-    uint8_t array[sizeof(components)];
-};
+typedef uint64_t RF24_Address_t;
+
+enum class RF24_DataRate : uint8_t { DR_250KBPS, DR_1MBPS, DR_2MBPS };
+
+enum class RF24_CRCConfig : uint8_t { CRC_DISABLED, CRC_1Byte, CRC_2Bytes };
+
+enum class RF24_OutputPower : uint8_t { PWR_18dBm, PWR_12dBm, PWR_6dBm, PWR_0dBm };
 
 enum RF24_Status_t {
     RF24_Status_Success,
@@ -36,6 +32,7 @@ enum RF24_Status_t {
     RF24_Status_TxFifoFull,
     RF24_Status_NoRxQueueSet,
     RF24_Status_NoTxQueueSet,
+    RF24_Status_MalformedAddress
 };
 
 enum AddressRegisterLength_t : uint8_t {
@@ -47,12 +44,6 @@ enum AddressRegisterLength_t : uint8_t {
     RX_ADDR_P5_LENGTH = 1,
     TX_ADDR_LENGTH    = 5
 };
-
-enum class RF24_DataRate : uint8_t { Low_250KBPS, Mid_1MBPS, High_2MBPS };
-
-enum class RF24_CRCConfig : uint8_t { DISABLED, CRC_8, CRC_16 };
-
-enum class RF24_OutputPower : uint8_t { Power_m18dBm, Power_m12dBm, Power_m6dBm, Power_0dBm };
 
 enum Command_t : uint8_t {
     Command_R_REGISTER         = 0b00000000,

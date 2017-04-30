@@ -13,8 +13,7 @@ nRF24L01P_BASE::nRF24L01P_BASE(ISpi &spi) : _spi(spi) {}
 
 nRF24L01P_BASE::~nRF24L01P_BASE() {}
 
-uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t inBytes[], uint8_t outBytes[],
-                                 size_t numBytes) {
+uint8_t nRF24L01P_BASE::transmit(uint8_t command, void *inBytes, void *outBytes, size_t numBytes) {
     uint8_t status;
     uint8_t buffer[numBytes + 1];
 
@@ -37,7 +36,7 @@ uint8_t nRF24L01P_BASE::transmit(uint8_t command, uint8_t inBytes[], uint8_t out
     return (status);
 }
 
-uint8_t nRF24L01P_BASE::cmd_R_REGISTER(Register_t address, uint8_t bytes[], size_t numBytes) {
+uint8_t nRF24L01P_BASE::cmd_R_REGISTER(Register_t address, void *bytes, size_t numBytes) {
     uint8_t command;
     uint8_t status;
 
@@ -47,7 +46,7 @@ uint8_t nRF24L01P_BASE::cmd_R_REGISTER(Register_t address, uint8_t bytes[], size
     return (status);
 }
 
-uint8_t nRF24L01P_BASE::cmd_W_REGISTER(Register_t address, uint8_t bytes[], size_t numBytes) {
+uint8_t nRF24L01P_BASE::cmd_W_REGISTER(Register_t address, void *bytes, size_t numBytes) {
     uint8_t command;
     uint8_t status;
 
@@ -57,7 +56,7 @@ uint8_t nRF24L01P_BASE::cmd_W_REGISTER(Register_t address, uint8_t bytes[], size
     return (status);
 }
 
-uint8_t nRF24L01P_BASE::cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
+uint8_t nRF24L01P_BASE::cmd_W_TX_PAYLOAD(void *bytes, size_t numBytes) {
     uint8_t command;
     uint8_t status;
 
@@ -67,7 +66,7 @@ uint8_t nRF24L01P_BASE::cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
     return (status);
 }
 
-uint8_t nRF24L01P_BASE::cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes) {
+uint8_t nRF24L01P_BASE::cmd_R_RX_PAYLOAD(void *bytes, size_t numBytes) {
     uint8_t command;
     uint8_t status;
 

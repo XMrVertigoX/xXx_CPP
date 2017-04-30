@@ -11,16 +11,16 @@ class nRF24L01P_BASE {
    private:
     ISpi &_spi;
 
-    uint8_t transmit(uint8_t command, uint8_t txBytes[], uint8_t rxBytes[], size_t numBytes);
+    uint8_t transmit(uint8_t command, void *txBytes, void *rxBytes, size_t numBytes);
 
    protected:
     nRF24L01P_BASE(ISpi &spi);
     virtual ~nRF24L01P_BASE();
 
-    uint8_t cmd_R_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
-    uint8_t cmd_W_REGISTER(Register_t reg, uint8_t bytes[], size_t numBytes);
-    uint8_t cmd_R_RX_PAYLOAD(uint8_t bytes[], size_t numBytes);
-    uint8_t cmd_W_TX_PAYLOAD(uint8_t bytes[], size_t numBytes);
+    uint8_t cmd_R_REGISTER(Register_t reg, void *bytes, size_t numBytes);
+    uint8_t cmd_W_REGISTER(Register_t reg, void *bytes, size_t numBytes);
+    uint8_t cmd_R_RX_PAYLOAD(void *bytes, size_t numBytes);
+    uint8_t cmd_W_TX_PAYLOAD(void *bytes, size_t numBytes);
     uint8_t cmd_FLUSH_TX();
     uint8_t cmd_FLUSH_RX();
     uint8_t cmd_REUSE_TX_PL();
