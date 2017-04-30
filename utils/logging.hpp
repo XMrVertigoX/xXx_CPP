@@ -13,7 +13,7 @@
 #define LOG(...) printFormat(__VA_ARGS__)
 #endif
 
-void printBuffer(const char *message, uint8_t bytes[], size_t numBytes);
+void printBuffer(const char *message, void *bytes, size_t numBytes);
 void printFormat(const char *format, ...);
 
 #endif /* LOGGING_HPP_ */

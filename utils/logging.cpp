@@ -33,13 +33,13 @@ void printFormat(const char *format, ...) {
     putchar('\n');
 }
 
-void printBuffer(const char *message, uint8_t bytes[], size_t numBytes) {
+void printBuffer(const char *message, void *bytes, size_t numBytes) {
     TickType_t ticks = xTaskGetTickCount();
 
     printf("%lu.%03lu %s", seconds(ticks), milliseconds(ticks), message);
 
     for (size_t i = 0; i < numBytes; ++i) {
-        printf(" %02x", bytes[i]);
+        printf(" %02x", static_cast<uint8_t *>(bytes)[i]);
     }
 
     putchar('\r');
