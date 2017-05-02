@@ -32,8 +32,6 @@ RF24_ESB::~RF24_ESB() {}
 void RF24_ESB::setup() {
     LOG("%p: %s", this, __PRETTY_FUNCTION__);
 
-    auto interruptFunction = [](void *user) { static_cast<RF24_ESB *>(user)->notifyFromISR(); };
-
     // Enable dynamic payload length only
     uint8_t feature = 0;
     clearBit_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK);
@@ -51,15 +49,11 @@ void RF24_ESB::setup() {
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
 
-    irq.enableInterrupt(interruptFunction, this);
+    irq.enableInterrupt([](void *user) { static_cast<RF24_ESB *>(user)->notifyFromISR(); }, this);
 }
 
 void RF24_ESB::loop() {
     uint8_t status = cmd_NOP();
-
-    if (readBit<uint8_t>(status, STATUS_RX_DR)) {
-        handle_RX_DR(status);
-    }
 
     if (readBit<uint8_t>(status, STATUS_MAX_RT)) {
         handle_MAX_RT(status);
@@ -69,8 +63,8 @@ void RF24_ESB::loop() {
         handle_TX_DS(status);
     }
 
-    if (this->txQueue) {
-        writeTxFifo(status);
+    if (readBit<uint8_t>(status, STATUS_RX_DR)) {
+        handle_RX_DR(status);
     }
 
     wait();
