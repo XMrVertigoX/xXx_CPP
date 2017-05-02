@@ -14,14 +14,6 @@ SimpleTask::~SimpleTask() {
     destroy();
 }
 
-void SimpleTask::delay(TickType_t ticksToDelay) {
-    vTaskDelay(ticksToDelay);
-}
-
-void SimpleTask::notifyTake(BaseType_t clearCounter, TickType_t ticksToWait) {
-    ulTaskNotifyTake(clearCounter, ticksToWait);
-}
-
 void SimpleTask::create(uint16_t stackSize, uint8_t priority) {
     auto taskFunction = [](void *simpleTask) {
         static_cast<SimpleTask *>(simpleTask)->setup();
@@ -70,6 +62,16 @@ void SimpleTask::suspend() {
 
 UBaseType_t SimpleTask::getStackHighWaterMark() {
     return (uxTaskGetStackHighWaterMark(_handle));
+}
+
+// ----- static ---------------------------------------------------------------
+
+void SimpleTask::sleep(TickType_t ticksToDelay) {
+    vTaskDelay(ticksToDelay);
+}
+
+void SimpleTask::wait() {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 }
 
 } /* namespace xXx */

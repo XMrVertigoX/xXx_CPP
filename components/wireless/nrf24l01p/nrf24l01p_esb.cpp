@@ -55,8 +55,6 @@ void RF24_ESB::setup() {
 }
 
 void RF24_ESB::loop() {
-    notifyTake();
-
     uint8_t status = cmd_NOP();
 
     if (readBit<uint8_t>(status, STATUS_RX_DR)) {
@@ -74,6 +72,8 @@ void RF24_ESB::loop() {
     if (this->txQueue) {
         writeTxFifo(status);
     }
+
+    wait();
 }
 
 RF24_Status_t RF24_ESB::readRxFifo(uint8_t status) {

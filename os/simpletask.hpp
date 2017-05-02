@@ -25,9 +25,6 @@ class SimpleTask {
    protected:
     virtual ~SimpleTask();
 
-    void delay(TickType_t ticksToDelay);
-    void notifyTake(BaseType_t clearCounter = pdTRUE, TickType_t ticksToWait = portMAX_DELAY);
-
    public:
     void create(uint16_t stackSize = configMINIMAL_STACK_SIZE,
                 uint8_t priority   = Task_Priority_MID);
@@ -39,6 +36,9 @@ class SimpleTask {
     void suspend();
 
     UBaseType_t getStackHighWaterMark();
+
+    static void sleep(TickType_t ticksToDelay);
+    static void wait();
 };
 
 } /* namespace xXx */
