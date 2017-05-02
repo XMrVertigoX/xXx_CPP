@@ -21,71 +21,56 @@ enum class RF24_CRCConfig : uint8_t { CRC_DISABLED, CRC_1Byte, CRC_2Bytes };
 
 enum class RF24_OutputPower : uint8_t { PWR_18dBm, PWR_12dBm, PWR_6dBm, PWR_0dBm };
 
-enum RF24_Status_t {
-    RF24_Status_Success,
-    RF24_Status_Failure,
-    RF24_Status_UnknownPipeIndex,
-    RF24_Status_UnknownChannelIndex,
-    RF24_Status_VerificationFailed,
-    RF24_Status_RxAddressVerificationFailed,
-    RF24_Status_TxAddressVerificationFailed,
-    RF24_Status_TxFifoFull,
-    RF24_Status_NoRxQueueSet,
-    RF24_Status_NoTxQueueSet,
-    RF24_Status_MalformedAddress
+enum class RF24_Status : uint8_t {
+    Success,
+    Failure,
+    UnknownPipe,
+    UnknownChannel,
+    VerificationFailed,
+    MalformedAddress
 };
 
-enum AddressRegisterLength_t : uint8_t {
-    RX_ADDR_P0_LENGTH = 5,
-    RX_ADDR_P1_LENGTH = 5,
-    RX_ADDR_P2_LENGTH = 1,
-    RX_ADDR_P3_LENGTH = 1,
-    RX_ADDR_P4_LENGTH = 1,
-    RX_ADDR_P5_LENGTH = 1,
-    TX_ADDR_LENGTH    = 5
+enum class RF24_Command : uint8_t {
+    R_REGISTER         = 0b00000000,
+    W_REGISTER         = 0b00100000,
+    R_RX_PAYLOAD       = 0b01100001,
+    W_TX_PAYLOAD       = 0b10100000,
+    FLUSH_TX           = 0b11100001,
+    FLUSH_RX           = 0b11100010,
+    REUSE_TX_PL        = 0b11100011,
+    R_RX_PL_WID        = 0b01100000,
+    W_ACK_PAYLOAD      = 0b10101000,
+    W_TX_PAYLOAD_NOACK = 0b10110000,
+    NOP                = 0b11111111,
 };
 
-enum Command_t : uint8_t {
-    Command_R_REGISTER         = 0b00000000,
-    Command_W_REGISTER         = 0b00100000,
-    Command_R_RX_PAYLOAD       = 0b01100001,
-    Command_W_TX_PAYLOAD       = 0b10100000,
-    Command_FLUSH_TX           = 0b11100001,
-    Command_FLUSH_RX           = 0b11100010,
-    Command_REUSE_TX_PL        = 0b11100011,
-    Command_R_RX_PL_WID        = 0b01100000,
-    Command_W_ACK_PAYLOAD      = 0b10101000,
-    Command_W_TX_PAYLOAD_NOACK = 0b10110000,
-    Command_NOP                = 0b11111111,
-};
-
-enum Register_t : uint8_t {
-    Register_CONFIG      = 0x00,
-    Register_EN_AA       = 0x01,
-    Register_EN_RXADDR   = 0x02,
-    Register_SETUP_AW    = 0x03,
-    Register_SETUP_RETR  = 0x04,
-    Register_RF_CH       = 0x05,
-    Register_RF_SETUP    = 0x06,
-    Register_STATUS      = 0x07,
-    Register_OBSERVE_TX  = 0x08,
-    Register_RPD         = 0x09,
-    Register_RX_ADDR_P0  = 0x0A,
-    Register_RX_ADDR_P1  = 0x0B,
-    Register_RX_ADDR_P2  = 0x0C,
-    Register_RX_ADDR_P3  = 0x0D,
-    Register_RX_ADDR_P4  = 0x0E,
-    Register_RX_ADDR_P5  = 0x0F,
-    Register_TX_ADDR     = 0x10,
-    Register_RX_PW_P0    = 0x11,
-    Register_RX_PW_P1    = 0x12,
-    Register_RX_PW_P2    = 0x13,
-    Register_RX_PW_P3    = 0x14,
-    Register_RX_PW_P4    = 0x15,
-    Register_RX_PW_P5    = 0x16,
-    Register_FIFO_STATUS = 0x17,
-    Register_DYNPD       = 0x1C,
-    Register_FEATURE     = 0x1D
+enum class RF24_Register : uint8_t {
+    CONFIG      = 0x00,
+    EN_AA       = 0x01,
+    EN_RXADDR   = 0x02,
+    SETUP_AW    = 0x03,
+    SETUP_RETR  = 0x04,
+    RF_CH       = 0x05,
+    RF_SETUP    = 0x06,
+    STATUS      = 0x07,
+    OBSERVE_TX  = 0x08,
+    RPD         = 0x09,
+    RX_ADDR_P0  = 0x0A,
+    RX_ADDR_P1  = 0x0B,
+    RX_ADDR_P2  = 0x0C,
+    RX_ADDR_P3  = 0x0D,
+    RX_ADDR_P4  = 0x0E,
+    RX_ADDR_P5  = 0x0F,
+    TX_ADDR     = 0x10,
+    RX_PW_P0    = 0x11,
+    RX_PW_P1    = 0x12,
+    RX_PW_P2    = 0x13,
+    RX_PW_P3    = 0x14,
+    RX_PW_P4    = 0x15,
+    RX_PW_P5    = 0x16,
+    FIFO_STATUS = 0x17,
+    DYNPD       = 0x1C,
+    FEATURE     = 0x1D
 };
 
 enum CONFIG_t : uint8_t {
@@ -168,6 +153,16 @@ enum FEATURE_t : uint8_t {
     FEATURE_EN_ACK_PAY_MASK = 0b00000010,
     FEATURE_EN_DPL          = 2,
     FEATURE_EN_DPL_MASK     = 0b00000100,
+};
+
+enum AddressRegisterLength_t : uint8_t {
+    RX_ADDR_P0_LENGTH = 5,
+    RX_ADDR_P1_LENGTH = 5,
+    RX_ADDR_P2_LENGTH = 1,
+    RX_ADDR_P3_LENGTH = 1,
+    RX_ADDR_P4_LENGTH = 1,
+    RX_ADDR_P5_LENGTH = 1,
+    TX_ADDR_LENGTH    = 5
 };
 
 #endif  // NRF24L01P_TYPES_HPP_

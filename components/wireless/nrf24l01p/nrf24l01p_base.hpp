@@ -17,8 +17,8 @@ class nRF24L01P_BASE {
     nRF24L01P_BASE(ISpi &spi);
     virtual ~nRF24L01P_BASE();
 
-    uint8_t cmd_R_REGISTER(Register_t reg, void *bytes, size_t numBytes);
-    uint8_t cmd_W_REGISTER(Register_t reg, void *bytes, size_t numBytes);
+    uint8_t cmd_R_REGISTER(RF24_Register reg, void *bytes, size_t numBytes);
+    uint8_t cmd_W_REGISTER(RF24_Register reg, void *bytes, size_t numBytes);
     uint8_t cmd_R_RX_PAYLOAD(void *bytes, size_t numBytes);
     uint8_t cmd_W_TX_PAYLOAD(void *bytes, size_t numBytes);
     uint8_t cmd_FLUSH_TX();
