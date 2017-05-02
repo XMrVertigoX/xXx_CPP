@@ -8,12 +8,12 @@
 #define txSettling (130)
 #define rxSettling (130)
 
+typedef uint64_t RF24_Address_t;
+
 struct RF24_Package_t {
     uint8_t numBytes;
     uint8_t bytes[32];
 };
-
-typedef uint64_t RF24_Address_t;
 
 enum class RF24_DataRate : uint8_t { DR_250KBPS, DR_1MBPS, DR_2MBPS };
 
