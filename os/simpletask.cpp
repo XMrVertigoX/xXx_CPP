@@ -71,7 +71,7 @@ void SimpleTask::sleep(TickType_t ticksToDelay) {
 }
 
 void SimpleTask::wait() {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
 }
 
 } /* namespace xXx */
