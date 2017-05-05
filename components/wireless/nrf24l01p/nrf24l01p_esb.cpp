@@ -46,8 +46,6 @@ void RF24_ESB::setup() {
 
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
-
-    irq.enableInterrupt([](void *user) { static_cast<RF24_ESB *>(user)->notifyFromISR(); }, this);
 }
 
 void RF24_ESB::loop() {
@@ -487,7 +485,7 @@ RF24_Status RF24_ESB::setTxAddress(RF24_Address_t address) {
 RF24_Address_t RF24_ESB::getRxAddress(uint8_t pipe) {
     RF24_Address_t address = 0;
 
-    // __BOUNCE(pipe > 5, RF24_Status::RF24_UnknownPipe);
+    __BOUNCE(pipe > 5, __UINT64_MAX__);
 
     if (pipe == 0) {
         cmd_R_REGISTER(RF24_Register::RX_ADDR_P0, &address, RX_ADDR_P0_LENGTH);
@@ -501,8 +499,6 @@ RF24_Address_t RF24_ESB::getRxAddress(uint8_t pipe) {
             case 5: cmd_R_REGISTER(RF24_Register::RX_ADDR_P5, &address, RX_ADDR_P5_LENGTH); break;
         }
     }
-
-    // TODO: This returns the address of p1 if pipe index is > 5
 
     return (address);
 }
