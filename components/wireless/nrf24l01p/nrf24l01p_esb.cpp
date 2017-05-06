@@ -171,8 +171,6 @@ void RF24_ESB::enterTxMode() {
     delayUs(txSettling);
 }
 
-// ----- getters and setters --------------------------------------------------
-
 uint8_t RF24_ESB::getPackageLossCounter() {
     uint8_t observe_tx;
 
@@ -537,6 +535,26 @@ RF24_Status RF24_ESB::setRxAddress(uint8_t pipe, RF24_Address_t address) {
 
     BOUNCE(address != getRxAddress(pipe), RF24_Status::VerificationFailed);
 
+    return (RF24_Status::Success);
+}
+
+RF24_Status RF24_ESB::enableAutoAcknowledgment(uint8_t pipe) {
+#warning "Not implemented yet"
+    return (RF24_Status::Success);
+}
+
+RF24_Status RF24_ESB::disableAutoAcknowledgment(uint8_t pipe) {
+#warning "Not implemented yet"
+    return (RF24_Status::Success);
+}
+
+RF24_Status enabledRxDataPipe(uint8_t pipe) {
+#warning "Not implemented yet"
+    return (RF24_Status::Success);
+}
+
+RF24_Status disabledRxDataPipe(uint8_t pipe) {
+#warning "Not implemented yet"
     return (RF24_Status::Success);
 }
 
