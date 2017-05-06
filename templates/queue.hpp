@@ -103,9 +103,6 @@ UBaseType_t Queue<TYPE>::queueSpacesAvailableFromISR() {
     return (uxQueueSpacesAvailable(_queue));
 }
 
-template <typename TYPE>
-using Queue_Handle_t = Queue<TYPE> *;
-
 } /* namespace xXx */
 
 #endif /* QUEUE_HPP_ */

@@ -10,7 +10,7 @@
 
 typedef uint64_t RF24_Address_t;
 
-struct RF24_Package_t {
+struct RF24_DataPackage_t {
     uint8_t numBytes;
     uint8_t bytes[32];
 };
@@ -24,10 +24,10 @@ enum class RF24_OutputPower : uint8_t { PWR_18dBm, PWR_12dBm, PWR_6dBm, PWR_0dBm
 enum class RF24_Status : uint8_t {
     Success,
     Failure,
-    UnknownPipe,
+    UnknownAddress,
     UnknownChannel,
-    VerificationFailed,
-    MalformedAddress
+    UnknownPipe,
+    VerificationFailed
 };
 
 enum class RF24_Command : uint8_t {

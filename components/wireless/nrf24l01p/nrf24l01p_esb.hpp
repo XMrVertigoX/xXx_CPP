@@ -16,8 +16,8 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     IGpio &ce;
     IGpio &irq;
 
-    Queue_Handle_t<RF24_Package_t> rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    Queue_Handle_t<RF24_Package_t> txQueue    = NULL;
+    Queue<RF24_DataPackage_t> *rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    Queue<RF24_DataPackage_t> *txQueue    = NULL;
 
     void setup();
     void loop();
@@ -42,10 +42,13 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     void enterStandbyMode();
     void enterTxMode();
 
-    RF24_Status enableRxDataPipe(uint8_t pipe, Queue<RF24_Package_t> &rxQueue);
+    RF24_Status configureRxDataPipe(uint8_t pipe, Queue<RF24_DataPackage_t> *rxQueue);
     RF24_Status disableRxDataPipe(uint8_t pipe);
-    RF24_Status enableTxDataPipe(Queue<RF24_Package_t> &txQueue);
+    RF24_Status configureTxDataPipe(Queue<RF24_DataPackage_t> *txQueue);
     RF24_Status disableTxDataPipe();
+
+    // TODO: enable/disable auto ack -> EN_AA
+    // TODO: Enabled RX Addresses -> EN_RXADDR
 
     RF24_Address_t getRxAddress(uint8_t pipe);
     RF24_Status setRxAddress(uint8_t pipe, RF24_Address_t address);

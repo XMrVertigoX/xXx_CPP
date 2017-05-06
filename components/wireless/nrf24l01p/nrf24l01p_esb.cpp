@@ -24,10 +24,10 @@
 
 // TODO: Need to understand this magic :-D
 #define __GET_WRITE_MACRO(_1, _2, _3, NAME, ...) NAME
-#define __WRITE_REGISTER_FIXED(reg, val) cmd_R_REGISTER(reg, &val, sizeof(val))
-#define __WRITE_REGISTER_VARIO(reg, val, len) cmd_R_REGISTER(reg, &val, len)
+#define __WRITE_REGISTER_FIXED(reg, val) cmd_W_REGISTER(reg, &val, sizeof(val))
+#define __WRITE_REGISTER_VARIO(reg, val, len) cmd_W_REGISTER(reg, &val, len)
 #define WRITE_REGISTER(...) \
-    __GET_WRITE_MACRO(__VA_ARGS__, __READ_REGISTER_VARIO, __READ_REGISTER_FIXED)(__VA_ARGS__)
+    __GET_WRITE_MACRO(__VA_ARGS__, __WRITE_REGISTER_VARIO, __WRITE_REGISTER_FIXED)(__VA_ARGS__)
 
 namespace xXx {
 
@@ -43,25 +43,30 @@ RF24_ESB::RF24_ESB(ISpi& spi, IGpio& ce, IGpio& irq) : nRF24L01P_BASE(spi), ce(c
 RF24_ESB::~RF24_ESB() {}
 
 void RF24_ESB::setup() {
-    uint8_t feature;
-    uint8_t status;
+    uint8_t tmp;
 
     // Enable dynamic payload length only
-    READ_REGISTER(RF24_Register::FEATURE, feature);
-    clearBit_eq<uint8_t>(feature, FEATURE_EN_DYN_ACK);
-    clearBit_eq<uint8_t>(feature, FEATURE_EN_ACK_PAY);
-    setBit_eq<uint8_t>(feature, FEATURE_EN_DPL);
-    WRITE_REGISTER(RF24_Register::FEATURE, feature);
+    READ_REGISTER(RF24_Register::FEATURE, tmp);
+    clearBit_eq<uint8_t>(tmp, FEATURE_EN_DYN_ACK);
+    clearBit_eq<uint8_t>(tmp, FEATURE_EN_ACK_PAY);
+    setBit_eq<uint8_t>(tmp, FEATURE_EN_DPL);
+    WRITE_REGISTER(RF24_Register::FEATURE, tmp);
 
     // Clear interrupts
-    READ_REGISTER(RF24_Register::STATUS, status);
-    setBit_eq<uint8_t>(status, STATUS_MAX_RT);
-    setBit_eq<uint8_t>(status, STATUS_RX_DR);
-    setBit_eq<uint8_t>(status, STATUS_TX_DS);
-    WRITE_REGISTER(RF24_Register::STATUS, status);
+    READ_REGISTER(RF24_Register::STATUS, tmp);
+    setBit_eq<uint8_t>(tmp, STATUS_MAX_RT);
+    setBit_eq<uint8_t>(tmp, STATUS_RX_DR);
+    setBit_eq<uint8_t>(tmp, STATUS_TX_DS);
+    WRITE_REGISTER(RF24_Register::STATUS, tmp);
 
     cmd_FLUSH_TX();
     cmd_FLUSH_RX();
+
+    IGpio_Callback_t interruptFunction = [](void* user) {
+        static_cast<RF24_ESB*>(user)->notifyFromISR();
+    };
+
+    irq.enableInterrupt(interruptFunction, this);
 }
 
 void RF24_ESB::loop() {
@@ -92,7 +97,7 @@ void RF24_ESB::handle_RX_DR(uint8_t status) {
 }
 
 RF24_Status RF24_ESB::readRxFifo(uint8_t status) {
-    RF24_Package_t package;
+    RF24_DataPackage_t package;
 
     uint8_t pipe = extractPipe(status);
     BOUNCE(pipe > 5, RF24_Status::Failure);
@@ -109,7 +114,7 @@ RF24_Status RF24_ESB::readRxFifo(uint8_t status) {
 }
 
 RF24_Status RF24_ESB::writeTxFifo(uint8_t status) {
-    RF24_Package_t package;
+    RF24_DataPackage_t package;
 
     BOUNCE(readBit<uint8_t>(status, STATUS_TX_FULL), RF24_Status::Failure);
 
@@ -188,7 +193,7 @@ uint8_t RF24_ESB::getRetransmissionCounter() {
     return (observe_tx);
 }
 
-RF24_Status RF24_ESB::enableRxDataPipe(uint8_t pipe, Queue<RF24_Package_t>& rxQueue) {
+RF24_Status RF24_ESB::configureRxDataPipe(uint8_t pipe, Queue<RF24_DataPackage_t>* rxQueue) {
     uint8_t en_rxaddr;
 
     BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
@@ -197,11 +202,11 @@ RF24_Status RF24_ESB::enableRxDataPipe(uint8_t pipe, Queue<RF24_Package_t>& rxQu
     setBit_eq<uint8_t>(en_rxaddr, pipe);
     WRITE_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
 
+    // TODO: Verify
+
     enableDynamicPayloadLength(pipe);
 
-    this->rxQueue[pipe] = &rxQueue;
-
-    // TODO: Verify
+    this->rxQueue[pipe] = rxQueue;
 
     return (RF24_Status::Success);
 }
@@ -215,43 +220,25 @@ RF24_Status RF24_ESB::disableRxDataPipe(uint8_t pipe) {
     clearBit_eq<uint8_t>(en_rxaddr, pipe);
     WRITE_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
 
+    // TODO: Verify
+
     disableDynamicPayloadLength(pipe);
 
     this->rxQueue[pipe] = NULL;
 
-    // TODO: Verify
-
     return (RF24_Status::Success);
 }
 
-// TODO: !!!
-RF24_Status RF24_ESB::enableTxDataPipe(Queue<RF24_Package_t>& txQueue) {
-    uint8_t en_rxaddr;
+RF24_Status RF24_ESB::configureTxDataPipe(Queue<RF24_DataPackage_t>* txQueue) {
+    this->txQueue = txQueue;
 
-    READ_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
-    setBit_eq<uint8_t>(en_rxaddr, 0);
-    WRITE_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
-
-    this->txQueue = &txQueue;
-
-    // TODO: Verify
-
-    return (RF24_Status::Success);
+    return (configureRxDataPipe(0, NULL));
 }
 
-// TODO: !!!
 RF24_Status RF24_ESB::disableTxDataPipe() {
-    uint8_t en_rxaddr;
-
-    READ_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
-    clearBit_eq<uint8_t>(en_rxaddr, 0);
-    WRITE_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
-
     this->txQueue = NULL;
 
-    // TODO: Verify
-
-    return (RF24_Status::Success);
+    return (disableRxDataPipe(0));
 }
 
 RF24_Status RF24_ESB::enableDynamicPayloadLength(uint8_t pipe) {
@@ -486,7 +473,7 @@ RF24_Address_t RF24_ESB::getTxAddress() {
 }
 
 RF24_Status RF24_ESB::setTxAddress(RF24_Address_t address) {
-    BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::MalformedAddress);
+    BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::UnknownAddress);
 
     WRITE_REGISTER(RF24_Register::TX_ADDR, address, TX_ADDR_LENGTH);
 
@@ -518,7 +505,7 @@ RF24_Address_t RF24_ESB::getRxAddress(uint8_t pipe) {
 
 RF24_Status RF24_ESB::setRxAddress(uint8_t pipe, RF24_Address_t address) {
     BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
-    BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::MalformedAddress);
+    BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::UnknownAddress);
 
     switch (pipe) {
         case 0: {
