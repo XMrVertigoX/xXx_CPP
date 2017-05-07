@@ -538,23 +538,43 @@ RF24_Status RF24_ESB::setRxAddress(uint8_t pipe, RF24_Address_t address) {
     return (RF24_Status::Success);
 }
 
-RF24_Status RF24_ESB::enableAutoAcknowledgment(uint8_t pipe) {
-#warning "Not implemented yet"
+RF24_Status RF24_ESB::enableAutoAcknowledgment(uint8_t pipe, bool enable) {
+    uint8_t en_aa;
+
+    BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
+
+    READ_REGISTER(RF24_Register::EN_AA, en_aa);
+
+    if (enable) {
+        setBit_eq<uint8_t>(en_aa, pipe);
+    } else {
+        clearBit_eq<uint8_t>(en_aa, pipe);
+    }
+
+    WRITE_REGISTER(RF24_Register::EN_AA, en_aa);
+
+    // TODO: Verify
+
     return (RF24_Status::Success);
 }
 
-RF24_Status RF24_ESB::disableAutoAcknowledgment(uint8_t pipe) {
-#warning "Not implemented yet"
-    return (RF24_Status::Success);
-}
+RF24_Status RF24_ESB::enableDataPipe(uint8_t pipe, bool enable) {
+    uint8_t en_rxaddr;
 
-RF24_Status enabledRxDataPipe(uint8_t pipe) {
-#warning "Not implemented yet"
-    return (RF24_Status::Success);
-}
+    BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
 
-RF24_Status disabledRxDataPipe(uint8_t pipe) {
-#warning "Not implemented yet"
+    READ_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
+
+    if (enable) {
+        setBit_eq<uint8_t>(en_rxaddr, pipe);
+    } else {
+        clearBit_eq<uint8_t>(en_rxaddr, pipe);
+    }
+
+    WRITE_REGISTER(RF24_Register::EN_RXADDR, en_rxaddr);
+
+    // TODO: Verify
+
     return (RF24_Status::Success);
 }
 

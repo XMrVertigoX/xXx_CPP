@@ -43,14 +43,14 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     void enterTxMode();
 
     RF24_Status configureRxDataPipe(uint8_t pipe, Queue<RF24_DataPackage_t> *rxQueue);
-    RF24_Status disableRxDataPipe(uint8_t pipe);
     RF24_Status configureTxDataPipe(Queue<RF24_DataPackage_t> *txQueue);
+
+    RF24_Status disableRxDataPipe(uint8_t pipe);
     RF24_Status disableTxDataPipe();
 
-    RF24_Status enableAutoAcknowledgment(uint8_t pipe);
-    RF24_Status disableAutoAcknowledgment(uint8_t pipe);
-    RF24_Status enabledRxDataPipe(uint8_t pipe);
-    RF24_Status disabledRxDataPipe(uint8_t pipe);
+    RF24_Status enableAutoAcknowledgment(uint8_t pipe, bool enable = true);
+    RF24_Status enableDataPipe(uint8_t pipe, bool enable = true);
+    // TODO: getter?
 
     uint8_t getPackageLossCounter();
 
