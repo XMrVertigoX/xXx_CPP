@@ -9,9 +9,12 @@
 #include <xXx/os/simpletask.hpp>
 #include <xXx/templates/queue.hpp>
 
+typedef void (*RF24_TxCallback_t)(void *user);
+typedef void (*RF24_RxCallback_t)(void *user);
+
 namespace xXx {
 
-class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
+class RF24_ESB : public nRF24L01P_BASE /*, public SimpleTask*/ {
    private:
     IGpio &ce;
     IGpio &irq;
@@ -19,8 +22,15 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     Queue<RF24_DataPackage_t> *rxQueue[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     Queue<RF24_DataPackage_t> *txQueue    = NULL;
 
-    void setup();
-    void loop();
+    RF24_RxCallback_t txCallback = NULL;
+    void *txUser                 = NULL;
+
+    RF24_RxCallback_t rxCallback = NULL;
+    void *rxUser                 = NULL;
+
+    uint8_t notificationCounter = 0;
+
+    RF24_Status notify();
 
     void handle_MAX_RT(uint8_t status);
     void handle_RX_DR(uint8_t status);
@@ -36,6 +46,10 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
    public:
     RF24_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
     ~RF24_ESB();
+
+    // TODO
+    void setup();
+    void loop();
 
     void enterRxMode();
     void enterShutdownMode();
@@ -60,8 +74,8 @@ class RF24_ESB : public nRF24L01P_BASE, public SimpleTask {
     RF24_Address_t getTxAddress();
     RF24_Status setTxAddress(RF24_Address_t address);
 
-    uint8_t getChannel();
-    RF24_Status setChannel(uint8_t channel);
+    RF24_Channel_t getChannel();
+    RF24_Status setChannel(RF24_Channel_t channel);
 
     RF24_CRCConfig getCrcConfig();
     RF24_Status setCrcConfig(RF24_CRCConfig crc);

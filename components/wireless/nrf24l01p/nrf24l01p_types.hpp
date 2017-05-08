@@ -9,6 +9,7 @@
 #define rxSettling (130)
 
 typedef uint64_t RF24_Address_t;
+typedef uint8_t RF24_Channel_t;
 
 struct RF24_DataPackage_t {
     uint8_t numBytes;
