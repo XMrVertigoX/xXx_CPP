@@ -1,8 +1,8 @@
 
-#if not defined(NRF24L01P_BASE_HPP_)
-#define NRF24L01P_BASE_HPP_
+#ifndef RF24_BASE_HPP
+#define RF24_BASE_HPP
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_types.hpp>
+#include <xXx/components/wireless/rf24/rf24_types.hpp>
 #include <xXx/interfaces/ispi.hpp>
 
 namespace xXx {
@@ -32,4 +32,4 @@ class nRF24L01P_BASE {
 
 } /* namespace xXx */
 
-#endif /* NRF24L01P_BASE_HPP_ */
+#endif /* RF24_BASE_HPP */

@@ -1,9 +1,10 @@
-#ifndef NRF24L01P_ESB_HPP_
-#define NRF24L01P_ESB_HPP_
+#ifndef RF24_HPP
+#define RF24_HPP
 
 #include <stdint.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
+#include <xXx/components/wireless/rf24/rf24_base.hpp>
+#include <xXx/components/wireless/rf24/rf24_types.hpp>
 #include <xXx/interfaces/igpio.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/os/simpletask.hpp>
@@ -11,7 +12,7 @@
 
 namespace xXx {
 
-class RF24_ESB : public nRF24L01P_BASE /*, public SimpleTask*/ {
+class RF24 : public nRF24L01P_BASE /*, public SimpleTask*/ {
    private:
     IGpio &ce;
     IGpio &irq;
@@ -41,8 +42,8 @@ class RF24_ESB : public nRF24L01P_BASE /*, public SimpleTask*/ {
     uint8_t getRetransmissionCounter();
 
    public:
-    RF24_ESB(ISpi &spi, IGpio &ce, IGpio &irq);
-    ~RF24_ESB();
+    RF24(ISpi &spi, IGpio &ce, IGpio &irq);
+    ~RF24();
 
     // TODO
     void setup();
@@ -92,4 +93,4 @@ class RF24_ESB : public nRF24L01P_BASE /*, public SimpleTask*/ {
 
 } /* namespace xXx */
 
-#endif  // NRF24L01P_ESB_HPP_
+#endif  // RF24_HPP

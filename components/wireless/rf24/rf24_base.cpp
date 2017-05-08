@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_base.hpp>
-#include <xXx/components/wireless/nrf24l01p/nrf24l01p_types.hpp>
+#include <xXx/components/wireless/rf24/rf24_base.hpp>
+#include <xXx/components/wireless/rf24/rf24_types.hpp>
 #include <xXx/interfaces/ispi.hpp>
 #include <xXx/utils/bitoperations.hpp>
 #include <xXx/utils/logging.hpp>

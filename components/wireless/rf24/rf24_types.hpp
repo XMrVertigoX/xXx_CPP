@@ -1,5 +1,5 @@
-#ifndef NRF24L01P_TYPES_HPP_
-#define NRF24L01P_TYPES_HPP_
+#ifndef RF24_TYPES_HPP
+#define RF24_TYPES_HPP
 
 #include <stdint.h>
 
@@ -169,4 +169,4 @@ enum AddressRegisterLength_t : uint8_t {
     TX_ADDR_LENGTH    = 5
 };
 
-#endif  // NRF24L01P_TYPES_HPP_
+#endif  // RF24_TYPES_HPP

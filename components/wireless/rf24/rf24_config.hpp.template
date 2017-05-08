@@ -1,0 +1,8 @@
+#ifndef RF24_CONFIG_HPP
+#define RF24_CONFIG_HPP
+
+#include <stdint.h>
+
+static inline void delayUs(uint32_t us) {}
+
+#endif // RF24_CONFIG_HPP
