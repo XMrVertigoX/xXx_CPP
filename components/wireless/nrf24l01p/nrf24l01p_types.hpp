@@ -11,6 +11,9 @@
 typedef uint64_t RF24_Address_t;
 typedef uint8_t RF24_Channel_t;
 
+typedef void (*RF24_TxCallback_t)(void *user);
+typedef void (*RF24_RxCallback_t)(void *user);
+
 struct RF24_DataPackage_t {
     uint8_t numBytes;
     uint8_t bytes[32];
