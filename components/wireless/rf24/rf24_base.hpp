@@ -1,4 +1,3 @@
-
 #ifndef RF24_BASE_HPP
 #define RF24_BASE_HPP
 
