@@ -10,8 +10,7 @@
 
 #include <nRF24L01_config.h>
 
-#define __MAX(value, limit) (value > limit ? limit : value)
-#define __MIN(value, limit) (value > limit ? limit : value)
+#define __LIMIT(value, limit) (value > limit ? limit : value)
 
 #define __BOUNCE(expression) \
     if (expression) return
@@ -436,7 +435,7 @@ RF24_Status RF24::setRetryCount(uint8_t count) {
     uint8_t setup_retr;
 
     __READ_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
-    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__MAX(count, 0xF), SETUP_RETR_ARC));
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__LIMIT(count, 0xF), SETUP_RETR_ARC));
     __WRITE_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
 
     __BOUNCE_IF(count != getRetryCount(), RF24_Status::VerificationFailed);
@@ -458,7 +457,7 @@ RF24_Status RF24::setRetryDelay(uint8_t delay) {
     uint8_t setup_retr;
 
     __READ_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
-    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__MAX(delay, 0xF), SETUP_RETR_ARD));
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__LIMIT(delay, 0xF), SETUP_RETR_ARD));
     __WRITE_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
 
     __BOUNCE_IF(delay != getRetryDelay(), RF24_Status::VerificationFailed);
