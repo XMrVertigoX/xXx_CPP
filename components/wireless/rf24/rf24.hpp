@@ -12,7 +12,7 @@
 
 namespace xXx {
 
-class RF24 : public RF24_BASE /*, public SimpleTask*/ {
+class RF24 : public RF24_BASE {
    private:
     IGpio &ce;
     IGpio &irq;
