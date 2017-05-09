@@ -33,7 +33,7 @@ static inline uint8_t extractPipe(uint8_t status) {
     return (status);
 }
 
-RF24::RF24(ISpi& spi, IGpio& ce, IGpio& irq) : nRF24L01P_BASE(spi), ce(ce), irq(irq) {}
+RF24::RF24(ISpi& spi, IGpio& ce, IGpio& irq) : RF24_BASE(spi), ce(ce), irq(irq) {}
 
 RF24::~RF24() {}
 
