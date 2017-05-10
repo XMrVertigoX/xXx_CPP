@@ -40,56 +40,56 @@ uint8_t RF24_BASE::transmit(uint8_t command, void *inBytes, void *outBytes, size
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_R_REGISTER(RF24_Register address, void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::readRegister(RF24_Register address, void *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::R_REGISTER), __CAST(address));
     uint8_t status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_W_REGISTER(RF24_Register address, void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::writeRegister(RF24_Register address, void *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::W_REGISTER), __CAST(address));
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_W_TX_PAYLOAD(void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::writeTxPayload(void *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::W_TX_PAYLOAD);
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_R_RX_PAYLOAD(void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::readRxPayload(void *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::R_RX_PAYLOAD);
     uint8_t status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_FLUSH_TX() {
+uint8_t RF24_BASE::flushTxFifo() {
     uint8_t command = __CAST(RF24_Command::FLUSH_TX);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_FLUSH_RX() {
+uint8_t RF24_BASE::flushRxFifo() {
     uint8_t command = __CAST(RF24_Command::FLUSH_RX);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_REUSE_TX_PL() {
+uint8_t RF24_BASE::reuseTxPayload() {
     uint8_t command = __CAST(RF24_Command::REUSE_TX_PL);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_R_RX_PL_WID(uint8_t &payloadLength) {
+uint8_t RF24_BASE::readRxPayloadLength(uint8_t &payloadLength) {
     uint8_t command = __CAST(RF24_Command::R_RX_PL_WID);
     uint8_t status  = transmit(command, NULL, &payloadLength, 1);
 
@@ -110,7 +110,7 @@ uint8_t RF24_BASE::cmd_W_TX_PAYLOAD_NOACK(uint8_t bytes[], size_t numBytes) {
     return (status);
 }
 
-uint8_t RF24_BASE::cmd_NOP() {
+uint8_t RF24_BASE::getStatus() {
     uint8_t command = __CAST(RF24_Command::NOP);
     uint8_t status  = transmit(command, NULL, NULL, 0);
 

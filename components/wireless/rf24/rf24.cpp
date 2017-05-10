@@ -17,11 +17,11 @@
 #define __BOUNCE_IF(expression, statement) \
     if (expression) return (statement)
 
-#define __READ_REGISTER(reg, val) cmd_R_REGISTER(reg, &val, sizeof(val))
-#define __READ_REGISTER_VARIO(reg, val, len) cmd_R_REGISTER(reg, &val, len)
+#define __READ_REGISTER(reg, val) R_REGISTER(reg, &val, sizeof(val))
+#define __READ_REGISTER_VARIO(reg, val, len) R_REGISTER(reg, &val, len)
 
-#define __WRITE_REGISTER(reg, val) cmd_W_REGISTER(reg, &val, sizeof(val))
-#define __WRITE_REGISTER_VARIO(reg, val, len) cmd_W_REGISTER(reg, &val, len)
+#define __WRITE_REGISTER(reg, val) W_REGISTER(reg, &val, sizeof(val))
+#define __WRITE_REGISTER_VARIO(reg, val, len) W_REGISTER(reg, &val, len)
 
 namespace xXx {
 
@@ -61,8 +61,8 @@ void RF24::setup() {
     setBit_eq<uint8_t>(tmp, STATUS_TX_DS);
     __WRITE_REGISTER(RF24_Register::STATUS, tmp);
 
-    cmd_FLUSH_TX();
-    cmd_FLUSH_RX();
+    FLUSH_TX();
+    FLUSH_RX();
 
     IGpio_Callback_t interruptFunction = [](void* user) {
         RF24* self = static_cast<RF24*>(user);
@@ -89,14 +89,14 @@ void RF24::loop() {
 }
 
 void RF24::handle_MAX_RT(uint8_t status) {
-    cmd_FLUSH_TX();
+    FLUSH_TX();
 }
 
 void RF24::handle_TX_DS(uint8_t status) {}
 
 void RF24::handle_RX_DR(uint8_t status) {
     RF24_Status error = readRxFifo(status);
-    if (error != RF24_Status::Success) cmd_FLUSH_RX();
+    if (error != RF24_Status::Success) FLUSH_RX();
 }
 
 RF24_Status RF24::readRxFifo(uint8_t status) {
@@ -105,10 +105,10 @@ RF24_Status RF24::readRxFifo(uint8_t status) {
     uint8_t pipe = extractPipe(status);
     __BOUNCE_IF(pipe > 5, RF24_Status::Failure);
 
-    cmd_R_RX_PL_WID(package.numBytes);
+    R_RX_PL_WID(package.numBytes);
     __BOUNCE_IF(package.numBytes > rxFifoSize, RF24_Status::Failure);
 
-    cmd_R_RX_PAYLOAD(package.bytes, package.numBytes);
+    R_RX_PAYLOAD(package.bytes, package.numBytes);
     __BOUNCE_IF(this->rxQueue[pipe] == NULL, RF24_Status::Failure);
 
     this->rxQueue[pipe]->enqueue(package);
@@ -123,7 +123,7 @@ RF24_Status RF24::writeTxFifo(uint8_t status) {
 
     this->txQueue->dequeue(package);
 
-    cmd_W_TX_PAYLOAD(package.bytes, package.numBytes);
+    W_TX_PAYLOAD(package.bytes, package.numBytes);
 
     return (RF24_Status::Success);
 }
