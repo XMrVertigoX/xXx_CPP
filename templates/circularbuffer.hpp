@@ -51,7 +51,7 @@ bool CircularBuffer<TYPE>::pushLeft(TYPE &item) {
 
 template <typename TYPE>
 bool CircularBuffer<TYPE>::popRight(TYPE &item) {
-    if (itemsAvailable() == false) return (false);
+    if (itemsAvailable() == 0) return (false);
 
     memcpy(&item, &data[tail++], sizeof(TYPE));
     tail %= capacity;
