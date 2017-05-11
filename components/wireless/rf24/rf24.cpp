@@ -89,10 +89,14 @@ void RF24::loop() {
 }
 
 void RF24::handle_MAX_RT(uint8_t status) {
+	(void) status;
+
     FLUSH_TX();
 }
 
-void RF24::handle_TX_DS(uint8_t status) {}
+void RF24::handle_TX_DS(uint8_t status) {
+	(void) status;
+}
 
 void RF24::handle_RX_DR(uint8_t status) {
     RF24_Status error = readRxFifo(status);
