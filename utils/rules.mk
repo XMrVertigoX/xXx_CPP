@@ -28,9 +28,6 @@ vpath %.hex $(OUTPUT_DIR)
 
 # ----- Flags -----------------------------------------------------------------
 
-GCCFLAGS += -fdiagnostics-color=always
-# GCCFLAGS += -flto
-
 ASMFLAGS +=
 
 COMMON_CFLAGS += -fdata-sections
@@ -41,7 +38,7 @@ COMMON_CFLAGS += -fno-strict-aliasing
 COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -nostdlib
 COMMON_CFLAGS += -Wall
-# COMMON_CFLAGS += -Wextra
+COMMON_CFLAGS += -Wextra
 
 CFLAGS +=
 
