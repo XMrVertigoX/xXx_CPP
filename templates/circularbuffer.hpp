@@ -62,7 +62,7 @@ bool CircularBuffer<TYPE>::popRight(TYPE &item) {
 template <typename TYPE>
 size_t CircularBuffer<TYPE>::itemsAvailable() {
     if (tail > head) {
-        return (capacity - tail + head);
+        return (capacity + head - tail);
     } else {
         return (head - tail);
     }
@@ -73,7 +73,7 @@ size_t CircularBuffer<TYPE>::slotsAvailable() {
     if (tail > head) {
         return (tail - head);
     } else {
-        return (capacity - head + tail);
+        return (capacity + tail - head);
     }
 }
 
