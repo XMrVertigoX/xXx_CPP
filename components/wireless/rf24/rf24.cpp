@@ -34,21 +34,6 @@ RF24::RF24(ISpi& spi, IGpio& ce, IGpio& irq) : RF24_BASE(spi), ce(ce), irq(irq) 
 
 RF24::~RF24() {}
 
-
-bool RF24::increaseNotificationCounter() {
-    __BOUNCE(notificationCounter == __UINT8_MAX__, false);
-
-    notificationCounter++;
-    return (true);
-}
-
-bool RF24::decreaseNotificationCounter() {
-    __BOUNCE(notificationCounter == 0, false);
-
-    notificationCounter--;
-    return (true);
-}
-
 void RF24::setup() {
     uint8_t tmp;
 
@@ -89,6 +74,20 @@ void RF24::loop() {
     if (readBit<uint8_t>(status, STATUS_TX_DS)) handle_TX_DS(status);
     if (readBit<uint8_t>(status, STATUS_RX_DR)) handle_RX_DR(status);
     __WRITE_REGISTER(RF24_Register::STATUS, status);
+}
+
+bool RF24::increaseNotificationCounter() {
+    __BOUNCE(notificationCounter == __UINT8_MAX__, false);
+
+    notificationCounter++;
+    return (true);
+}
+
+bool RF24::decreaseNotificationCounter() {
+    __BOUNCE(notificationCounter == 0, false);
+
+    notificationCounter--;
+    return (true);
 }
 
 void RF24::handle_MAX_RT(uint8_t status) {
