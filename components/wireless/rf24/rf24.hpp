@@ -28,7 +28,8 @@ class RF24 : public RF24_BASE {
 
     uint8_t notificationCounter = 0;
 
-    RF24_Status notify();
+    bool increaseNotificationCounter();
+    bool decreaseNotificationCounter();
 
     void handle_MAX_RT(uint8_t status);
     void handle_RX_DR(uint8_t status);
