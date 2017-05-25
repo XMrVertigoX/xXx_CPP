@@ -27,6 +27,7 @@ class RF24 : public RF24_BASE {
     // void *rxUser                 = NULL;
 
     uint8_t notificationCounter = 0;
+    uint8_t maxAddressLength    = 5;
 
     bool increaseNotificationCounter();
     bool decreaseNotificationCounter();

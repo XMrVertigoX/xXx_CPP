@@ -10,8 +10,6 @@
 
 #include <nRF24L01_config.h>
 
-#define __LIMIT(value, limit) (value > limit ? limit : value)
-
 #define __BOUNCE(expression, statement) \
     if (expression) return (statement)
 
@@ -402,7 +400,7 @@ RF24_Status RF24::setOutputPower(RF24_OutputPower outputPower) {
 
     __READ_REGISTER(RF24_Register::RF_SETUP, rf_setup);
 
-    // Reset value
+    // Default value
     OR_eq<uint8_t>(rf_setup, RF_SETUP_RF_PWR_MASK);
 
     switch (outputPower) {
@@ -417,6 +415,7 @@ RF24_Status RF24::setOutputPower(RF24_OutputPower outputPower) {
             clearBit_eq<uint8_t>(rf_setup, 1);
         } break;
         case RF24_OutputPower::PWR_0dBm: {
+            // Default value
         } break;
     }
 
@@ -440,8 +439,10 @@ uint8_t RF24::getRetryCount() {
 RF24_Status RF24::setRetryCount(uint8_t count) {
     uint8_t setup_retr;
 
+    __BOUNCE(count > 0xF, RF24_Status::Invalid);
+
     __READ_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
-    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__LIMIT(count, 0xF), SETUP_RETR_ARC));
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(count, SETUP_RETR_ARC));
     __WRITE_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
 
     __BOUNCE(count != getRetryCount(), RF24_Status::VerificationFailed);
@@ -462,8 +463,10 @@ uint8_t RF24::getRetryDelay() {
 RF24_Status RF24::setRetryDelay(uint8_t delay) {
     uint8_t setup_retr;
 
+    __BOUNCE(delay > 0xF, RF24_Status::Invalid);
+
     __READ_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
-    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(__LIMIT(delay, 0xF), SETUP_RETR_ARD));
+    OR_eq<uint8_t>(setup_retr, LEFT<uint8_t>(delay, SETUP_RETR_ARD));
     __WRITE_REGISTER(RF24_Register::SETUP_RETR, setup_retr);
 
     __BOUNCE(delay != getRetryDelay(), RF24_Status::VerificationFailed);
@@ -474,7 +477,7 @@ RF24_Status RF24::setRetryDelay(uint8_t delay) {
 RF24_Address_t RF24::getTxAddress() {
     RF24_Address_t address = 0;
 
-    __READ_REGISTER_VARIO(RF24_Register::TX_ADDR, address, TX_ADDR_LENGTH);
+    __READ_REGISTER_VARIO(RF24_Register::TX_ADDR, address, maxAddressLength);
 
     return (address);
 }
@@ -482,7 +485,7 @@ RF24_Address_t RF24::getTxAddress() {
 RF24_Status RF24::setTxAddress(RF24_Address_t address) {
     __BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::UnknownAddress);
 
-    __WRITE_REGISTER_VARIO(RF24_Register::TX_ADDR, address, TX_ADDR_LENGTH);
+    __WRITE_REGISTER_VARIO(RF24_Register::TX_ADDR, address, maxAddressLength);
 
     __BOUNCE(address != getTxAddress(), RF24_Status::VerificationFailed);
 
@@ -495,23 +498,15 @@ RF24_Address_t RF24::getRxAddress(uint8_t pipe) {
     __BOUNCE(pipe > 5, __UINT64_MAX__);
 
     if (pipe == 0) {
-        __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P0, address, RX_ADDR_P0_LENGTH);
+        __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P0, address, maxAddressLength);
     } else {
-        __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, RX_ADDR_P1_LENGTH);
+        __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, maxAddressLength);
 
         switch (pipe) {
-            case 2:
-                __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P2, address, RX_ADDR_P2_LENGTH);
-                break;
-            case 3:
-                __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P3, address, RX_ADDR_P3_LENGTH);
-                break;
-            case 4:
-                __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P4, address, RX_ADDR_P4_LENGTH);
-                break;
-            case 5:
-                __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P5, address, RX_ADDR_P5_LENGTH);
-                break;
+            case 2: __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P2, address, 1); break;
+            case 3: __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P3, address, 1); break;
+            case 4: __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P4, address, 1); break;
+            case 5: __READ_REGISTER_VARIO(RF24_Register::RX_ADDR_P5, address, 1); break;
         }
     }
 
@@ -522,32 +517,29 @@ RF24_Status RF24::setRxAddress(uint8_t pipe, RF24_Address_t address) {
     __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
     __BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::UnknownAddress);
 
-    switch (pipe) {
-        case 0: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P0, address, RX_ADDR_P0_LENGTH);
-        } break;
-        case 1: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, RX_ADDR_P1_LENGTH);
-        } break;
-        case 2: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P2, address, RX_ADDR_P2_LENGTH);
-        } break;
-        case 3: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P3, address, RX_ADDR_P3_LENGTH);
-        } break;
-        case 4: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P4, address, RX_ADDR_P4_LENGTH);
-        } break;
-        case 5: {
-            __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P5, address, RX_ADDR_P5_LENGTH);
-        } break;
-    }
+    if (pipe == 0) {
+        __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P0, address, maxAddressLength);
+    } else {
+        RF24_Address_t temporaryAddress = getRxAddress(1);
 
-    // TODO: Beautify this solution!
-    if (pipe > 1) {
-        RF24_Address_t address_p1 = getRxAddress(1);
-        memcpy(&address, &address_p1, 1);
-        __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, RX_ADDR_P1_LENGTH);
+        __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, maxAddressLength);
+
+        switch (pipe) {
+            case 2: {
+                __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P2, address, 1);
+            } break;
+            case 3: {
+                __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P3, address, 1);
+            } break;
+            case 4: {
+                __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P4, address, 1);
+            } break;
+            case 5: {
+                __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P5, address, 1);
+            } break;
+        }
+
+        __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, temporaryAddress, 1);
     }
 
     __BOUNCE(address != getRxAddress(pipe), RF24_Status::VerificationFailed);
