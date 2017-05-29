@@ -160,14 +160,4 @@ enum FEATURE_t : uint8_t {
     FEATURE_EN_DPL_MASK     = 0b00000100,
 };
 
-enum AddressRegisterLength_t : uint8_t {
-    //    RX_ADDR_P0_LENGTH = 5,
-    //    RX_ADDR_P1_LENGTH = 5,
-    //    RX_ADDR_P2_LENGTH = 1,
-    //    RX_ADDR_P3_LENGTH = 1,
-    //    RX_ADDR_P4_LENGTH = 1,
-    //    RX_ADDR_P5_LENGTH = 1,
-    //    TX_ADDR_LENGTH    = 5
-};
-
 #endif  // RF24_TYPES_HPP
