@@ -38,7 +38,7 @@ COMMON_CFLAGS += -fno-strict-aliasing
 COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -nostdlib
 COMMON_CFLAGS += -Wall
-COMMON_CFLAGS += -Wextra
+# COMMON_CFLAGS += -Wextra
 
 CFLAGS +=
 
