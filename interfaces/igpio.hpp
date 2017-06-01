@@ -1,14 +1,12 @@
-#ifndef XXX_IGPIO_HPP_
-#define XXX_IGPIO_HPP_
+#ifndef IGPIO_HPP_
+#define IGPIO_HPP_
 
 namespace xXx {
 
 typedef void (*IGpio_Callback_t)(void *user);
 
 class IGpio {
-  public:
-    virtual ~IGpio() = default;
-
+   public:
     /* General functionality */
     virtual void clear()  = 0;
     virtual bool get()    = 0;
@@ -16,10 +14,10 @@ class IGpio {
     virtual void toggle() = 0;
 
     /* Interrupt control */
-    virtual void disableInterrupt() = 0;
+    virtual void disableInterrupt()                               = 0;
     virtual void enableInterrupt(IGpio_Callback_t cb, void *user) = 0;
 };
 
 } /* namespace xXx */
 
-#endif /* XXX_IGPIO_HPP_ */
+#endif /* IGPIO_HPP_ */
