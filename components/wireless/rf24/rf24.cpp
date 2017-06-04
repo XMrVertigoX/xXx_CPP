@@ -498,46 +498,38 @@ RF24_Address_t RF24::getRxAddress(uint8_t pipe) {
         R_REGISTER(RF24_Register::RX_ADDR_P0, &address, maxAddressLength);
     } else {
         R_REGISTER(RF24_Register::RX_ADDR_P1, &address, maxAddressLength);
+    }
 
-        switch (pipe) {
-            case 2: R_REGISTER(RF24_Register::RX_ADDR_P2, &address, 1); break;
-            case 3: R_REGISTER(RF24_Register::RX_ADDR_P3, &address, 1); break;
-            case 4: R_REGISTER(RF24_Register::RX_ADDR_P4, &address, 1); break;
-            case 5: R_REGISTER(RF24_Register::RX_ADDR_P5, &address, 1); break;
-        }
+    switch (pipe) {
+        case 2: R_REGISTER(RF24_Register::RX_ADDR_P2, &address, 1); break;
+        case 3: R_REGISTER(RF24_Register::RX_ADDR_P3, &address, 1); break;
+        case 4: R_REGISTER(RF24_Register::RX_ADDR_P4, &address, 1); break;
+        case 5: R_REGISTER(RF24_Register::RX_ADDR_P5, &address, 1); break;
     }
 
     return (address);
 }
 
 RF24_Status RF24::setRxAddress(uint8_t pipe, RF24_Address_t address) {
+    uint8_t prefix;
+
     __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
     __BOUNCE(address > 0xFFFFFFFFFF, RF24_Status::UnknownAddress);
 
     if (pipe == 0) {
         W_REGISTER(RF24_Register::RX_ADDR_P0, &address, maxAddressLength);
-        //    } else if (pipe == 1) {
-        //        __WRITE_REGISTER_VARIO(RF24_Register::RX_ADDR_P1, address, maxAddressLength);
     } else {
-        RF24_Address_t temporaryAddress = getRxAddress(1);
-
+        R_REGISTER(RF24_Register::RX_ADDR_P1, &prefix, 1);
         W_REGISTER(RF24_Register::RX_ADDR_P1, &address, maxAddressLength);
-        W_REGISTER(RF24_Register::RX_ADDR_P1, &temporaryAddress, 1);
+        W_REGISTER(RF24_Register::RX_ADDR_P1, &prefix, 1);
+    }
 
-        switch (pipe) {
-            case 2: {
-                W_REGISTER(RF24_Register::RX_ADDR_P2, &address, 1);
-            } break;
-            case 3: {
-                W_REGISTER(RF24_Register::RX_ADDR_P3, &address, 1);
-            } break;
-            case 4: {
-                W_REGISTER(RF24_Register::RX_ADDR_P4, &address, 1);
-            } break;
-            case 5: {
-                W_REGISTER(RF24_Register::RX_ADDR_P5, &address, 1);
-            } break;
-        }
+    switch (pipe) {
+        case 1: W_REGISTER(RF24_Register::RX_ADDR_P1, &address, 1); break;
+        case 2: W_REGISTER(RF24_Register::RX_ADDR_P2, &address, 1); break;
+        case 3: W_REGISTER(RF24_Register::RX_ADDR_P3, &address, 1); break;
+        case 4: W_REGISTER(RF24_Register::RX_ADDR_P4, &address, 1); break;
+        case 5: W_REGISTER(RF24_Register::RX_ADDR_P5, &address, 1); break;
     }
 
     __BOUNCE(address != getRxAddress(pipe), RF24_Status::VerificationFailed);
