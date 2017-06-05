@@ -16,10 +16,10 @@ class CircularBuffer {
     size_t tail;
 
    public:
-    ~CircularBuffer() = default;
+    ~CircularBuffer();
 
     // Default constructor
-    CircularBuffer(TYPE *elements, size_t numberOfElements);
+    CircularBuffer(size_t numberOfElements);
 
     // Copy constructor
     CircularBuffer(const CircularBuffer &other);
@@ -41,47 +41,68 @@ class CircularBuffer {
 };
 
 template <typename TYPE>
-CircularBuffer<TYPE>::CircularBuffer(TYPE *elements, size_t numberOfElements)
-    : elements(elements), numberOfElements(numberOfElements), head(0), tail(0) {
-    assert(elements != NULL);
+CircularBuffer<TYPE>::~CircularBuffer() {
+    delete[] elements;
 }
 
 template <typename TYPE>
+CircularBuffer<TYPE>::CircularBuffer(size_t numberOfElements)
+    : elements(new TYPE[numberOfElements]), numberOfElements(numberOfElements), head(0), tail(0) {}
+
+template <typename TYPE>
 CircularBuffer<TYPE>::CircularBuffer(const CircularBuffer<TYPE> &other)
-    : elements(other.elements),
+    : elements(new TYPE[other.numberOfElements]),
       numberOfElements(other.numberOfElements),
       head(other.head),
-      tail(other.tail) {}
+      tail(other.tail) {
+    memcpy(elements, other.elements, numberOfElements * sizeof(TYPE));
+}
 
 template <typename TYPE>
 CircularBuffer<TYPE>::CircularBuffer(CircularBuffer<TYPE> &&other)
     : elements(other.elements),
       numberOfElements(other.numberOfElements),
       head(other.head),
-      tail(other.tail) {}
+      tail(other.tail) {
+    other.elements         = NULL;
+    other.numberOfElements = 0;
+    other.head             = 0;
+    other.tail             = 0;
+}
 
 template <typename TYPE>
 CircularBuffer<TYPE> &CircularBuffer<TYPE>::operator=(const CircularBuffer<TYPE> &other) {
-    if (&other != this) {
-        elements         = other.elements;
-        numberOfElements = other.numberOfElements;
-        head             = other.head;
-        tail             = other.tail;
-    }
+    if (&other == this) return (*this);
 
-    return *this;
+    delete[] elements;
+
+    elements         = new TYPE[other.numberOfElements];
+    numberOfElements = other.numberOfElements;
+    head             = other.head;
+    tail             = other.tail;
+
+    memcpy(elements, other.elements, numberOfElements * sizeof(TYPE));
+
+    return (*this);
 }
 
 template <typename TYPE>
 CircularBuffer<TYPE> &CircularBuffer<TYPE>::operator=(CircularBuffer &&other) {
-    if (&other != this) {
-        elements         = other.elements;
-        numberOfElements = other.numberOfElements;
-        head             = other.head;
-        tail             = other.tail;
-    }
+    if (&other == this) return (*this);
 
-    return *this;
+    delete[] elements;
+
+    elements         = other.elements;
+    numberOfElements = other.numberOfElements;
+    head             = other.head;
+    tail             = other.tail;
+
+    other.elements         = NULL;
+    other.numberOfElements = 0;
+    other.head             = 0;
+    other.tail             = 0;
+
+    return (*this);
 }
 
 template <typename TYPE>
@@ -108,10 +129,10 @@ template <typename TYPE>
 size_t CircularBuffer<TYPE>::itemsAvailable() {
     size_t itemsAvailable;
 
+    itemsAvailable = (head - tail);
+
     if (tail > head) {
-        itemsAvailable = (numberOfElements + head - tail);
-    } else {
-        itemsAvailable = (head - tail);
+        itemsAvailable += numberOfElements;
     }
 
     return (itemsAvailable);
