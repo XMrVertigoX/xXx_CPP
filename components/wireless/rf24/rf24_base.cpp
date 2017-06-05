@@ -7,7 +7,7 @@
 #include <xXx/utils/bitoperations.hpp>
 
 #define DUMMY 0xFF
-
+#define COMMAND_LENGTH (1)
 #define __CAST(x) static_cast<uint8_t>(x)
 
 namespace xXx {
@@ -16,14 +16,14 @@ RF24_BASE::RF24_BASE(ISpi &spi) : _spi(spi) {}
 
 RF24_BASE::~RF24_BASE() {}
 
-uint8_t RF24_BASE::transmit(uint8_t command, void *inBytes, void *outBytes, size_t numBytes) {
+uint8_t RF24_BASE::transmit(uint8_t command, const void *txBytes, void *rxBytes, size_t numBytes) {
     uint8_t status;
     uint8_t buffer[numBytes + 1];
 
     buffer[0] = command;
 
-    if (inBytes != NULL) {
-        memcpy(&buffer[1], inBytes, numBytes);
+    if (txBytes != NULL) {
+        memcpy(&buffer[1], txBytes, numBytes);
     } else {
         memset(&buffer[1], DUMMY, numBytes);
     }
@@ -32,8 +32,8 @@ uint8_t RF24_BASE::transmit(uint8_t command, void *inBytes, void *outBytes, size
 
     status = buffer[0];
 
-    if (outBytes != NULL) {
-        memcpy(outBytes, &buffer[1], numBytes);
+    if (rxBytes != NULL) {
+        memcpy(rxBytes, &buffer[1], numBytes);
     }
 
     return (status);
@@ -46,7 +46,7 @@ uint8_t RF24_BASE::R_REGISTER(RF24_Register address, void *bytes, size_t numByte
     return (status);
 }
 
-uint8_t RF24_BASE::W_REGISTER(RF24_Register address, void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::W_REGISTER(RF24_Register address, const void *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::W_REGISTER), __CAST(address));
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
@@ -60,7 +60,7 @@ uint8_t RF24_BASE::R_RX_PAYLOAD(void *bytes, size_t numBytes) {
     return (status);
 }
 
-uint8_t RF24_BASE::W_TX_PAYLOAD(void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::W_TX_PAYLOAD(const void *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::W_TX_PAYLOAD);
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
@@ -95,14 +95,14 @@ uint8_t RF24_BASE::R_RX_PL_WID(uint8_t &payloadLength) {
     return (status);
 }
 
-uint8_t RF24_BASE::W_ACK_PAYLOAD(uint8_t pipe, uint8_t bytes[], size_t numBytes) {
+uint8_t RF24_BASE::W_ACK_PAYLOAD(uint8_t pipe, const uint8_t *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::W_ACK_PAYLOAD), pipe);
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::W_TX_PAYLOAD_NOACK(uint8_t bytes[], size_t numBytes) {
+uint8_t RF24_BASE::W_TX_PAYLOAD_NOACK(const uint8_t *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::W_TX_PAYLOAD_NOACK);
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
