@@ -1,6 +1,7 @@
 #ifndef CIRCULAR_BUFFER_HPP
 #define CIRCULAR_BUFFER_HPP
 
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -11,70 +12,100 @@ namespace xXx {
 template <typename TYPE>
 class CircularBuffer {
    private:
-    TYPE *data;
+    TYPE *elements;
+    size_t numberOfElements;
+    size_t head;
+    size_t tail;
 
-    size_t head = 0;
-    size_t tail = 0;
+    // Copy assignment operator
+    CircularBuffer &operator=(const CircularBuffer &other) = default;
 
-    size_t capacity;
+    // Move assignment operator
+    CircularBuffer &operator=(CircularBuffer &&other) = default;
 
    public:
-    CircularBuffer(size_t size);
-    ~CircularBuffer();
+    ~CircularBuffer() = default;
 
-    bool pushLeft(TYPE &item);
-    bool popRight(TYPE &item);
+    // Default constructor
+    CircularBuffer(TYPE *buffer, size_t capacity);
+
+    // Copy constructor
+    CircularBuffer(const CircularBuffer &other);
+
+    // Move constructor
+    CircularBuffer(CircularBuffer &&other);
+
+    bool push(TYPE &item);
+    bool pop(TYPE &item);
 
     size_t itemsAvailable();
     size_t slotsAvailable();
 };
 
 template <typename TYPE>
-CircularBuffer<TYPE>::CircularBuffer(size_t size) : capacity(size) {
-    data = new TYPE[capacity];
+CircularBuffer<TYPE>::CircularBuffer(TYPE *elements, size_t numberOfElements)
+    : elements(elements), numberOfElements(numberOfElements), head(0), tail(0) {
+    assert(elements != NULL);
 }
 
 template <typename TYPE>
-CircularBuffer<TYPE>::~CircularBuffer() {
-    delete data;
+CircularBuffer<TYPE>::CircularBuffer(const CircularBuffer &other)
+    : elements(other.elements),
+      numberOfElements(other.numberOfElements),
+      head(other.head),
+      tail(other.tail) {
+    assert(elements != NULL);
+    assert(head < numberOfElements);
+    assert(tail < numberOfElements);
 }
 
 template <typename TYPE>
-bool CircularBuffer<TYPE>::pushLeft(TYPE &item) {
+CircularBuffer<TYPE>::CircularBuffer(CircularBuffer &&other)
+    : elements(other.elements),
+      numberOfElements(other.numberOfElements),
+      head(other.head),
+      tail(other.tail) {
+    assert(elements != NULL);
+    assert(head < numberOfElements);
+    assert(tail < numberOfElements);
+}
+
+template <typename TYPE>
+bool CircularBuffer<TYPE>::push(TYPE &item) {
     if (slotsAvailable() == 0) return (false);
 
-    memcpy(&data[head++], &item, sizeof(TYPE));
-    head %= capacity;
+    memcpy(&elements[head++], &item, sizeof(TYPE));
+    head %= numberOfElements;
 
     return (true);
 }
 
 template <typename TYPE>
-bool CircularBuffer<TYPE>::popRight(TYPE &item) {
+bool CircularBuffer<TYPE>::pop(TYPE &item) {
     if (itemsAvailable() == 0) return (false);
 
-    memcpy(&item, &data[tail++], sizeof(TYPE));
-    tail %= capacity;
+    memcpy(&item, &elements[tail++], sizeof(TYPE));
+    tail %= numberOfElements;
 
     return (true);
 }
 
 template <typename TYPE>
 size_t CircularBuffer<TYPE>::itemsAvailable() {
+    size_t itemsAvailable;
+
     if (tail > head) {
-        return (capacity + head - tail);
+        itemsAvailable = (numberOfElements + head - tail);
     } else {
-        return (head - tail);
+        itemsAvailable = (head - tail);
     }
+
+    return (itemsAvailable);
 }
 
 template <typename TYPE>
 size_t CircularBuffer<TYPE>::slotsAvailable() {
-    if (tail > head) {
-        return (tail - head);
-    } else {
-        return (capacity + tail - head);
-    }
+    return (numberOfElements - itemsAvailable());
 }
 
 } /* namespace xXx */
