@@ -8,9 +8,6 @@
 #define txSettling (130)
 #define rxSettling (130)
 
-typedef uint64_t RF24_Address_t;
-typedef uint8_t RF24_Channel_t;
-
 typedef void (*RF24_TxCallback_t)(void *user);
 typedef void (*RF24_RxCallback_t)(void *user);
 

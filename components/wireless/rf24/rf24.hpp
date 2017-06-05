@@ -68,14 +68,20 @@ class RF24 : public RF24_BASE {
 
     uint8_t getPackageLossCounter();
 
-    RF24_Address_t getRxAddress(uint8_t pipe);
-    RF24_Status setRxAddress(uint8_t pipe, RF24_Address_t address);
+    uint32_t getRxBaseAddress(uint8_t pipe);
+    RF24_Status setRxBaseAddress(uint8_t pipe, uint32_t baseAddress);
 
-    RF24_Address_t getTxAddress();
-    RF24_Status setTxAddress(RF24_Address_t address);
+    uint32_t getTxBaseAddress();
+    RF24_Status setTxBaseAddress(uint32_t baseAddress);
 
-    RF24_Channel_t getChannel();
-    RF24_Status setChannel(RF24_Channel_t channel);
+    uint8_t getRxAddress(uint8_t pipe);
+    RF24_Status setRxAddress(uint8_t pipe, uint8_t address);
+
+    uint8_t getTxAddress();
+    RF24_Status setTxAddress(uint8_t address);
+
+    uint8_t getChannel();
+    RF24_Status setChannel(uint8_t channel);
 
     RF24_CRCConfig getCrcConfig();
     RF24_Status setCrcConfig(RF24_CRCConfig crc);
