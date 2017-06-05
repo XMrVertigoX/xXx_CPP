@@ -114,9 +114,9 @@ RF24_Status RF24::readRxFifo(uint8_t status) {
 
     R_RX_PAYLOAD(package.bytes, package.numBytes);
 
-    __BOUNCE(this->rxBuffer[pipe] == NULL, RF24_Status::Failure);
+    __BOUNCE(rxBuffer[pipe] == NULL, RF24_Status::Failure);
 
-    if (this->rxBuffer[pipe]->push(package)) {
+    if (rxBuffer[pipe]->push(package)) {
         return (RF24_Status::Success);
     } else {
         return (RF24_Status::Failure);
@@ -124,13 +124,13 @@ RF24_Status RF24::readRxFifo(uint8_t status) {
 }
 
 RF24_Status RF24::writeTxFifo(uint8_t status) {
-    RF24_DataPackage_t package;
+    //    RF24_DataPackage_t package;
 
     __BOUNCE(readBit<uint8_t>(status, STATUS_TX_FULL), RF24_Status::Failure);
 
     // TODO: this->txQueue->dequeue(package);
 
-    W_TX_PAYLOAD(package.bytes, package.numBytes);
+    //    W_TX_PAYLOAD(package.bytes, package.numBytes);
 
     return (RF24_Status::Success);
 }
