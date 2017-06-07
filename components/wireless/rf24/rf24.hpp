@@ -28,10 +28,17 @@ class RF24 : public RF24_BASE {
     uint8_t notificationCounter = 0;
     uint8_t addressLength       = 5;
 
-    RF24(const RF24 &other) = default;             // Copy constructor
-    RF24(RF24 &&other)      = default;             // Move constructor
-    RF24 &operator=(const RF24 &other) = default;  // Copy assignment operator
-    RF24 &operator=(RF24 &&other) = default;       // Move assignment operator
+    // Copy constructor
+    RF24(const RF24 &other) = default;
+
+    // Move constructor
+    RF24(RF24 &&other) = default;
+
+    // Copy assignment operator
+    RF24 &operator=(const RF24 &other) = default;
+
+    // Move assignment operator
+    RF24 &operator=(RF24 &&other) = default;
 
     bool increaseNotificationCounter();
     bool decreaseNotificationCounter();
