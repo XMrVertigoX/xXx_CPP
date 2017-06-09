@@ -1,5 +1,5 @@
-#ifndef IGPIO_HPP_
-#define IGPIO_HPP_
+#ifndef IGPIO_HPP
+#define IGPIO_HPP
 
 namespace xXx {
 
@@ -20,4 +20,4 @@ class IGpio {
 
 } /* namespace xXx */
 
-#endif /* IGPIO_HPP_ */
+#endif /* IGPIO_HPP */

@@ -1,14 +1,10 @@
-#ifndef ISPI_HPP_
-#define ISPI_HPP_
+#ifndef ISPI_HPP
+#define ISPI_HPP
 
 #include <stddef.h>
 #include <stdint.h>
 
-#include <xXx/templates/queue.hpp>
-
 namespace xXx {
-
-// typedef void (*ISpi_Callback_t)(void *user);
 
 class ISpi {
    public:
@@ -17,4 +13,4 @@ class ISpi {
 
 } /* namespace xXx */
 
-#endif /* ISPI_HPP_ */
+#endif /* ISPI_HPP */

@@ -11,7 +11,9 @@ template <typename TYPE>
 class CircularBuffer {
    private:
     TYPE *elements;
-    size_t numberOfElements;
+
+    size_t maxElements;
+    size_t numElements;
     size_t head;
     size_t tail;
 
@@ -19,16 +21,16 @@ class CircularBuffer {
     ~CircularBuffer();
 
     // Default constructor
-    CircularBuffer(size_t numberOfElements);
+    CircularBuffer(size_t maxElements);
 
     // Copy constructor
     CircularBuffer(const CircularBuffer &other);
 
-    // Move constructor
-    CircularBuffer(CircularBuffer &&other);
-
     // Copy assignment operator
     CircularBuffer &operator=(const CircularBuffer &other);
+
+    // Move constructor
+    CircularBuffer(CircularBuffer &&other);
 
     // Move assignment operator
     CircularBuffer &operator=(CircularBuffer &&other);
@@ -46,28 +48,17 @@ CircularBuffer<TYPE>::~CircularBuffer() {
 }
 
 template <typename TYPE>
-CircularBuffer<TYPE>::CircularBuffer(size_t numberOfElements)
-    : elements(new TYPE[numberOfElements]), numberOfElements(numberOfElements), head(0), tail(0) {}
+CircularBuffer<TYPE>::CircularBuffer(size_t maxElements)
+    : elements(new TYPE[maxElements]), maxElements(maxElements), numElements(0), head(0), tail(0) {}
 
 template <typename TYPE>
 CircularBuffer<TYPE>::CircularBuffer(const CircularBuffer<TYPE> &other)
-    : elements(new TYPE[other.numberOfElements]),
-      numberOfElements(other.numberOfElements),
+    : elements(new TYPE[other.maxElements]),
+      maxElements(other.maxElements),
+      numElements(other.numElements),
       head(other.head),
       tail(other.tail) {
-    memcpy(elements, other.elements, numberOfElements * sizeof(TYPE));
-}
-
-template <typename TYPE>
-CircularBuffer<TYPE>::CircularBuffer(CircularBuffer<TYPE> &&other)
-    : elements(other.elements),
-      numberOfElements(other.numberOfElements),
-      head(other.head),
-      tail(other.tail) {
-    other.elements         = NULL;
-    other.numberOfElements = 0;
-    other.head             = 0;
-    other.tail             = 0;
+    memcpy(elements, other.elements, maxElements * sizeof(TYPE));
 }
 
 template <typename TYPE>
@@ -76,14 +67,29 @@ CircularBuffer<TYPE> &CircularBuffer<TYPE>::operator=(const CircularBuffer<TYPE>
 
     delete[] elements;
 
-    elements         = new TYPE[other.numberOfElements];
-    numberOfElements = other.numberOfElements;
-    head             = other.head;
-    tail             = other.tail;
+    elements    = new TYPE[other.maxElements];
+    maxElements = other.maxElements;
+    numElements = other.numElements;
+    head        = other.head;
+    tail        = other.tail;
 
-    memcpy(elements, other.elements, numberOfElements * sizeof(TYPE));
+    memcpy(elements, other.elements, numElements * sizeof(TYPE));
 
     return (*this);
+}
+
+template <typename TYPE>
+CircularBuffer<TYPE>::CircularBuffer(CircularBuffer<TYPE> &&other)
+    : elements(other.elements),
+      maxElements(other.maxElements),
+      numElements(other.numElements),
+      head(other.head),
+      tail(other.tail) {
+    other.elements    = NULL;
+    other.maxElements = 0;
+    other.numElements = 0;
+    other.head        = 0;
+    other.tail        = 0;
 }
 
 template <typename TYPE>
@@ -92,15 +98,17 @@ CircularBuffer<TYPE> &CircularBuffer<TYPE>::operator=(CircularBuffer &&other) {
 
     delete[] elements;
 
-    elements         = other.elements;
-    numberOfElements = other.numberOfElements;
-    head             = other.head;
-    tail             = other.tail;
+    elements    = other.elements;
+    maxElements = other.maxElements;
+    numElements = other.numElements;
+    head        = other.head;
+    tail        = other.tail;
 
-    other.elements         = NULL;
-    other.numberOfElements = 0;
-    other.head             = 0;
-    other.tail             = 0;
+    other.elements    = NULL;
+    other.maxElements = 0;
+    other.numElements = 0;
+    other.head        = 0;
+    other.tail        = 0;
 
     return (*this);
 }
@@ -109,8 +117,10 @@ template <typename TYPE>
 bool CircularBuffer<TYPE>::push(const TYPE &element) {
     if (slotsAvailable() == 0) return (false);
 
-    memcpy(&elements[head++], &element, sizeof(TYPE));
-    head %= numberOfElements;
+    memcpy(&elements[head], &element, sizeof(TYPE));
+
+    head = (head + 1) % maxElements;
+    numElements++;
 
     return (true);
 }
@@ -119,32 +129,22 @@ template <typename TYPE>
 bool CircularBuffer<TYPE>::pop(TYPE &element) {
     if (itemsAvailable() == 0) return (false);
 
-    memcpy(&element, &elements[tail++], sizeof(TYPE));
-    tail %= numberOfElements;
+    memcpy(&element, &elements[tail], sizeof(TYPE));
+
+    tail = (tail + 1) % maxElements;
+    numElements--;
 
     return (true);
 }
 
 template <typename TYPE>
 size_t CircularBuffer<TYPE>::itemsAvailable() {
-    size_t itemsAvailable;
-
-    itemsAvailable = (head - tail);
-
-    if (tail > head) {
-        itemsAvailable += numberOfElements;
-    }
-
-    return (itemsAvailable);
+    return (numElements);
 }
 
 template <typename TYPE>
 size_t CircularBuffer<TYPE>::slotsAvailable() {
-    size_t slotsAvailable;
-
-    slotsAvailable = (numberOfElements - itemsAvailable());
-
-    return (slotsAvailable);
+    return (maxElements - numElements);
 }
 
 } /* namespace xXx */
