@@ -1,7 +1,6 @@
 #ifndef CIRCULAR_BUFFER_HPP
 #define CIRCULAR_BUFFER_HPP
 
-#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 

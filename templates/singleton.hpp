@@ -5,23 +5,29 @@ namespace xXx {
 
 template <typename TYPE>
 class Singleton {
-   public:
-    static TYPE &getInstance();
+   private:
+    static TYPE instance;
+
+    Singleton(const Singleton &other) = default;
+    Singleton &operator=(const Singleton &other) = default;
+
+    Singleton(Singleton &&other) = default;
+    Singleton &operator=(Singleton &&other) = default;
 
    protected:
-    Singleton()  = default;
     ~Singleton() = default;
+    Singleton()  = default;
 
-   private:
-    static TYPE _instance;
+   public:
+    static TYPE &getInstance();
 };
 
 template <typename TYPE>
-TYPE Singleton<TYPE>::_instance;
+TYPE Singleton<TYPE>::instance;
 
 template <typename TYPE>
 TYPE &Singleton<TYPE>::getInstance() {
-    return (_instance);
+    return (instance);
 }
 
 } /* namespace xXx */
