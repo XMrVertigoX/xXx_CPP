@@ -36,6 +36,7 @@ void RF24::setup() {
     IGpio_Callback_t interruptFunction = [](void *user) {
         RF24 *self = static_cast<RF24 *>(user);
         self->increaseNotificationCounter();
+        // TODO: Read FIFO from here?
     };
 
     // Enable dynamic payload length only
@@ -584,7 +585,8 @@ RF24_Status RF24::enableAutoAcknowledgment(uint8_t pipe, bool enable) {
 
     W_REGISTER(RF24_Register::EN_AA, &en_aa);
 
-    // TODO: Verify
+    R_REGISTER(RF24_Register::EN_AA, &en_aa);
+    __BOUNCE(readBit<uint8_t>(en_aa, pipe), RF24_Status::VerificationFailed);
 
     return (RF24_Status::Success);
 }
@@ -604,7 +606,8 @@ RF24_Status RF24::enableDataPipe(uint8_t pipe, bool enable) {
 
     W_REGISTER(RF24_Register::EN_RXADDR, &en_rxaddr);
 
-    // TODO: Verify
+    R_REGISTER(RF24_Register::EN_AA, &en_rxaddr);
+    __BOUNCE(readBit<uint8_t>(en_rxaddr, pipe), RF24_Status::VerificationFailed);
 
     return (RF24_Status::Success);
 }
