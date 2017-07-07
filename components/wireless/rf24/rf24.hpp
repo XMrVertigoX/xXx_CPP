@@ -52,20 +52,19 @@ class RF24 : public RF24_BASE {
     RF24(ISpi &spi, IGpio &ce, IGpio &irq);
     ~RF24();
 
-    // TODO
     void setup();
     void loop();
-
-    RF24_Status startListening(uint8_t pipe, RF24_RxCallback_t callback = NULL, void *user = NULL);
-    RF24_Status stopListening(uint8_t pipe);
 
     void enterRxMode();
     void enterShutdownMode();
     void enterStandbyMode();
     void enterTxMode();
 
+    RF24_Status startListening(uint8_t pipe, RF24_RxCallback_t callback = NULL, void *user = NULL);
+    RF24_Status stopListening(uint8_t pipe);
+
     RF24_Status enableDynamicPayloadLength(uint8_t pipe, bool enable = true);
-    RF24_Status enableRxDataPipe(uint8_t pipe, bool enable = true);
+    RF24_Status enableDataPipe(uint8_t pipe, bool enable = true);
     RF24_Status enableAutoAcknowledgment(uint8_t pipe, bool enable = true);
 
     uint8_t getRetransmissionCounter();

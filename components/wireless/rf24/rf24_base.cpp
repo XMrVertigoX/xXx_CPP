@@ -16,7 +16,8 @@ RF24_BASE::RF24_BASE(ISpi &spi) : _spi(spi) {}
 
 RF24_BASE::~RF24_BASE() {}
 
-uint8_t RF24_BASE::transmit(uint8_t command, const void *txBytes, void *rxBytes, size_t numBytes) {
+uint8_t RF24_BASE::transmit(uint8_t command, const uint8_t *txBytes, uint8_t *rxBytes,
+                            size_t numBytes) {
     uint8_t status;
     uint8_t buffer[numBytes + 1];
 
@@ -39,28 +40,28 @@ uint8_t RF24_BASE::transmit(uint8_t command, const void *txBytes, void *rxBytes,
     return (status);
 }
 
-uint8_t RF24_BASE::R_REGISTER(RF24_Register address, void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::R_REGISTER(RF24_Register address, uint8_t *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::R_REGISTER), __CAST(address));
     uint8_t status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::W_REGISTER(RF24_Register address, const void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::W_REGISTER(RF24_Register address, const uint8_t *bytes, size_t numBytes) {
     uint8_t command = OR<uint8_t>(__CAST(RF24_Command::W_REGISTER), __CAST(address));
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::R_RX_PAYLOAD(void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::R_RX_PAYLOAD);
     uint8_t status  = transmit(command, NULL, bytes, numBytes);
 
     return (status);
 }
 
-uint8_t RF24_BASE::W_TX_PAYLOAD(const void *bytes, size_t numBytes) {
+uint8_t RF24_BASE::W_TX_PAYLOAD(const uint8_t *bytes, size_t numBytes) {
     uint8_t command = __CAST(RF24_Command::W_TX_PAYLOAD);
     uint8_t status  = transmit(command, bytes, NULL, numBytes);
 
