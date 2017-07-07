@@ -12,12 +12,12 @@
 
 namespace xXx {
 
-RF24_BASE::RF24_BASE(ISpi &spi) : _spi(spi) {}
+RF24_BASE::RF24_BASE(ISpi &spi)
+    : _spi(spi) {}
 
 RF24_BASE::~RF24_BASE() {}
 
-uint8_t RF24_BASE::transmit(uint8_t command, const uint8_t *txBytes, uint8_t *rxBytes,
-                            size_t numBytes) {
+uint8_t RF24_BASE::transmit(uint8_t command, const uint8_t *txBytes, uint8_t *rxBytes, size_t numBytes) {
     uint8_t status;
     uint8_t buffer[numBytes + 1];
 

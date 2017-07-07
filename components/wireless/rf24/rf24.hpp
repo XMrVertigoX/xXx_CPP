@@ -17,13 +17,12 @@ class RF24 : public RF24_BASE {
     IGpio &ce;
     IGpio &irq;
 
-    CircularBuffer<RF24_DataPackage_t> rxBuffer;
-
-    RF24_RxCallback_t rxCallback[6] = {};
-    void *rxUser[6]                 = {};
-
     uint8_t notificationCounter = 0;
     uint8_t addressLength       = 5;
+
+    CircularBuffer<RF24_DataPackage_t> rxBuffer;
+    RF24_RxCallback_t rxCallback[6] = {};
+    void *rxUser[6]                 = {};
 
     // Copy constructor
     RF24(const RF24 &other) = default;
@@ -46,7 +45,6 @@ class RF24 : public RF24_BASE {
 
     RF24_Status readRxFifo(uint8_t status);
     RF24_Status writeTxFifo(uint8_t status);
-
 
    public:
     RF24(ISpi &spi, IGpio &ce, IGpio &irq);
@@ -86,7 +84,7 @@ class RF24 : public RF24_BASE {
     RF24_Status setChannel(uint8_t channel);
 
     RF24_CRCConfig getCrcConfig();
-    RF24_Status setCrcConfig(RF24_CRCConfig crc);
+    RF24_Status setCrcConfig(RF24_CRCConfig crcConfig);
 
     RF24_DataRate getDataRate();
     RF24_Status setDataRate(RF24_DataRate dataRate);

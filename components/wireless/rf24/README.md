@@ -1,5 +1,15 @@
-# nRF24L01+
+# rf24
 
-## Public API
+## class RF24_BASE
 
-Work in progress...
+
+
+## class RF24 : public RF24_BASE
+### private
+### public
+
+###### setup()
+Setup the transmitter. Needs to be called only once.
+
+###### loop()
+The infinite loop. Needs to be called repeatedly. Returns early if nothing has happened.

@@ -8,11 +8,11 @@
 namespace xXx {
 
 class SI1145 {
-  private:
+   private:
     ITwi &_twi;
     uint8_t _address;
 
-  public:
+   public:
     SI1145(ITwi &twi, uint8_t address);
     ~SI1145();
     void init();

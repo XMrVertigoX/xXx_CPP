@@ -14,7 +14,7 @@ class IGpio {
     virtual void toggle() = 0;
 
     /* Interrupt control */
-    virtual void disableInterrupt()                               = 0;
+    virtual void disableInterrupt() = 0;
     virtual void enableInterrupt(IGpio_Callback_t cb, void *user) = 0;
 };
 

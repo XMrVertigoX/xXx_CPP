@@ -17,11 +17,24 @@ struct RF24_DataPackage_t {
 //typedef void (*RF24_TxCallback_t)(void *user);
 typedef void (*RF24_RxCallback_t)(RF24_DataPackage_t data, void *user);
 
-enum class RF24_DataRate : uint8_t { DR_250KBPS, DR_1MBPS, DR_2MBPS };
+enum class RF24_DataRate : uint8_t {
+    DR_250KBPS,
+    DR_1MBPS,
+    DR_2MBPS
+};
 
-enum class RF24_CRCConfig : uint8_t { CRC_DISABLED, CRC_1Byte, CRC_2Bytes };
+enum class RF24_CRCConfig : uint8_t {
+    CRC_DISABLED,
+    CRC_1Byte,
+    CRC_2Bytes
+};
 
-enum class RF24_OutputPower : uint8_t { PWR_18dBm, PWR_12dBm, PWR_6dBm, PWR_0dBm };
+enum class RF24_OutputPower : uint8_t {
+    PWR_18dBm,
+    PWR_12dBm,
+    PWR_6dBm,
+    PWR_0dBm
+};
 
 enum class RF24_Status : uint8_t {
     Success,
@@ -42,7 +55,7 @@ enum class RF24_Command : uint8_t {
     R_RX_PL_WID        = 0b01100000,
     W_ACK_PAYLOAD      = 0b10101000,
     W_TX_PAYLOAD_NOACK = 0b10110000,
-    NOP                = 0b11111111,
+    NOP                = 0b11111111
 };
 
 enum class RF24_Register : uint8_t {
@@ -81,24 +94,24 @@ enum CONFIG_t : uint8_t {
     CONFIG_EN_CRC      = 3,
     CONFIG_MASK_MAX_RT = 4,
     CONFIG_MASK_TX_DS  = 5,
-    CONFIG_MASK_RX_DR  = 6,
+    CONFIG_MASK_RX_DR  = 6
 };
 
 enum SETUP_AW_t : uint8_t {
     SETUP_AW      = 0,
-    SETUP_AW_MASK = 0b00000011,
+    SETUP_AW_MASK = 0b00000011
 };
 
 enum SETUP_RETR_t : uint8_t {
     SETUP_RETR_ARC      = 0,
     SETUP_RETR_ARC_MASK = 0b00001111,
     SETUP_RETR_ARD      = 4,
-    SETUP_RETR_ARD_MASK = 0b11110000,
+    SETUP_RETR_ARD_MASK = 0b11110000
 };
 
 enum RF_CH_t : uint8_t {
     RF_CH      = 0,
-    RF_CH_MASK = 0b01111111,
+    RF_CH_MASK = 0b01111111
 };
 
 enum RF_SETUP_t : uint8_t {
@@ -111,7 +124,7 @@ enum RF_SETUP_t : uint8_t {
     RF_SETUP_RF_DR_LOW       = 5,
     RF_SETUP_RF_DR_LOW_MASK  = 0b00100000,
     RF_SETUP_CONT_WAVE       = 7,
-    RF_SETUP_CONT_WAVE_MASK  = 0b10000000,
+    RF_SETUP_CONT_WAVE_MASK  = 0b10000000
 };
 
 enum STATUS_t : uint8_t {
@@ -124,19 +137,19 @@ enum STATUS_t : uint8_t {
     STATUS_TX_DS        = 5,
     STATUS_TX_DS_MASK   = 0b00100000,
     STATUS_RX_DR        = 6,
-    STATUS_RX_DR_MASK   = 0b01000000,
+    STATUS_RX_DR_MASK   = 0b01000000
 };
 
 enum OBSERVE_TX_t : uint8_t {
     OBSERVE_TX_ARC_CNT       = 0,
     OBSERVE_TX_ARC_CNT_MASK  = 0b00001111,
     OBSERVE_TX_PLOS_CNT      = 4,
-    OBSERVE_TX_PLOS_CNT_MASK = 0b11110000,
+    OBSERVE_TX_PLOS_CNT_MASK = 0b11110000
 };
 
 enum RPD_t : uint8_t {
     RPD_RPD      = 0,
-    RPD_RPD_MASK = 0b00000001,
+    RPD_RPD_MASK = 0b00000001
 };
 
 enum FIFO_STATUS_t : uint8_t {
@@ -144,7 +157,7 @@ enum FIFO_STATUS_t : uint8_t {
     FIFO_STATUS_RX_FULL  = 1,
     FIFO_STATUS_TX_EMPTY = 4,
     FIFO_STATUS_TX_FULL  = 5,
-    FIFO_STATUS_TX_REUSE = 6,
+    FIFO_STATUS_TX_REUSE = 6
 };
 
 enum FEATURE_t : uint8_t {
@@ -153,7 +166,7 @@ enum FEATURE_t : uint8_t {
     FEATURE_EN_ACK_PAY      = 1,
     FEATURE_EN_ACK_PAY_MASK = 0b00000010,
     FEATURE_EN_DPL          = 2,
-    FEATURE_EN_DPL_MASK     = 0b00000100,
+    FEATURE_EN_DPL_MASK     = 0b00000100
 };
 
 #endif  // RF24_TYPES_HPP

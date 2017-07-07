@@ -28,7 +28,8 @@ class Queue {
 };
 
 template <typename TYPE>
-Queue<TYPE>::Queue(UBaseType_t size) : _queue(NULL) {
+Queue<TYPE>::Queue(UBaseType_t size)
+    : _queue(NULL) {
     _queue = xQueueCreate(size, sizeof(TYPE));
 }
 
