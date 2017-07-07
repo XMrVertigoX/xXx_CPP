@@ -8,13 +8,14 @@
 #define txSettling (130)
 #define rxSettling (130)
 
-//typedef void (*RF24_TxCallback_t)(void *user);
-//typedef void (*RF24_RxCallback_t)(void *user);
-
 struct RF24_DataPackage_t {
     uint8_t bytes[32];
     uint8_t numBytes;
+    uint8_t pipe;
 };
+
+//typedef void (*RF24_TxCallback_t)(void *user);
+typedef void (*RF24_RxCallback_t)(RF24_DataPackage_t data, void *user);
 
 enum class RF24_DataRate : uint8_t { DR_250KBPS, DR_1MBPS, DR_2MBPS };
 

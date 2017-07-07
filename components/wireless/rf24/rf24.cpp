@@ -28,12 +28,18 @@ static inline uint8_t extractPipe(uint8_t status) {
     return (status);
 }
 
-RF24::RF24(ISpi& spi, IGpio& ce, IGpio& irq) : RF24_BASE(spi), ce(ce), irq(irq) {}
+RF24::RF24(ISpi &spi, IGpio &ce, IGpio &irq)
+    : RF24_BASE(spi), ce(ce), irq(irq), rxBuffer(CircularBuffer<RF24_DataPackage_t>(6)) {}
 
 RF24::~RF24() {}
 
 void RF24::setup() {
     uint8_t tmp;
+
+    IGpio_Callback_t interruptFunction = [](void *user) {
+        RF24 *self = static_cast<RF24 *>(user);
+        self->increaseNotificationCounter();
+    };
 
     // Enable dynamic payload length only
     __READ_REGISTER(RF24_Register::FEATURE, tmp);
@@ -52,18 +58,20 @@ void RF24::setup() {
     FLUSH_TX();
     FLUSH_RX();
 
-    IGpio_Callback_t interruptFunction = [](void* user) {
-        RF24* self = static_cast<RF24*>(user);
-        self->increaseNotificationCounter();
-    };
-
     irq.enableInterrupt(interruptFunction, this);
 }
 
 void RF24::loop() {
     uint8_t status;
 
-    // TODO: Callback logic here
+    if (rxBuffer.itemsAvailable()) {
+        RF24_DataPackage_t package;
+        rxBuffer.pop(package);
+
+        if (rxCallback[package.pipe]) {
+            rxCallback[package.pipe](package, rxUser[package.pipe]);
+        }
+    }
 
     if (!decreaseNotificationCounter()) return;
 
@@ -78,6 +86,7 @@ bool RF24::increaseNotificationCounter() {
     __BOUNCE(notificationCounter == __UINT8_MAX__, false);
 
     notificationCounter++;
+
     return (true);
 }
 
@@ -85,6 +94,7 @@ bool RF24::decreaseNotificationCounter() {
     __BOUNCE(notificationCounter == 0, false);
 
     notificationCounter--;
+
     return (true);
 }
 
@@ -105,22 +115,20 @@ void RF24::handle_RX_DR(uint8_t status) {
 
 RF24_Status RF24::readRxFifo(uint8_t status) {
     RF24_DataPackage_t package;
+    bool success;
 
-    uint8_t pipe = extractPipe(status);
-    __BOUNCE(pipe > 5, RF24_Status::Failure);
+    package.pipe = extractPipe(status);
+    __BOUNCE(package.pipe > 5, RF24_Status::Failure);
 
     R_RX_PL_WID(package.numBytes);
     __BOUNCE(package.numBytes > rxFifoSize, RF24_Status::Failure);
 
     R_RX_PAYLOAD(package.bytes, package.numBytes);
 
-    __BOUNCE(rxBuffer[pipe] == NULL, RF24_Status::Failure);
+    success = rxBuffer.push(package);
+    __BOUNCE(!success, RF24_Status::Failure);
 
-    if (rxBuffer[pipe]->push(package)) {
-        return (RF24_Status::Success);
-    } else {
-        return (RF24_Status::Failure);
-    }
+    return (RF24_Status::Success);
 }
 
 RF24_Status RF24::writeTxFifo(uint8_t status) {
@@ -181,6 +189,32 @@ void RF24::enterTxMode() {
     delayUs(txSettling);
 }
 
+RF24_Status RF24::startListening(uint8_t pipe, RF24_RxCallback_t callback, void *user) {
+    __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
+
+    rxCallback[pipe] = callback;
+    rxUser[pipe]     = user;
+
+    enableDynamicPayloadLength(pipe);
+    enableAutoAcknowledgment(pipe);
+    enableRxDataPipe(pipe);
+
+    return (RF24_Status::Success);
+}
+
+RF24_Status RF24::stopListening(uint8_t pipe) {
+    __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
+
+    rxCallback[pipe] = NULL;
+    rxUser[pipe]     = NULL;
+
+    enableDynamicPayloadLength(pipe, false);
+    enableAutoAcknowledgment(pipe, false);
+    enableRxDataPipe(pipe, false);
+
+    return (RF24_Status::Success);
+}
+
 uint8_t RF24::getPackageLossCounter() {
     uint8_t observe_tx;
 
@@ -199,30 +233,6 @@ uint8_t RF24::getRetransmissionCounter() {
     RIGHT_eq<uint8_t>(observe_tx, OBSERVE_TX_ARC_CNT);
 
     return (observe_tx);
-}
-
-RF24_Status RF24::startListening(uint8_t pipe, CircularBuffer<RF24_DataPackage_t>* rxQueue) {
-    __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
-
-    this->rxBuffer[pipe] = rxQueue;
-
-    enableDynamicPayloadLength(pipe);
-    enableAutoAcknowledgment(pipe);
-    enableRxDataPipe(pipe);
-
-    return (RF24_Status::Success);
-}
-
-RF24_Status RF24::stopListening(uint8_t pipe) {
-    __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
-
-    enableRxDataPipe(pipe, false);
-    enableAutoAcknowledgment(pipe, false);
-    enableDynamicPayloadLength(pipe, false);
-
-    this->rxBuffer[pipe] = NULL;
-
-    return (RF24_Status::Success);
 }
 
 RF24_Status RF24::enableDynamicPayloadLength(uint8_t pipe, bool enable) {
@@ -446,16 +456,16 @@ RF24_Status RF24::setRetryDelay(uint8_t delay) {
 }
 
 uint32_t RF24::getRxBaseAddress(uint8_t pipe) {
-    uint32_t baseAddress = 0;
-    uint8_t buffer[addressLength];
+    uint32_t baseAddress      = 0;
     uint8_t baseAddressLength = addressLength - addressPrefixLength;
+    uint8_t buffer[addressLength];
 
     // TODO: Verify pipe
 
-    if (pipe == 0) {
-        R_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
-    } else {
+    if (pipe > 0) {
         R_REGISTER(RF24_Register::RX_ADDR_P1, buffer, addressLength);
+    } else {
+        R_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
     }
 
     memcpy(&baseAddress, &buffer[baseAddressOffset], baseAddressLength);
@@ -464,23 +474,23 @@ uint32_t RF24::getRxBaseAddress(uint8_t pipe) {
 }
 
 RF24_Status RF24::setRxBaseAddress(uint8_t pipe, uint32_t baseAddress) {
-    uint8_t buffer[addressLength];
     uint8_t baseAddressLength = addressLength - addressPrefixLength;
+    uint8_t buffer[addressLength];
 
     __BOUNCE(pipe > 5, RF24_Status::UnknownPipe);
 
-    if (pipe == 0) {
-        R_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
-    } else {
+    if (pipe > 0) {
         R_REGISTER(RF24_Register::RX_ADDR_P1, buffer, addressLength);
+    } else {
+        R_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
     }
 
     memcpy(&buffer[baseAddressOffset], &baseAddress, baseAddressLength);
 
-    if (pipe == 0) {
-        W_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
-    } else {
+    if (pipe > 0) {
         W_REGISTER(RF24_Register::RX_ADDR_P1, buffer, addressLength);
+    } else {
+        W_REGISTER(RF24_Register::RX_ADDR_P0, buffer, addressLength);
     }
 
     __BOUNCE(baseAddress != getRxBaseAddress(pipe), RF24_Status::VerificationFailed);
@@ -489,20 +499,22 @@ RF24_Status RF24::setRxBaseAddress(uint8_t pipe, uint32_t baseAddress) {
 }
 
 uint32_t RF24::getTxBaseAddress() {
-    uint32_t baseAddress = 0;
+    uint32_t baseAddress      = 0;
+    uint8_t baseAddressLength = addressLength - addressPrefixLength;
     uint8_t buffer[addressLength];
 
     R_REGISTER(RF24_Register::TX_ADDR, buffer, addressLength);
-    memcpy(&baseAddress, &buffer[1], addressLength - addressPrefixLength);
+    memcpy(&baseAddress, &buffer[baseAddressOffset], baseAddressLength);
 
     return (baseAddress);
 }
 
 RF24_Status RF24::setTxBaseAddress(uint32_t baseAddress) {
+    uint8_t baseAddressLength = addressLength - addressPrefixLength;
     uint8_t buffer[addressLength];
 
     R_REGISTER(RF24_Register::TX_ADDR, buffer, addressLength);
-    memcpy(&buffer[1], &baseAddress, addressLength - 1);
+    memcpy(&buffer[baseAddressOffset], &baseAddress, baseAddressLength);
     W_REGISTER(RF24_Register::TX_ADDR, buffer, addressLength);
 
     __BOUNCE(baseAddress != getTxBaseAddress(), RF24_Status::VerificationFailed);
