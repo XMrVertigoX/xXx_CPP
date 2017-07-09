@@ -26,9 +26,16 @@ static inline uint8_t extractPipe(uint8_t status) {
 }
 
 RF24::RF24(ISpi &spi, IGpio &ce, IGpio &irq)
-    : RF24_BASE(spi), ce(ce), irq(irq), rxBuffer(CircularBuffer<RF24_DataPackage_t>(6)) {}
+    : RF24_BASE(spi),
+      ce(ce),
+      irq(irq),
+      rxBuffer(CircularBuffer<RF24_DataPackage_t>(6)) {
+    LOG("%s: %p\n", __FUNCTION__, this);
+}
 
-RF24::~RF24() {}
+RF24::~RF24() {
+    LOG("%s: %p\n", __FUNCTION__, this);
+}
 
 void RF24::setup() {
     uint8_t tmp;

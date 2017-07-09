@@ -16,11 +16,11 @@ class RF24 : public RF24_BASE {
    private:
     IGpio &ce;
     IGpio &irq;
+    CircularBuffer<RF24_DataPackage_t> rxBuffer;
 
     uint8_t notificationCounter = 0;
     uint8_t addressLength       = 5;
 
-    CircularBuffer<RF24_DataPackage_t> rxBuffer;
     RF24_RxCallback_t rxCallback[6] = {};
     void *rxUser[6]                 = {};
 
