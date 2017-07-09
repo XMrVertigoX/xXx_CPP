@@ -5,15 +5,22 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
+
 #if defined(NDEBUG)
-#define BUFFER(...)
+#define HEXDUMP(...)
 #define LOG(...)
 #else
-#define BUFFER(...) printBuffer(__VA_ARGS__)
-#define LOG(...) printFormat(__VA_ARGS__)
+#define HEXDUMP(...) xXx::hexdump(__VA_ARGS__)
+#define LOG(...) xXx::log(__VA_ARGS__)
+
 #endif
 
-void printBuffer(const char *message, void *bytes, size_t numBytes);
-void printFormat(const char *format, ...);
+namespace xXx {
+
+void hexdump(const void *bytes, size_t numBytes);
+void log(const char *format, ...);
+
+} /* namespace xXx */
 
 #endif /* LOGGING_HPP_ */
