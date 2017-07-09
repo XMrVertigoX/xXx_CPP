@@ -17,6 +17,7 @@ class CircularBuffer {
     size_t tail;
 
    public:
+    // Destructor
     ~CircularBuffer();
 
     // Default constructor
