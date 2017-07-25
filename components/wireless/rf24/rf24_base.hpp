@@ -18,8 +18,8 @@ class RF24_BASE {
     RF24_BASE(ISpi &spi);
     virtual ~RF24_BASE();
 
-    uint8_t R_REGISTER(RF24_Register reg, uint8_t *bytes, size_t numBytes = sizeof(uint8_t));
-    uint8_t W_REGISTER(RF24_Register reg, const uint8_t *bytes, size_t numBytes = sizeof(uint8_t));
+    uint8_t R_REGISTER(RF24_Register reg, uint8_t *bytes, size_t numBytes = 1);
+    uint8_t W_REGISTER(RF24_Register reg, const uint8_t *bytes, size_t numBytes = 1);
     uint8_t R_RX_PAYLOAD(uint8_t *bytes, size_t numBytes);
     uint8_t W_TX_PAYLOAD(const uint8_t *bytes, size_t numBytes);
     uint8_t FLUSH_TX();

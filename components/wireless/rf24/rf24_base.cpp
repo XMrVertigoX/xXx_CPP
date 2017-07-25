@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -29,9 +28,9 @@ uint8_t RF24_BASE::transmit(uint8_t command, const uint8_t *txBytes, uint8_t *rx
     buffer[0] = command;
 
     if (txBytes != NULL) {
-        memcpy(&buffer[1], txBytes, numBytes);
+        std::memcpy(&buffer[1], txBytes, numBytes);
     } else {
-        memset(&buffer[1], dummyByte, numBytes);
+        std::memset(&buffer[1], dummyByte, numBytes);
     }
 
     _spi.transmit_receive(buffer, buffer, numBytes + 1);
@@ -39,7 +38,7 @@ uint8_t RF24_BASE::transmit(uint8_t command, const uint8_t *txBytes, uint8_t *rx
     status = buffer[0];
 
     if (rxBytes != NULL) {
-        memcpy(rxBytes, &buffer[1], numBytes);
+        std::memcpy(rxBytes, &buffer[1], numBytes);
     }
 
     return (status);
