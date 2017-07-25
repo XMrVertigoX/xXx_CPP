@@ -68,17 +68,17 @@ class RF24 : public RF24_BASE {
     uint8_t getRetransmissionCounter();
     uint8_t getPackageLossCounter();
 
-    uint32_t getRxBaseAddress(uint8_t pipe);
-    RF24_Status setRxBaseAddress(uint8_t pipe, uint32_t baseAddress);
+    RF24_Status readRxBaseAddress(uint8_t pipe, uint32_t &baseAddress);
+    RF24_Status writeRxBaseAddress(uint8_t pipe, uint32_t baseAddress);
 
-    uint32_t getTxBaseAddress();
-    RF24_Status setTxBaseAddress(uint32_t baseAddress);
+    RF24_Status readTxBaseAddress(uint32_t &baseAddress);
+    RF24_Status writeTxBaseAddress(uint32_t baseAddress);
 
-    uint8_t getRxAddress(uint8_t pipe);
-    RF24_Status setRxAddress(uint8_t pipe, uint8_t address);
+    RF24_Status readRxAddress(uint8_t pipe, uint8_t &address);
+    RF24_Status writeRxAddress(uint8_t pipe, uint8_t address);
 
-    uint8_t getTxAddress();
-    RF24_Status setTxAddress(uint8_t address);
+    RF24_Status readTxAddress(uint8_t &address);
+    RF24_Status writeTxAddress(uint8_t address);
 
     uint8_t getChannel();
     RF24_Status setChannel(uint8_t channel);
