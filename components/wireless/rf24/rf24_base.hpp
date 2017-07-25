@@ -1,6 +1,8 @@
 #ifndef RF24_BASE_HPP
 #define RF24_BASE_HPP
 
+#include <cstdint>
+
 #include <xXx/components/wireless/rf24/rf24_types.hpp>
 #include <xXx/interfaces/ispi.hpp>
 

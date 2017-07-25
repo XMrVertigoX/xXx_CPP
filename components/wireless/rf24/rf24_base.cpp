@@ -1,6 +1,6 @@
-#include <assert.h>
-#include <string.h>
-
+#include <cassert>
+#include <cstdint>
+#include <cstring>
 #include <type_traits>
 
 #include <xXx/components/wireless/rf24/rf24_base.hpp>
