@@ -87,7 +87,7 @@ enum class RF24_Register : uint8_t {
     FEATURE     = 0x1D
 };
 
-enum CONFIG_t : uint8_t {
+enum CONFIG : uint8_t {
     CONFIG_PRIM_RX     = 0,
     CONFIG_PWR_UP      = 1,
     CONFIG_CRCO        = 2,
@@ -97,24 +97,24 @@ enum CONFIG_t : uint8_t {
     CONFIG_MASK_RX_DR  = 6
 };
 
-enum SETUP_AW_t : uint8_t {
+enum SETUP_AW : uint8_t {
     SETUP_AW      = 0,
     SETUP_AW_MASK = 0b00000011
 };
 
-enum SETUP_RETR_t : uint8_t {
+enum SETUP_RETR : uint8_t {
     SETUP_RETR_ARC      = 0,
     SETUP_RETR_ARC_MASK = 0b00001111,
     SETUP_RETR_ARD      = 4,
     SETUP_RETR_ARD_MASK = 0b11110000
 };
 
-enum RF_CH_t : uint8_t {
+enum RF_CH : uint8_t {
     RF_CH      = 0,
     RF_CH_MASK = 0b01111111
 };
 
-enum RF_SETUP_t : uint8_t {
+enum RF_SETUP : uint8_t {
     RF_SETUP_RF_PWR          = 1,
     RF_SETUP_RF_PWR_MASK     = 0b00000110,
     RF_SETUP_RF_DR_HIGH      = 3,
@@ -127,7 +127,7 @@ enum RF_SETUP_t : uint8_t {
     RF_SETUP_CONT_WAVE_MASK  = 0b10000000
 };
 
-enum STATUS_t : uint8_t {
+enum STATUS : uint8_t {
     STATUS_TX_FULL      = 0,
     STATUS_TX_FULL_MASK = 0b00000001,
     STATUS_RX_P_NO      = 1,
@@ -140,19 +140,19 @@ enum STATUS_t : uint8_t {
     STATUS_RX_DR_MASK   = 0b01000000
 };
 
-enum OBSERVE_TX_t : uint8_t {
+enum OBSERVE_TX : uint8_t {
     OBSERVE_TX_ARC_CNT       = 0,
     OBSERVE_TX_ARC_CNT_MASK  = 0b00001111,
     OBSERVE_TX_PLOS_CNT      = 4,
     OBSERVE_TX_PLOS_CNT_MASK = 0b11110000
 };
 
-enum RPD_t : uint8_t {
+enum RPD : uint8_t {
     RPD_RPD      = 0,
     RPD_RPD_MASK = 0b00000001
 };
 
-enum FIFO_STATUS_t : uint8_t {
+enum FIFO_STATUS : uint8_t {
     FIFO_STATUS_RX_EMPTY = 0,
     FIFO_STATUS_RX_FULL  = 1,
     FIFO_STATUS_TX_EMPTY = 4,
@@ -160,7 +160,7 @@ enum FIFO_STATUS_t : uint8_t {
     FIFO_STATUS_TX_REUSE = 6
 };
 
-enum FEATURE_t : uint8_t {
+enum FEATURE : uint8_t {
     FEATURE_EN_DYN_ACK      = 0,
     FEATURE_EN_DYN_ACK_MASK = 0b00000001,
     FEATURE_EN_ACK_PAY      = 1,

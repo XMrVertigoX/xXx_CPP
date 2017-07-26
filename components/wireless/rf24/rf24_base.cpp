@@ -10,8 +10,8 @@
 static const uint8_t dummyByte = 0xFF;
 
 template <typename TYPE>
-constexpr typename std::underlying_type<TYPE>::type asUnderlyingType(TYPE e) {
-    return (static_cast<typename std::underlying_type<TYPE>::type>(e));
+constexpr typename std::underlying_type<TYPE>::type asUnderlyingType(TYPE enumValue) {
+    return (static_cast<typename std::underlying_type<TYPE>::type>(enumValue));
 }
 
 namespace xXx {

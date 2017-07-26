@@ -308,7 +308,7 @@ uint8_t RF24::getChannel() {
 
     R_REGISTER(RF24_Register::RF_CH, &channel);
 
-    __BOUNCE(channel > 127, __UINT8_MAX__);
+    __BOUNCE(channel > 127, UINT8_MAX);
 
     return (channel);
 }
