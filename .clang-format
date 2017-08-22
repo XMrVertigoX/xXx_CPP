@@ -8,11 +8,17 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
-ColumnLimit: 0
+ColumnLimit: 666
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 DerivePointerAlignment: false
 IndentWidth: 4
 PointerAlignment: Right
 ReflowComments: false
 SortIncludes: true
+UseTab: Never
+
+BreakBeforeBraces: Custom
+BraceWrapping: {
+    AfterEnum: 'true'
+}
 ---
