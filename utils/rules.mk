@@ -21,13 +21,14 @@ HEXARY     = $(OUTPUT_DIR)/$(PROJECT_NAME).hex
 
 # ----- Flags -----------------------------------------------------------------
 
-ASMFLAGS +=
+# ASMFLAGS +=
 
 COMMON_CFLAGS += -fdata-sections
 COMMON_CFLAGS += -ffunction-sections
 COMMON_CFLAGS += -fno-exceptions
 COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -fno-asynchronous-unwind-tables
+COMMON_CFLAGS += -fno-common
 COMMON_CFLAGS += -nostdlib
 # Warnings
 COMMON_CFLAGS += -Wall
@@ -74,7 +75,7 @@ clean:
 $(EXECUTABLE): $(_OBJECT_FILES)
 	echo $@
 	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^
+	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $+
 
 $(BINARY): $(EXECUTABLE)
 	echo $@
@@ -89,26 +90,26 @@ $(HEXARY): $(EXECUTABLE)
 # Assembler
 
 $(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
-	echo $@
+	echo $(subst $(dir $(PWD)),/.../,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(OUTPUT_DIR)/%.o: /%.S $(MAKEFILE_LIST)
-	echo $@
+	echo $(subst $(dir $(PWD)),/.../,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
 $(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
-	echo $@
+	echo $(subst $(dir $(PWD)),/.../,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
 $(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
-	echo $@
+	echo $(subst $(dir $(PWD)),/.../,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
