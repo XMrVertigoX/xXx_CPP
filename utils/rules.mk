@@ -9,19 +9,20 @@ RM      = rm -rf
 
 # ----- Directories and files -------------------------------------------------
 
-ifndef PROJECT_NAME
-PROJECT_NAME = PROJECT_NAME_NOT_SET
-endif
+OUTPUT_NAME = $(notdir $(PWD))
+OUTPUT_DIR  = _out
 
-OUTPUT_DIR = _out
+BIN_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).bin
+ELF_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).elf
+HEX_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).hex
 
-BINARY     = $(OUTPUT_DIR)/$(PROJECT_NAME).bin
-EXECUTABLE = $(OUTPUT_DIR)/$(PROJECT_NAME).elf
-HEXARY     = $(OUTPUT_DIR)/$(PROJECT_NAME).hex
+BASE_FILES       = $(addprefix $(OUTPUT_DIR),$(basename $(realpath $(SOURCE_FILES))))
+DEPENDENCY_FILES = $(addsuffix .d,$(BASE_FILES))
+OBJECT_FILES     = $(addsuffix .o,$(BASE_FILES))
+
+VPATH += /
 
 # ----- Flags -----------------------------------------------------------------
-
-# ASMFLAGS +=
 
 COMMON_CFLAGS += -fdata-sections
 COMMON_CFLAGS += -ffunction-sections
@@ -30,6 +31,7 @@ COMMON_CFLAGS += -fno-unwind-tables
 COMMON_CFLAGS += -fno-asynchronous-unwind-tables
 COMMON_CFLAGS += -fno-common
 COMMON_CFLAGS += -nostdlib
+
 # Warnings
 COMMON_CFLAGS += -Wall
 # COMMON_CFLAGS += -Wextra
@@ -46,23 +48,15 @@ CPPFLAGS += $(addprefix -D,$(SYMBOLS))
 CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 
 LDFLAGS += -Wl,--gc-sections
-LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(PROJECT_NAME).map
+LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(OUTPUT_NAME).map
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
 LDFLAGS += -Wl,--start-group $(addprefix -l,$(LIBRARIES)) -Wl,--end-group
-
-# ----- Sources and objects ---------------------------------------------------
-
-_SOURCE_FILES = $(realpath $(SOURCE_FILES))
-_OUTPUT_FILES = $(addprefix $(OUTPUT_DIR),$(basename $(_SOURCE_FILES)))
-
-_DEPENDENCY_FILES = $(addsuffix .d,$(_OUTPUT_FILES))
-_OBJECT_FILES     = $(addsuffix .o,$(_OUTPUT_FILES))
 
 # ----- Rules -----------------------------------------------------------------
 
 .PHONY: all clean
 
-all: $(EXECUTABLE) $(BINARY) $(HEXARY)
+all: $(ELF_FILE) $(BIN_FILE) $(HEX_FILE)
 	@echo # New line for better reading
 	$(SIZE) $<
 	@echo # Another new line for even better reading
@@ -72,45 +66,47 @@ clean:
 
 # Output
 
-$(EXECUTABLE): $(_OBJECT_FILES)
+%.elf: $(OBJECT_FILES) | $(OUTPUT_DIR)
 	echo $@
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $+
+	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^
 
-$(BINARY): $(EXECUTABLE)
+%.bin: %.elf
 	echo $@
-	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
 
-$(HEXARY): $(EXECUTABLE)
+%.hex: %.elf
 	echo $@
-	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O ihex $< $@
+
+# Directories
+
+$(OUTPUT_DIR):
+	$(MKDIR) $@
 
 # Assembler
 
-$(OUTPUT_DIR)/%.o: /%.s $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/.../,$@)
+$(OUTPUT_DIR)/%.o: %.s $(MAKEFILE_LIST)
+	echo $(subst $(dir $(PWD)),/[...]/,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-$(OUTPUT_DIR)/%.o: /%.S $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/.../,$@)
+$(OUTPUT_DIR)/%.o: %.S $(MAKEFILE_LIST)
+	echo $(subst $(dir $(PWD)),/[...]/,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
-$(OUTPUT_DIR)/%.o: /%.c $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/.../,$@)
+$(OUTPUT_DIR)/%.o: %.c $(MAKEFILE_LIST)
+	echo $(subst $(dir $(PWD)),/[...]/,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
-$(OUTPUT_DIR)/%.o: /%.cpp $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/.../,$@)
+$(OUTPUT_DIR)/%.o: %.cpp $(MAKEFILE_LIST)
+	echo $(subst $(dir $(PWD)),/[...]/,$@)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
--include $(_DEPENDENCY_FILES)
+-include $(DEPENDENCY_FILES)
