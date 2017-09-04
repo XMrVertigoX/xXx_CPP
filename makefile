@@ -1,17 +1,20 @@
-HEADER_FILES = $(shell find -iregex ".*\(.hpp\)")
-SOURCE_FILES = # Add .cpp files here
-OBJECT_FILES = $(patsubst %.cpp,%.o,$(SOURCE_FILES))
+# Force make to use g++ for linking instead of gcc
+LINK.o = $(LINK.cc)
 
-TEST_FILES = $(shell find -iregex ".*\(_test.cpp\)")
+SRC_FILES = $(wildcard templates/*.cpp)
+OBJ_FILES = $(addsuffix .o,$(basename $(SRC_FILES)))
+DEP_FILES = $(addsuffix .d,$(basename $(SRC_FILES)))
 
-all: tests $(OBJECT_FILES)
-	./tests -r compact
+CPPFLAGS += -MD
+CPPFLAGS += -MP
+
+all: tests
+	./tests
 
 clean:
-	rm -rf tests
+	rm -rf $(DEP_FILES)
+	rm -rf $(OBJ_FILES)
 
-tests: tests.o $(TEST_FILES) $(HEADER_FILES) $(MAKEFILE_LIST)
-	g++ -o $@ $< $(TEST_FILES)
+tests: tests.o $(OBJ_FILES)
 
-%.o: %.cpp
-	g++ -c $<
+-include $(DEP_FILES)
