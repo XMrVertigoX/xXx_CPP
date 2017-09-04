@@ -12,8 +12,8 @@ RM      = rm -rf
 OUTPUT_NAME = $(notdir $(PWD))
 OUTPUT_DIR  = _out
 
-BIN_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).bin
 ELF_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).elf
+BIN_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).bin
 HEX_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).hex
 
 BASE_FILES       = $(addprefix $(OUTPUT_DIR),$(basename $(realpath $(SOURCE_FILES))))
@@ -34,7 +34,7 @@ COMMON_CFLAGS += -nostdlib
 
 # Warnings
 COMMON_CFLAGS += -Wall
-# COMMON_CFLAGS += -Wextra
+COMMON_CFLAGS += -Wextra
 
 CFLAGS += $(COMMON_CFLAGS)
 
