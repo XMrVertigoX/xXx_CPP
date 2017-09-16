@@ -7,14 +7,14 @@ SIZE    = $(TOOLCHAIN_PREFIX)size
 MKDIR   = mkdir -p
 RM      = rm -rf
 
+__ECHO  = echo $(subst $(dir $(PWD)),/[...]/,$@)
+
 # ----- Directories and files -------------------------------------------------
 
 OUTPUT_NAME = $(notdir $(PWD))
 OUTPUT_DIR  = _out
 
 ELF_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).elf
-BIN_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).bin
-HEX_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).hex
 
 BASE_FILES       = $(addprefix $(OUTPUT_DIR),$(basename $(realpath $(SOURCE_FILES))))
 DEPENDENCY_FILES = $(addsuffix .d,$(BASE_FILES))
@@ -56,7 +56,7 @@ LDFLAGS += -Wl,--start-group $(addprefix -l,$(LIBRARIES)) -Wl,--end-group
 
 .PHONY: all clean
 
-all: $(ELF_FILE) $(BIN_FILE) $(HEX_FILE)
+all: $(ELF_FILE)
 	@echo # New line for better reading
 	$(SIZE) $<
 	@echo # Another new line for even better reading
@@ -66,16 +66,19 @@ clean:
 
 # Output
 
-%.elf: $(OBJECT_FILES) | $(OUTPUT_DIR)
-	echo $@
+%.elf: $(OBJECT_FILES)
+	$(__ECHO)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^
 
-%.bin: %.elf
-	echo $@
+%.bin: $(ELF_FILE)
+	$(__ECHO)
+	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
 
-%.hex: %.elf
-	echo $@
+%.hex: $(ELF_FILE)
+	$(__ECHO)
+	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O ihex $< $@
 
 # Directories
@@ -86,26 +89,26 @@ $(OUTPUT_DIR):
 # Assembler
 
 $(OUTPUT_DIR)/%.o: %.s $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/[...]/,$@)
+	$(__ECHO)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(OUTPUT_DIR)/%.o: %.S $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/[...]/,$@)
+	$(__ECHO)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
 $(OUTPUT_DIR)/%.o: %.c $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/[...]/,$@)
+	$(__ECHO)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
 $(OUTPUT_DIR)/%.o: %.cpp $(MAKEFILE_LIST)
-	echo $(subst $(dir $(PWD)),/[...]/,$@)
+	$(__ECHO)
 	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
