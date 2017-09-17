@@ -4,17 +4,21 @@ GCC     = $(TOOLCHAIN_PREFIX)gcc
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
-MKDIR   = mkdir -p
+ECHO    = echo $(subst $(dir $(PWD)),/[...]/,$@)
+MKDIR   = mkdir -p $(dir $@)
 RM      = rm -rf
-
-__ECHO  = echo $(subst $(dir $(PWD)),/[...]/,$@)
 
 # ----- Directories and files -------------------------------------------------
 
+ifdef PROJECT_NAME
+OUTPUT_NAME = $(PROJECT_NAME)
+else
 OUTPUT_NAME = $(notdir $(PWD))
+endif
+
 OUTPUT_DIR  = _out
 
-ELF_FILE = $(OUTPUT_DIR)/$(OUTPUT_NAME).elf
+__ELF = $(OUTPUT_DIR)/$(OUTPUT_NAME).elf
 
 BASE_FILES       = $(addprefix $(OUTPUT_DIR),$(basename $(realpath $(SOURCE_FILES))))
 DEPENDENCY_FILES = $(addsuffix .d,$(BASE_FILES))
@@ -24,21 +28,21 @@ VPATH += /
 
 # ----- Flags -----------------------------------------------------------------
 
-COMMON_CFLAGS += -fdata-sections
-COMMON_CFLAGS += -ffunction-sections
-COMMON_CFLAGS += -fno-exceptions
-COMMON_CFLAGS += -fno-unwind-tables
-COMMON_CFLAGS += -fno-asynchronous-unwind-tables
-COMMON_CFLAGS += -fno-common
-COMMON_CFLAGS += -nostdlib
+__CFLAGS += -fdata-sections
+__CFLAGS += -ffunction-sections
+__CFLAGS += -fno-exceptions
+__CFLAGS += -fno-unwind-tables
+__CFLAGS += -fno-asynchronous-unwind-tables
+__CFLAGS += -fno-common
+__CFLAGS += -nostdlib
 
 # Warnings
-COMMON_CFLAGS += -Wall
-COMMON_CFLAGS += -Wextra
+__CFLAGS += -Wall
+# __CFLAGS += -Wextra
 
-CFLAGS += $(COMMON_CFLAGS)
+CFLAGS += $(__CFLAGS)
 
-CXXFLAGS += $(COMMON_CFLAGS)
+CXXFLAGS += $(__CFLAGS)
 CXXFLAGS += -fno-rtti
 CXXFLAGS += -fno-threadsafe-statics
 
@@ -50,13 +54,14 @@ CPPFLAGS += $(addprefix -I,$(realpath $(INCLUDE_DIRS)))
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$(OUTPUT_DIR)/$(OUTPUT_NAME).map
 LDFLAGS += $(addprefix -L,$(realpath $(LIBRARY_DIRS)))
-LDFLAGS += -Wl,--start-group $(addprefix -l,$(LIBRARIES)) -Wl,--end-group
+
+LDLIBS += $(addprefix -l,$(LIBRARIES))
 
 # ----- Rules -----------------------------------------------------------------
 
 .PHONY: all clean
 
-all: $(ELF_FILE)
+all: $(__ELF)
 	@echo # New line for better reading
 	$(SIZE) $<
 	@echo # Another new line for even better reading
@@ -67,49 +72,30 @@ clean:
 # Output
 
 %.elf: $(OBJECT_FILES)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^
+	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-%.bin: $(ELF_FILE)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(OBJCOPY) -O binary $< $@
+%.bin: $(__ELF)
+	$(ECHO) && $(MKDIR) && $(OBJCOPY) -O binary $< $@
 
-%.hex: $(ELF_FILE)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(OBJCOPY) -O ihex $< $@
-
-# Directories
-
-$(OUTPUT_DIR):
-	$(MKDIR) $@
+%.hex: $(__ELF)
+	$(ECHO) && $(MKDIR) && $(OBJCOPY) -O ihex $< $@
 
 # Assembler
 
 $(OUTPUT_DIR)/%.o: %.s $(MAKEFILE_LIST)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(OUTPUT_DIR)/%.o: %.S $(MAKEFILE_LIST)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
 $(OUTPUT_DIR)/%.o: %.c $(MAKEFILE_LIST)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
 $(OUTPUT_DIR)/%.o: %.cpp $(MAKEFILE_LIST)
-	$(__ECHO)
-	$(MKDIR) $(dir $@)
-	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(DEPENDENCY_FILES)
