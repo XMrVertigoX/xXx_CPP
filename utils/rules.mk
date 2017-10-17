@@ -4,9 +4,10 @@ GCC     = $(TOOLCHAIN_PREFIX)gcc
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
-ECHO    = echo $(subst $(dir $(PWD)),/[...]/,$@)
-MKDIR   = mkdir -p $(dir $@)
+MKDIR   = mkdir -p
 RM      = rm -rf
+
+ECHO    = echo $(subst $(dir $(PWD)),/[...]/,$@)
 
 # ----- Directories and files -------------------------------------------------
 
@@ -38,7 +39,7 @@ __CFLAGS += -nostdlib
 
 # Warnings
 __CFLAGS += -Wall
-# __CFLAGS += -Wextra
+__CFLAGS += -Wextra
 
 CFLAGS += $(__CFLAGS)
 
@@ -72,30 +73,44 @@ clean:
 # Output
 
 %.elf: $(OBJECT_FILES)
-	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.bin: $(__ELF)
-	$(ECHO) && $(MKDIR) && $(OBJCOPY) -O binary $< $@
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(OBJCOPY) -O binary $< $@
 
 %.hex: $(__ELF)
-	$(ECHO) && $(MKDIR) && $(OBJCOPY) -O ihex $< $@
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(OBJCOPY) -O ihex $< $@
 
 # Assembler
 
 $(OUTPUT_DIR)/%.o: %.s $(MAKEFILE_LIST)
-	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(OUTPUT_DIR)/%.o: %.S $(MAKEFILE_LIST)
-	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
 $(OUTPUT_DIR)/%.o: %.c $(MAKEFILE_LIST)
-	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
 $(OUTPUT_DIR)/%.o: %.cpp $(MAKEFILE_LIST)
-	$(ECHO) && $(MKDIR) && $(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(ECHO)
+	$(MKDIR) $(dir $@)
+	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(DEPENDENCY_FILES)
