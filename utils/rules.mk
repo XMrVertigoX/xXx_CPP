@@ -4,9 +4,10 @@ GCC     = $(TOOLCHAIN_PREFIX)gcc
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
-ECHO    = echo $(subst $(dir $(PWD)),/[...]/,$@)
-MKDIR   = mkdir -p $(dir $@)
+MKDIR   = mkdir -p
 RM      = rm -rf
+
+ECHO    = echo $(subst $(dir $(PWD)),/[...]/,$@)
 
 # ----- Directories and files -------------------------------------------------
 
