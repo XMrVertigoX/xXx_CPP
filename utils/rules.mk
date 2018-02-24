@@ -74,43 +74,43 @@ clean:
 
 %.elf: $(__OBJECT_FILES)
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.bin: %.elf
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O binary $< $@
 
 %.hex: %.elf
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(OBJCOPY) -O ihex $< $@
 
 # Assembler
 
 $(__OUTPUT_DIR)/%.o: %.s
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(__OUTPUT_DIR)/%.o: %.S
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(ASMFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C
 
 $(__OUTPUT_DIR)/%.o: %.c
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CFLAGS) $(__COMMON_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # C++
 
 $(__OUTPUT_DIR)/%.o: %.cpp
 	$(ECHO)
-	$(MKDIR)
+	$(MKDIR) $(dir $@)
 	$(GCC) $(GCCFLAGS) $(CXXFLAGS) $(__COMMON_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(__DEPENDENCY_FILES)
